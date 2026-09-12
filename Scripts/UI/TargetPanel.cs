@@ -408,15 +408,15 @@ public partial class TargetPanel : PanelContainer
 
             string actionName = selectable.TargetName switch
             {
-                "Tree" => "Chop",
-                "Rock" => "Quarry",
+                "Tree" or "Pine Tree" => "Chop",
+                "Rock" or "Quarry Boulder" => "Quarry",
                 _ => "Attack"
             };
 
             Texture2D actionTex = selectable.TargetName switch
             {
-                "Tree" => _chopIcon,
-                "Rock" => _quarryIcon,
+                "Tree" or "Pine Tree" => _chopIcon,
+                "Rock" or "Quarry Boulder" => _quarryIcon,
                 _ => _attackIcon
             };
             if (_actionButton.TextureNormal != actionTex)

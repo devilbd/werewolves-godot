@@ -16,6 +16,7 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget
     public float MaxHealth => 80f;
     public bool IsDead => Health <= 0f;
     public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -75);
+    public Rect2 TargetBounds => new Rect2(-28f, -68f, 56f, 68f);
 
     private float _speed = 65f;
     private bool _isAggro = false;
@@ -151,6 +152,7 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget
         if (!IsDead && @event is InputEventMouseButton mouseBtn && mouseBtn.Pressed && mouseBtn.ButtonIndex == MouseButton.Left)
         {
             GameState.Instance.SelectedTarget = this;
+            GetViewport().SetInputAsHandled();
         }
     }
 
@@ -356,30 +358,7 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget
 
     public override void _Draw()
     {
-        if (_isSelected && !IsDead)
-        {
-            Vector2 c = new Vector2(0, -35);
-            float s = 36f;
-            float len = 12f;
-            Color yellow = new Color(1f, 1f, 0.4f, 0.9f);
-            float width = 3f;
-
-            // Top-Left
-            DrawLine(c + new Vector2(-s, -s), c + new Vector2(-s + len, -s), yellow, width);
-            DrawLine(c + new Vector2(-s, -s), c + new Vector2(-s, -s + len), yellow, width);
-
-            // Top-Right
-            DrawLine(c + new Vector2(s, -s), c + new Vector2(s - len, -s), yellow, width);
-            DrawLine(c + new Vector2(s, -s), c + new Vector2(s, -s + len), yellow, width);
-
-            // Bottom-Left
-            DrawLine(c + new Vector2(-s, s), c + new Vector2(-s + len, s), yellow, width);
-            DrawLine(c + new Vector2(-s, s), c + new Vector2(-s, s - len), yellow, width);
-
-            // Bottom-Right
-            DrawLine(c + new Vector2(s, s), c + new Vector2(s - len, s), yellow, width);
-            DrawLine(c + new Vector2(s, s), c + new Vector2(s, s - len), yellow, width);
-        }
+        // Selection reticle with animated shiny rounded corners is rendered by TargetReticle
     }
 
     public void OnSelected()

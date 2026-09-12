@@ -10,6 +10,7 @@ public partial class RockObject : StaticBody2D, ISelectableTarget
     public float MaxHealth => 100f;
     public bool IsDead => Health <= 0;
     public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -70);
+    public Rect2 TargetBounds => new Rect2(-36f, -38f, 72f, 40f);
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;
@@ -84,6 +85,7 @@ public partial class RockObject : StaticBody2D, ISelectableTarget
         if (!IsDead && @event is InputEventMouseButton mouseBtn && mouseBtn.Pressed && mouseBtn.ButtonIndex == MouseButton.Left)
         {
             GameState.Instance.SelectedTarget = this;
+            GetViewport().SetInputAsHandled();
         }
     }
 
@@ -105,26 +107,7 @@ public partial class RockObject : StaticBody2D, ISelectableTarget
 
     public override void _Draw()
     {
-        if (_isSelected && !IsDead)
-        {
-            float s = 35f;
-            float len = 12f;
-            Color yellow = new Color(1f, 1f, 0.4f, 0.9f);
-            float width = 3f;
-
-            // Corners
-            DrawLine(new Vector2(-s, -s), new Vector2(-s + len, -s), yellow, width);
-            DrawLine(new Vector2(-s, -s), new Vector2(-s, -s + len), yellow, width);
-
-            DrawLine(new Vector2(s, -s), new Vector2(s - len, -s), yellow, width);
-            DrawLine(new Vector2(s, -s), new Vector2(s, -s + len), yellow, width);
-
-            DrawLine(new Vector2(-s, s), new Vector2(-s + len, s), yellow, width);
-            DrawLine(new Vector2(-s, s), new Vector2(-s, s - len), yellow, width);
-
-            DrawLine(new Vector2(s, s), new Vector2(s - len, s), yellow, width);
-            DrawLine(new Vector2(s, s), new Vector2(s, s - len), yellow, width);
-        }
+        // Selection reticle with animated shiny rounded corners is rendered by TargetReticle
     }
 
     public void OnSelected()

@@ -37,6 +37,7 @@ public partial class WorldManager : Node2D
 	private Texture2D _groundVillageTex = null!;
 	private readonly List<Texture2D> _lakeTextures = new();
 	private readonly List<Rect2> _lakeBoundsList = new();
+	private Effects.TargetReticle _targetReticle = null!;
 
 	public override void _Ready()
 	{
@@ -108,7 +109,23 @@ public partial class WorldManager : Node2D
 			_entitiesContainer.AddChild(dn);
 		};
 
+		// Attach selection reticle
+		_targetReticle = new Effects.TargetReticle { Name = "TargetReticle" };
+		AddChild(_targetReticle);
+
 		GenerateOpenWorld();
+	}
+
+	public override void _UnhandledInput(InputEvent @event)
+	{
+		if (@event is InputEventMouseButton mb && mb.Pressed && mb.ButtonIndex == MouseButton.Left)
+		{
+			GameState.Instance.SelectedTarget = null;
+		}
+		else if (@event is InputEventKey key && key.Pressed && key.Keycode == Key.Escape)
+		{
+			GameState.Instance.SelectedTarget = null;
+		}
 	}
 
 	public override void _Process(double delta)

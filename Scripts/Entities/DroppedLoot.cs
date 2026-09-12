@@ -80,6 +80,7 @@ public partial class DroppedLoot : Area2D
         if (@event is InputEventMouseButton mouseBtn && mouseBtn.Pressed && mouseBtn.ButtonIndex == MouseButton.Left)
         {
             Collect();
+            GetViewport().SetInputAsHandled();
         }
     }
 

@@ -26,6 +26,7 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget
     private Vector2 _wanderVelocity = Vector2.Zero;
     private float _wanderTimer = 0f;
     private float _pauseTimer = 0f;
+    public Rect2 TargetBounds => new Rect2(-34f, -66f, 68f, 64f);
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;
@@ -104,6 +105,7 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget
         if (!IsDead && @event is InputEventMouseButton mouseBtn && mouseBtn.Pressed && mouseBtn.ButtonIndex == MouseButton.Left)
         {
             GameState.Instance.SelectedTarget = this;
+            GetViewport().SetInputAsHandled();
         }
     }
 
@@ -268,26 +270,7 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget
 
     public override void _Draw()
     {
-        if (_isSelected && !IsDead)
-        {
-            float s = 45f;
-            float len = 15f;
-            Color yellow = new Color(1f, 1f, 0.4f, 0.9f);
-            float width = 3f;
-
-            // Draw selection corners around deer
-            DrawLine(new Vector2(-s, -s), new Vector2(-s + len, -s), yellow, width);
-            DrawLine(new Vector2(-s, -s), new Vector2(-s, -s + len), yellow, width);
-
-            DrawLine(new Vector2(s, -s), new Vector2(s - len, -s), yellow, width);
-            DrawLine(new Vector2(s, -s), new Vector2(s, -s + len), yellow, width);
-
-            DrawLine(new Vector2(-s, s), new Vector2(-s + len, s), yellow, width);
-            DrawLine(new Vector2(-s, s), new Vector2(-s, s - len), yellow, width);
-
-            DrawLine(new Vector2(s, s), new Vector2(s - len, s), yellow, width);
-            DrawLine(new Vector2(s, s), new Vector2(s, s - len), yellow, width);
-        }
+        // Selection reticle with animated shiny rounded corners is rendered by TargetReticle
     }
 
     public void OnSelected()

@@ -10,6 +10,7 @@ public interface ISelectableTarget
     bool IsDead { get; }
     Vector2 GlobalPosition { get; }
     Vector2 FloatingTextPosition { get; }
+    Rect2 TargetBounds => new Rect2(-32f, -60f, 64f, 60f);
     void OnSelected();
     void OnDeselected();
     void Interact();

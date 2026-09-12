@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using Werewolves.Entities;
 
 namespace Werewolves.Core;
 
@@ -82,7 +83,18 @@ public partial class GameState : Node
         {
             if (_selectedTarget != value)
             {
+                if (GodotObject.IsInstanceValid(_selectedTarget) && _selectedTarget is ISelectableTarget oldTarget)
+                {
+                    oldTarget.OnDeselected();
+                }
+
                 _selectedTarget = value;
+
+                if (GodotObject.IsInstanceValid(_selectedTarget) && _selectedTarget is ISelectableTarget newTarget)
+                {
+                    newTarget.OnSelected();
+                }
+
                 OnTargetChanged?.Invoke(_selectedTarget);
             }
         }
@@ -149,6 +161,15 @@ public partial class GameState : Node
             if (PlayerPower != oldPower)
             {
                 OnPowerChanged?.Invoke(PlayerPower, PlayerMaxPower);
+            }
+        }
+
+        // Validate selected target
+        if (_selectedTarget != null)
+        {
+            if (!GodotObject.IsInstanceValid(_selectedTarget) || _selectedTarget.IsQueuedForDeletion() || (_selectedTarget is ISelectableTarget sel && sel.IsDead))
+            {
+                SelectedTarget = null;
             }
         }
     }
