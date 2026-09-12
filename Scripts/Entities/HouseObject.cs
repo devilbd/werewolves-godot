@@ -2,9 +2,13 @@ using Godot;
 
 namespace Werewolves.Entities;
 
-public partial class HouseObject : StaticBody2D
+public partial class HouseObject : StaticBody2D, IFogBorderable
 {
     [Export] public int HouseVariant { get; set; } = 1;
+
+    // IFogBorderable implementation
+    public Rect2 FogBounds => new Rect2(-155f, -225f, 310f, 235f);
+    public Color FogBorderColor => new Color(0.92f, 0.78f, 0.55f, 0.90f); // Warm timber gold
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;

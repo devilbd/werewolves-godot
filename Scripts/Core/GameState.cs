@@ -59,6 +59,10 @@ public partial class GameState : Node
     // World state
     public bool IsInLair { get; set; } = false;
 
+    // Fog state
+    public bool IsPlayerInFog { get; private set; } = false;
+    public float PlayerFogFactor { get; private set; } = 0f;
+
     // World position (continuous open world coordinates)
     private Vector2 _playerPosition = Vector2.Zero;
     public Vector2 PlayerPosition
@@ -114,6 +118,7 @@ public partial class GameState : Node
     public event Action<int, float, float>? OnCooldownUpdated;
     public event Action<bool>? OnPouchToggled;
     public event Action<string, Vector2, Color>? OnSpawnDamageNumber;
+    public event Action<bool>? OnPlayerInFogChanged;
 
     public override void _EnterTree()
     {
@@ -175,6 +180,16 @@ public partial class GameState : Node
                 SelectedTarget = null;
             }
         }
+
+        // Process ambient fog detection
+        float currentFog = Werewolves.World.FogZone.GetFogFactorAt(PlayerPosition);
+        bool inFog = currentFog > 0.05f;
+        if (inFog != IsPlayerInFog)
+        {
+            IsPlayerInFog = inFog;
+            SafeInvoke(OnPlayerInFogChanged, inFog);
+        }
+        PlayerFogFactor = currentFog;
     }
 
     public void ModifyHealth(float delta)

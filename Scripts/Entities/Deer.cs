@@ -5,7 +5,7 @@ using Werewolves.Effects;
 
 namespace Werewolves.Entities;
 
-public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget
+public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget, IFogBorderable
 {
     public string TargetName => "Deer";
     public float BaseDamage { get; set; } = 15f;
@@ -27,6 +27,10 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget
     private float _wanderTimer = 0f;
     private float _pauseTimer = 0f;
     public Rect2 TargetBounds => new Rect2(-51f, -99f, 102f, 96f);
+
+    // IFogBorderable implementation
+    public Rect2 FogBounds => TargetBounds;
+    public Color FogBorderColor => new Color(0.55f, 0.95f, 0.65f, 0.95f); // Forest mint
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;

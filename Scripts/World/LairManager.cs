@@ -133,6 +133,14 @@ public partial class LairManager : Node2D
         BuildAmbiance();
         BuildFog();
 
+        // 7.1 Fog dashed border overlay
+        var borderOverlay = GetNodeOrNull<Effects.FogDashedBorderOverlay>("FogDashedBorderOverlay");
+        if (borderOverlay == null)
+        {
+            borderOverlay = new Effects.FogDashedBorderOverlay { Name = "FogDashedBorderOverlay" };
+            AddChild(borderOverlay);
+        }
+
         // 8. Exit Area with Enter-key interaction at the left '1 1' entrance
         BuildExitArea();
 

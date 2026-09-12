@@ -73,8 +73,27 @@ P(\text{More Loot}) &= 0.35 \quad (35\%)
 | Source Entity / Node | Resource | Chance | Quantity Range | Expected Value (EV) | Interaction / Trigger |
 | :--- | :--- | :---: | :---: | :---: | :--- |
 | **Deer** | Meat | $100\%$ | $1 - 2$ | $1.5$ | Defeat in combat |
-| **Pine Tree** | Wood Logs | $100\%$ | $1 - 3$ | $2.0$ | Chop (3 strikes) |
+| **Pine Tree** | Wood Logs | $100\%$ | $1 - 3$ | $1.625$ | Chop (4 strikes @ $25\text{ HP/hit}$) |
 | **Quarry Boulder** | Stones | $100\%$ | $1 - 3$ | $2.0$ | Mine (3 strikes) |
+
+#### 2.2.1 Tree Size & Harvesting Yield (Random Principle)
+Trees across the world generate with randomized sizes according to a 3-tier distribution model matching the game's core random principles:
+
+$$\begin{aligned}
+P(\text{Small Pine}) &= 0.25 \quad (25\%) \\
+P(\text{Medium / Standard Pine}) &= 0.50 \quad (50\%) \\
+P(\text{Large / Ancient Pine}) &= 0.25 \quad (25\%)
+\end{aligned}$$
+
+| Tree Tier | Probability | Scale Range | Sprite Orientation | Dropped Logs | EV per Tree |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Small Pine** (Young growth) | $25\%$ | $0.45\text{–}0.60$ | $50\%$ FlipH | $1\text{ log}$ | $1.00$ |
+| **Medium Pine** (Mature forest) | $50\%$ | $0.65\text{–}0.85$ | $50\%$ FlipH | $1\text{–}2\text{ logs}$ | $1.50$ |
+| **Large Pine** (Ancient canopy) | $25\%$ | $0.90\text{–}1.15$ | $50\%$ FlipH | $2\text{–}3\text{ logs}$ | $2.50$ |
+
+- **Overall Expected Logs per Tree**:
+  $$\mathbb{E}[\text{Logs}] = 0.25 \times 1.0 + 0.50 \times 1.5 + 0.25 \times 2.5 = 0.25 + 0.75 + 0.625 = \mathbf{1.625\text{ logs}}$$
+- **Reticle & Collision Scaling**: Reticle bounds (`TargetBounds`), collision radius ($30\text{px} \times \text{Scale}$), and floating damage numbers scale dynamically in lockstep with the generated tree scale factor.
 
 ---
 

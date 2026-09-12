@@ -8,8 +8,12 @@ namespace Werewolves.Entities;
 /// Currently non-targetable; displays a blinking prompt above the cave when the Werewolf is near,
 /// instructing the player to hit Enter to enter the cave.
 /// </summary>
-public partial class LairEntranceObject : StaticBody2D
+public partial class LairEntranceObject : StaticBody2D, IFogBorderable
 {
+    // IFogBorderable implementation
+    public Rect2 FogBounds => new Rect2(-170f, -175f, 340f, 180f);
+    public Color FogBorderColor => new Color(0.78f, 0.68f, 1.0f, 0.95f); // Mystic cavern purple
+
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;
     private Area2D _proximityArea = null!;

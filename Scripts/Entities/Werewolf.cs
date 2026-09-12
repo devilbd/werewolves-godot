@@ -5,7 +5,7 @@ using Werewolves.Effects;
 
 namespace Werewolves.Entities;
 
-public partial class Werewolf : CharacterBody2D, ICombatant
+public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
 {
     public float BaseDamage => GameState.Instance.BaseDamage;
     public float Accuracy => GameState.Instance.Accuracy;
@@ -18,6 +18,10 @@ public partial class Werewolf : CharacterBody2D, ICombatant
     }
     public float MaxHealth => GameState.Instance.PlayerMaxHealth;
     public bool IsDead => Health <= 0;
+
+    // IFogBorderable implementation (personal hero in fog clouds)
+    public Rect2 FogBounds => new Rect2(-38f, -88f, 76f, 92f);
+    public Color FogBorderColor => new Color(0.65f, 0.90f, 1.0f, 0.95f); // Luminous moonlight cyan
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;

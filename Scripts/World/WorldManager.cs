@@ -40,6 +40,7 @@ public partial class WorldManager : Node2D
 	private readonly List<Texture2D> _lakeTextures = new();
 	private readonly List<Rect2> _lakeBoundsList = new();
 	private Effects.TargetReticle _targetReticle = null!;
+	private Effects.FogDashedBorderOverlay _fogDashedBorderOverlay = null!;
 
 	public override void _Ready()
 	{
@@ -110,6 +111,10 @@ public partial class WorldManager : Node2D
 		// Attach selection reticle
 		_targetReticle = new Effects.TargetReticle { Name = "TargetReticle" };
 		AddChild(_targetReticle);
+
+		// Attach fog dashed border overlay (renders dashed borders when player is inside fog clouds)
+		_fogDashedBorderOverlay = new Effects.FogDashedBorderOverlay { Name = "FogDashedBorderOverlay" };
+		AddChild(_fogDashedBorderOverlay);
 
 		GenerateOpenWorld();
 	}

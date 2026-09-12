@@ -5,7 +5,7 @@ using Werewolves.Effects;
 
 namespace Werewolves.Entities;
 
-public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget
+public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget, IFogBorderable
 {
     public string TargetName => "Villager";
     public float BaseDamage { get; set; } = 15f;
@@ -17,6 +17,10 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget
     public bool IsDead => Health <= 0f;
     public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -100);
     public Rect2 TargetBounds => new Rect2(-42f, -102f, 84f, 102f);
+
+    // IFogBorderable implementation
+    public Rect2 FogBounds => TargetBounds;
+    public Color FogBorderColor => new Color(1.0f, 0.72f, 0.35f, 0.95f); // Torch amber
 
     private float _speed = 65f;
     private bool _isAggro = false;

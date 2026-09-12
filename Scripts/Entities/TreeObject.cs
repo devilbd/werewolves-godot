@@ -3,16 +3,22 @@ using Werewolves.Core;
 
 namespace Werewolves.Entities;
 
-public partial class TreeObject : StaticBody2D, ISelectableTarget
+public partial class TreeObject : StaticBody2D, ISelectableTarget, IFogBorderable
 {
     [Export] public bool IsSelectable { get; set; } = true;
+    [Export] public float TreeScale { get; set; } = 0f;
     public string TargetName => "Tree";
     public float Health { get; set; } = 100f;
     public float MaxHealth => 100f;
     public bool IsDead => Health <= 0;
-    public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -220);
-    public Rect2 TargetBounds => new Rect2(-32f, -50f, 64f, 54f);
+    public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -440f * _currentScale);
+    public Rect2 TargetBounds => new Rect2(-64f * _currentScale, -100f * _currentScale, 128f * _currentScale, 108f * _currentScale);
 
+    // IFogBorderable implementation (ethereal mist border scaled with tree canopy)
+    public Rect2 FogBounds => new Rect2(-80f * _currentScale, -300f * _currentScale, 160f * _currentScale, 310f * _currentScale);
+    public Color FogBorderColor => new Color(0.85f, 0.92f, 0.98f, 0.90f); // Ethereal silver mist
+
+    private float _currentScale = 0.5f;
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;
     private Tween? _shakeTween;
@@ -42,17 +48,57 @@ public partial class TreeObject : StaticBody2D, ISelectableTarget
             _sprite.Texture = GD.Load<Texture2D>(path);
         }
 
-        _sprite.Scale = new Vector2(0.5f, 0.5f);
+        if (TreeScale > 0.01f)
+        {
+            _currentScale = TreeScale;
+        }
+        else
+        {
+            // Randomized tree sizing principle:
+            // 25% Small Pines (0.45 - 0.60)
+            // 50% Medium / Standard Pines (0.65 - 0.85)
+            // 25% Large / Ancient Pines (0.90 - 1.15)
+            float roll = GD.Randf();
+            if (roll < 0.25f)
+            {
+                _currentScale = (float)GD.RandRange(0.45, 0.60);
+            }
+            else if (roll < 0.75f)
+            {
+                _currentScale = (float)GD.RandRange(0.65, 0.85);
+            }
+            else
+            {
+                _currentScale = (float)GD.RandRange(0.90, 1.15);
+            }
+        }
+
+        _sprite.Scale = new Vector2(_currentScale, _currentScale);
+        _sprite.FlipH = GD.Randf() < 0.5f;
         _sprite.Offset = new Vector2(0, -_sprite.Texture.GetHeight() * 0.4f);
 
         _collision = GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
         if (_collision == null)
         {
             _collision = new CollisionShape2D { Name = "CollisionShape2D" };
-            var circle = new CircleShape2D { Radius = 15f };
+            var circle = new CircleShape2D { Radius = 30f * _currentScale };
             _collision.Shape = circle;
-            _collision.Position = new Vector2(0, -5);
+            _collision.Position = new Vector2(0, -10f * _currentScale);
             AddChild(_collision);
+        }
+        else
+        {
+            if (_collision.Shape is CircleShape2D circle)
+            {
+                var newCircle = (CircleShape2D)circle.Duplicate();
+                newCircle.Radius = 30f * _currentScale;
+                _collision.Shape = newCircle;
+            }
+            else
+            {
+                _collision.Shape = new CircleShape2D { Radius = 30f * _currentScale };
+            }
+            _collision.Position = new Vector2(0, -10f * _currentScale);
         }
 
         InputPickable = true;
@@ -152,8 +198,9 @@ public partial class TreeObject : StaticBody2D, ISelectableTarget
         if (Health <= 0f)
         {
             Health = 0f;
-            // Spawn dropped log
-            var loot = DroppedLoot.Instantiate("Logs", GlobalPosition);
+            // Spawn dropped log scaled with tree size tier
+            int logCount = _currentScale < 0.65f ? 1 : (_currentScale < 0.90f ? GD.RandRange(1, 2) : GD.RandRange(2, 3));
+            var loot = DroppedLoot.Instantiate("Logs", GlobalPosition, logCount);
             GetParent()?.AddChild(loot);
 
             if (GameState.Instance.SelectedTarget == this)

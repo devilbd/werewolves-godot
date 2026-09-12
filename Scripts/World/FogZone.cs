@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Godot;
 
 namespace Werewolves.World;
@@ -13,11 +14,74 @@ public partial class FogZone : Node2D
     [Export] public float TimeOffset { get; set; } = 0.0f;
     [Export] public float RadialFalloff { get; set; } = 0.45f;
 
+    private static readonly List<FogZone> _activeZones = new();
+    public static IReadOnlyList<FogZone> ActiveZones => _activeZones;
+
     private static Shader? _fogShader;
     private static NoiseTexture2D? _noiseTexture;
 
     private ColorRect _fogRect = null!;
     private ShaderMaterial _material = null!;
+
+    public override void _EnterTree()
+    {
+        if (!_activeZones.Contains(this))
+        {
+            _activeZones.Add(this);
+        }
+    }
+
+    public override void _ExitTree()
+    {
+        _activeZones.Remove(this);
+    }
+
+    /// <summary>
+    /// Checks if a world position is inside any active fog zone.
+    /// </summary>
+    public static bool IsPositionInFog(Vector2 worldPos, float buffer = 0f)
+    {
+        for (int i = 0; i < _activeZones.Count; i++)
+        {
+            var zone = _activeZones[i];
+            if (GodotObject.IsInstanceValid(zone) && zone.IsInsideTree() && zone.Visible)
+            {
+                if (worldPos.DistanceTo(zone.GlobalPosition) <= zone.ZoneRadius + buffer)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Calculates fog density factor (0.0 to 1.0) at the given world position with radial falloff.
+    /// </summary>
+    public static float GetFogFactorAt(Vector2 worldPos)
+    {
+        float maxFactor = 0f;
+        for (int i = 0; i < _activeZones.Count; i++)
+        {
+            var zone = _activeZones[i];
+            if (GodotObject.IsInstanceValid(zone) && zone.IsInsideTree() && zone.Visible)
+            {
+                float dist = worldPos.DistanceTo(zone.GlobalPosition);
+                if (dist <= zone.ZoneRadius)
+                {
+                    float normDist = dist / zone.ZoneRadius;
+                    float falloffStart = 1.0f - zone.RadialFalloff;
+                    float edgeFade = normDist <= falloffStart ? 1.0f : Mathf.SmoothStep(1.0f, falloffStart, normDist);
+                    float factor = Mathf.Clamp(edgeFade * zone.Density, 0f, 1f);
+                    if (factor > maxFactor)
+                    {
+                        maxFactor = factor;
+                    }
+                }
+            }
+        }
+        return maxFactor;
+    }
 
     public static FogZone Instantiate(
         Vector2 position,

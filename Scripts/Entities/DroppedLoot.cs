@@ -3,10 +3,18 @@ using Werewolves.Core;
 
 namespace Werewolves.Entities;
 
-public partial class DroppedLoot : Area2D
+public partial class DroppedLoot : Area2D, IFogBorderable
 {
     [Export] public string ItemType { get; set; } = "Logs"; // "Logs", "Stones", "Meat", "GoldCoins"
     [Export] public int Amount { get; set; } = 1;
+
+    // IFogBorderable implementation
+    public Rect2 FogBounds => new Rect2(-24f, -24f, 48f, 48f);
+    public Color FogBorderColor => (ItemType is "GoldCoins" or "Gold Coins" or "Gold")
+        ? new Color(1.0f, 0.88f, 0.25f, 0.95f) // Treasure gold
+        : (ItemType is "Meat"
+            ? new Color(1.0f, 0.55f, 0.55f, 0.95f) // Crimson meat
+            : new Color(0.65f, 0.95f, 0.65f, 0.95f)); // Forest loot
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;

@@ -3,7 +3,7 @@ using Werewolves.Core;
 
 namespace Werewolves.Entities;
 
-public partial class RockObject : StaticBody2D, ISelectableTarget
+public partial class RockObject : StaticBody2D, ISelectableTarget, IFogBorderable
 {
     public string TargetName => "Rock";
     public float Health { get; set; } = 100f;
@@ -11,6 +11,10 @@ public partial class RockObject : StaticBody2D, ISelectableTarget
     public bool IsDead => Health <= 0;
     public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -70);
     public Rect2 TargetBounds => new Rect2(-36f, -38f, 72f, 40f);
+
+    // IFogBorderable implementation
+    public Rect2 FogBounds => new Rect2(-40f, -42f, 80f, 46f);
+    public Color FogBorderColor => new Color(0.88f, 0.90f, 0.94f, 0.90f); // Granite silver
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;
