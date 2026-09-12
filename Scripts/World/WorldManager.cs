@@ -165,6 +165,7 @@ public partial class WorldManager : Node2D
 
 		// 2. Build Village
 		BuildVillage(VillagePosition);
+		BuildVillagers(VillagePosition);
 
 		// 3. Build Quarry Hills
 		BuildQuarryHills(QuarryPosition);
@@ -312,6 +313,38 @@ public partial class WorldManager : Node2D
 			Vector2 pos = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * dist;
 			var tree = new TreeObject { GlobalPosition = pos };
 			_entitiesContainer.AddChild(tree);
+		}
+	}
+
+	private void BuildVillagers(Vector2 center)
+	{
+		Vector2[] spawnOffsets =
+		{
+			// Central Square Plaza
+			new Vector2(-60f, -50f),
+			new Vector2(70f, 60f),
+
+			// Inner thoroughfares / streets
+			new Vector2(-30f, -280f),
+			new Vector2(40f, 280f),
+			new Vector2(280f, -30f),
+			new Vector2(-280f, 40f),
+
+			// Outer neighborhood pathways
+			new Vector2(520f, -480f),
+			new Vector2(-480f, 520f),
+		};
+
+		foreach (var offset in spawnOffsets)
+		{
+			Vector2 spawnPos = center + offset + new Vector2((float)GD.RandRange(-40, 40), (float)GD.RandRange(-40, 40));
+			var villager = new Villager
+			{
+				GlobalPosition = spawnPos,
+				HomePosition = spawnPos,
+				TargetWerewolf = Player
+			};
+			_entitiesContainer.AddChild(villager);
 		}
 	}
 

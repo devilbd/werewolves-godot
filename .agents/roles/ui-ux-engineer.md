@@ -15,7 +15,7 @@
      - Bottom Right: `PowerOrb`
      - Bottom Center: `StatsPanel` and `ActionBar`
      - Center (Modal): `PouchWindow`
-   - Bind to strongly typed events from `GameState.Instance` (`OnHealthChanged`, `OnPowerChanged`, `OnMapChanged`, `OnCooldownUpdated`, `OnTargetChanged`, `OnPouchToggled`).
+    - Bind to strongly typed events from `GameState.Instance` (`OnHealthChanged`, `OnPowerChanged`, `OnPositionChanged`, `OnCooldownUpdated`, `OnTargetChanged`, `OnPouchToggled`).
 
 2. **Custom CanvasItem Rendering (`OrbGauge.cs`)**:
    - Use `[Tool]` with `_Draw()` and `QueueRedraw()` for real-time visual updates.
@@ -25,12 +25,13 @@
    - Bubble buoyancy simulation:
      - Update bubble array in `_Process()` with upward drift and wrap-around reset.
      - Clip bubbles so they only render within the liquid region.
-   - Overlay border frame texture (`health_ring.png` or `power_ring.png`) and fallback golden arc.
+   - Overlay border frame texture (`health_ring.png` or `power_ring.png`) scaled with `RingRadiusOffset = 44f` (giving $r = 126\text{px}$) to cleanly encapsulate the orb fluid.
 
 3. **Draggable Pouch Modal (`PouchWindow.cs`)**:
    - Provide window dragging clamped to viewport dimensions (`0` to `viewport.Size - window.Size`).
    - Freeform item placement:
      - Render items within `_itemsArea` with `ClipContents = true`.
+     - Support uniform 44×44px slot items while preserving texture aspect ratio (e.g. `GoldCoins`).
      - Allow individual item dragging with local mouse offset tracking.
      - On drag release, commit coordinates to `GameState.Instance.UpdatePouchItemPosition(...)`.
    - Prevent UI clicks from leaking into game world via `GetViewport().SetInputAsHandled()`.

@@ -103,13 +103,13 @@ QueueFree();
 ```
 
 ### Step 7: Spawn in `WorldManager.cs`
-In `WorldManager.GenerateWilderness(...)`:
+In `WorldManager.cs` (e.g. inside `BuildHuntingGrounds()` or a dedicated landmark/spawn helper called from `GenerateOpenWorld()`):
 ```csharp
-// Example: 20% chance to spawn Boar
-if (GD.Randf() < 0.20f)
+// Example: Spawning creatures around a landmark or wilderness clearing
+for (int i = 0; i < count; i++)
 {
-    Vector2 spawnPos = new Vector2((float)GD.RandRange(100, size.X - 100), (float)GD.RandRange(100, size.Y - 100));
-    var boar = new Boar { GlobalPosition = spawnPos, TargetWerewolf = Player };
+    Vector2 offset = new Vector2((float)GD.RandRange(-250, 250), (float)GD.RandRange(-250, 250));
+    var boar = new Boar { GlobalPosition = landmarkCenter + offset, TargetWerewolf = Player };
     _entitiesContainer.AddChild(boar);
 }
 ```

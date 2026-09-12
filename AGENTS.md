@@ -19,9 +19,9 @@ Specialized guidelines and prompts for specific development tasks reside in the 
 
 | Role | Domain / Focus | Reference |
 | :--- | :--- | :--- |
-| **Gameplay Engineer** | Player mechanics, combat math, monster AI, entity state, skills | [`.agents/roles/gameplay-engineer.md`](.agents/roles/gameplay-engineer.md) |
+| **Gameplay Engineer** | Player mechanics, combat math, monster/NPC AI, entity state, skills | [`.agents/roles/gameplay-engineer.md`](.agents/roles/gameplay-engineer.md) |
 | **UI/UX Engineer** | HUD layout, CanvasLayer, custom `_Draw` gauges, drag-and-drop modals | [`.agents/roles/ui-ux-engineer.md`](.agents/roles/ui-ux-engineer.md) |
-| **World Architect** | Map coordinate matrix, procedural biomes, collision volumes, Y-sorting | [`.agents/roles/world-architect.md`](.agents/roles/world-architect.md) |
+| **World Architect** | Open-world coordinate space, persistent landmarks, dynamic terrain, collision, Y-sorting | [`.agents/roles/world-architect.md`](.agents/roles/world-architect.md) |
 | **QA Engineer** | Solution builds, regression checks, save state integrity, smoke testing | [`.agents/roles/qa-engineer.md`](.agents/roles/qa-engineer.md) |
 
 ---
@@ -39,7 +39,7 @@ Specialized guidelines and prompts for specific development tasks reside in the 
   - `Werewolves.Entities`: CharacterBody2D, StaticBody2D, Area2D game objects.
   - `Werewolves.UI`: CanvasLayer, Control, Window nodes.
   - `Werewolves.Effects`: Particles, animations, floating text.
-  - `Werewolves.World`: Tile backgrounds, area generation, map routing.
+  - `Werewolves.World`: Dynamic terrain tiling, open-world generation, landmark placement.
 - **Node Lookups**: Use `GetNodeOrNull<T>("Path")` with null-coalescing fallbacks.
 - **State Changes**: Route all player stats and inventory mutations through `GameState.Instance` to ensure HUD events and persistence triggers fire.
 - **Cursor State**: When altering mouse cursors on hover, always provide an unhover reset (`normal_o.png`), including cases where the object is collected or freed.

@@ -28,7 +28,7 @@ werewolves-godot/
 ├── project.godot              # Godot project settings, input map, autoloads, window settings
 ├── scenes/
 │   ├── Main.tscn              # Root scene: WorldManager, Entities/Werewolf, HUD (CanvasLayer)
-│   ├── Entities/              # Packed scenes for Werewolf, Deer, TreeObject, RockObject, HouseObject
+│   ├── Entities/              # Packed scenes for Werewolf, Deer, Villager, TreeObject, RockObject, HouseObject
 │   └── UI/                    # Packed scenes for ActionBar, PouchWindow, StatsPanel, TargetPanel
 ├── Scripts/
 │   ├── Main.cs                # Entry point bootstrap; dynamic node attachment fallback
@@ -41,6 +41,7 @@ werewolves-godot/
 │   ├── Entities/              # Game actors and environmental interactive bodies
 │   │   ├── Werewolf.cs        # Player CharacterBody2D: movement, animation states, combat, skills
 │   │   ├── Deer.cs            # Prey/monster CharacterBody2D: wandering, aggro AI, loot drop
+│   │   ├── Villager.cs        # Village NPC CharacterBody2D: 3-row state machine, combatant, coin drop
 │   │   ├── TreeObject.cs      # StaticBody2D: 15% selectable, chop interaction, log drop
 │   │   ├── RockObject.cs      # StaticBody2D: quarry interaction, stone drop
 │   │   ├── HouseObject.cs     # StaticBody2D: village cottages with custom collision boxes
@@ -61,7 +62,9 @@ werewolves-godot/
     ├── cursors/               # normal_o.png, interaction_o.png, grab_o.png
     ├── werewolf/optimized/    # w_moving.png, w_idle_states.png, w_attacks.png, w_magic_attacks.png
     ├── houses/                # house_1..4.png, simple_path_cross_prim.png, lantern_light.png
-    └── icons/                 # scratch_hit_icon.png, charge_attack.png, bite.png, blood_howling.png
+    ├── icons/                 # scratch_hit_icon.png, charge_attack.png, bite.png, blood_howling.png
+    ├── villager/              # villager.png (3x3 spritesheet)
+    └── gold_coins.png         # Collectible currency sprite
 ```
 
 ---
@@ -111,7 +114,7 @@ All scripts are designed to work under two scenarios:
   - Map / HUD coordinates use standard Cartesian coordinates (`WorldManager.ToMapCoordinates`): `+X` East/Right, `+Y` North/Up (inverting Godot's vertical axis).
 - **Points of Interest (Landmarks)**:
   - **Awakening Grove** at Map `(0, 0)` [World `(0, 0)`]: Central clearing where the player awakens.
-  - **The Village** at Map `(2500, 1800)` [World `(2500, -1800)`]: 8 cottages arranged in a circle around the central lantern with cobblestone pathing (North-East).
+  - **The Village** at Map `(2500, 1800)` [World `(2500, -1800)`]: 8 cottages arranged in a circle around the central lantern with cobblestone pathing (North-East) and roaming human NPCs (`Villager`).
   - **Silent Lake** at Map `(-2000, -2000)` [World `(-2000, 2000)`]: Dynamic lake with water body collision (South-West).
   - **Misty Lake** at Map `(-2200, 2200)` [World `(-2200, -2200)`]: Second natural lake formation (North-West).
   - **Quarry Hills** at Map `(2200, -2200)` [World `(2200, 2200)`]: Dense cluster of minable boulders (`RockObject`) (South-East).
@@ -122,10 +125,11 @@ All scripts are designed to work under two scenarios:
 - **`OrbGauge`**:
   - Inherits `Control`. Uses `_Draw()` with trigonometric chord calculations to render liquid fill polygons.
   - Maintains an internal pool of rising `Bubble` structs simulated in `_Process`.
-  - Blits decorative ring frame texture over the orb.
+  - Blits decorative ring frame texture over the orb, scaled with an expanded radius (`RingRadiusOffset = 44f`) to seamlessly encompass the liquid fluid.
 - **`PouchWindow`**:
   - Window dragging implemented via `GuiInput` and global mouse delta, clamped to viewport rect.
   - Items are freeform controls within `_itemsArea`. Dragging items updates their local position and serializes `(PosX, PosY)` into `SaveManager`.
+  - Supports uniform 44×44px slot display preserving texture aspect ratio (e.g., `GoldCoins`).
 
 ### 3.6 State Persistence (`SaveManager.cs`)
 - Serializes `SaveData` to `user://werewolves_save.json` using `System.Text.Json`.

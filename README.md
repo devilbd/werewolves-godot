@@ -14,10 +14,10 @@ A 2D top-down Action RPG / Survival Exploration game built with **Godot 4.7 (.NE
 
 - [Overview & Lore](#-overview--lore)
 - [Key Features & Mechanics](#-key-features--mechanics)
-  - [Open-World Grid Exploration](#open-world-grid-exploration)
+  - [Persistent Open-World Exploration](#persistent-open-world-exploration)
   - [Werewolf Character & Movement](#werewolf-character--movement)
   - [Combat & Skills System](#combat--skills-system)
-  - [Wildlife AI & Ecology](#wildlife-ai--ecology)
+  - [Fauna & NPC Ecology](#fauna--npc-ecology)
   - [Resource Gathering & Harvesting](#resource-gathering--harvesting)
   - [Diablo-Style Liquid Orb HUD](#diablo-style-liquid-orb-hud)
   - [Freeform Draggable Pouch Inventory](#freeform-draggable-pouch-inventory)
@@ -37,24 +37,24 @@ A 2D top-down Action RPG / Survival Exploration game built with **Godot 4.7 (.NE
 
 ## 🌑 Overview & Lore
 
-In **Werewolves**, you inhabit a powerful werewolf traversing the secluded borderlands between human civilization and the primeval wilderness. Roam across an 11×11 wilderness coordinate grid, hunt forest fauna, fell timber, quarry stone, infiltrate the human village settlement, and harness primal combat techniques to survive.
+In **Werewolves**, you inhabit a powerful werewolf traversing the secluded borderlands between human civilization and the primeval wilderness. Roam across a continuous open world (10,000×10,000 units), hunt forest fauna, fell timber, quarry stone, infiltrate the human village settlement, confront roaming villagers, and harness primal combat techniques to survive.
 
 ---
 
 ## ✨ Key Features & Mechanics
 
-### Open-World Grid Exploration
-- **Coordinate Matrix**: A persistent 11×11 grid ranging from `[-5, -5]` to `[5, 5]`.
-- **Seamless Screen Edge Transitions**: Moving past any screen margin automatically shifts world coordinates, generates the new biome/area, and teleports the player to the opposite boundary edge.
-- **Village Settlement `[5, 5]`**:
-  - Circular settlement anchored around a central illuminated street lantern.
-  - Ring of 8 cobblestone cottages with varied roof styles and authentic footprint collisions.
-  - Intersecting cobblestone paths with sparse peripheral forest growth.
-- **Wilderness Biomes**:
-  - Procedural placement of ~60 pine trees (with 15% interactive harvestable trees).
-  - Dynamic lakes (25% spawn chance) with dedicated collision volumes.
-  - Quarry boulders and roving wildlife.
-- **Y-Sort Depth Sorting**: Dynamic visual layering ensures player, creatures, trees, and buildings sort correctly along the 2D vertical axis.
+### Persistent Open-World Exploration
+- **Massive Coordinate Space**: A continuous 10,000×10,000 world space (`WorldRadius = 5000f`) centered around the Awakening Grove at `(0, 0)`, bounded by dense perimeter tree barriers and physical collision walls.
+- **Smooth Camera Tracking**: Smooth Camera2D attached to the player with boundary clamping and position smoothing (`PositionSmoothingEnabled = true`).
+- **Dynamic Terrain Tiling**: Seamless infinite forest ground texture dynamically tiled and snapped to 350px intervals relative to camera and player movement.
+- **Key Landmarks & Points of Interest**:
+  - **Awakening Grove** at Map `(0, 0)` [World `(0, 0)`]: The central clearing where the player awakens.
+  - **The Village** at Map `(2500, 1800)` [World `(2500, -1800)`]: 8 cobblestone cottages arranged in a circle around an illuminated lantern, cobblestone paths, and roaming human villagers.
+  - **Silent Lake** at Map `(-2000, -2000)` [World `(-2000, 2000)`]: Large natural lake formation with water collision body.
+  - **Misty Lake** at Map `(-2200, 2200)` [World `(-2200, -2200)`]: Second deep lake formation in the northern reaches.
+  - **Quarry Hills** at Map `(2200, -2200)` [World `(2200, 2200)`]: Rocky hillside with a dense cluster of minable boulders.
+  - **Hunting Grounds & Deep Wilderness**: Expansive clearings with roaming deer herds, ~450 harvestable pine trees, and scattered quarry rocks.
+- **Y-Sort Depth Sorting**: Dynamic visual layering ensures player, creatures, NPCs, trees, and buildings sort correctly along the 2D vertical axis.
 
 ### Werewolf Character & Movement
 - **Omnidirectional Movement**: 4-directional WASD movement with automatic sprite flipping (`FlipH`) tracking facing orientation.
@@ -67,29 +67,35 @@ Combat utilizes an active warmode auto-attack loop (1.0s interval within melee r
 
 | Skill | Hotkey | Power Cost | Cooldown | Description |
 | :--- | :---: | :---: | :---: | :--- |
-| **Scratch Hit** | <kbd>1</kbd> | 15 | 2.0s | Swift claw swipe dealing `BaseDamage - Def/2 + 12` bonus damage with a directional visual slash effect. |
-| **Charge Attack** | <kbd>2</kbd> | 25 | 2.0s | High-speed dash toward the selected target, executing a crushing strike for `BaseDamage - Def/2 + 20` bonus damage upon impact. |
-| **Execute Bite** | <kbd>3</kbd> | 20 | 2.0s | Savage bite usable **only** when target health is $<25\%$. Deals `BaseDamage - Def/2 + 15` damage and **heals the werewolf for +20 HP**. |
-| **Blood Howling** | <kbd>4</kbd> | 40 | 60.0s | Primal roar buffing **Damage, Defense, Speed, Accuracy, and Evasion by +30% for 10 seconds**, enveloped in a glowing violet particle aura. |
+| **Scratch Hit** | <kbd>1</kbd> | 15 | 5.0s | Swift claw swipe dealing `BaseDamage - Def/2 + 12` bonus damage with a directional visual slash effect. |
+| **Charge Attack** | <kbd>2</kbd> | 25 | 8.0s | High-speed dash toward the selected target, executing a crushing strike for `BaseDamage - Def/2 + 20` bonus damage upon impact. |
+| **Execute Bite** | <kbd>3</kbd> | 20 | 10.0s | Savage bite usable **only** when target health is $<25\%$. Deals `BaseDamage - Def/2 + 15` damage and **heals the werewolf for +20 HP**. |
+| **Blood Howling** | <kbd>4</kbd> | 40 | 30.0s | Primal roar buffing **Damage, Defense, Speed, Accuracy, and Evasion by +30% for 10 seconds**, enveloped in a glowing violet particle aura. |
 
-### Wildlife AI & Ecology
+### Fauna & NPC Ecology
 - **Deer Fauna**:
   - Realistic wandering AI with randomized directional vectors and pause intervals.
-  - Screen boundary avoidance / bounce physics.
+  - Boundary collision avoidance.
   - **Retaliatory Aggro**: Taking damage turns deer aggressive, chasing the werewolf and striking back within melee range.
   - Visual selection bracket indicators rendered directly via CanvasItem `_Draw()`.
   - Smooth death opacity fade-out followed by **Meat** loot generation.
+- **Villager NPCs**:
+  - Inhabit The Village settlement with 3-row spritesheet state machine (wander/run, attack, and death animations).
+  - Wandering AI within the village perimeter with randomized facing and movement cycles.
+  - Selectable target with combat stats matching wildlife, fighting back if engaged.
+  - Drops **Gold Coins** (2 to 8 coins per defeat).
 
 ### Resource Gathering & Harvesting
 - **Interactive Pine Trees**: Trees flagged as harvestable highlight on mouse hover; interacting or chopping with <kbd>Attack</kbd> deals 25 chop damage per strike. Depleted trees drop **Logs** loot.
 - **Quarry Boulders**: Interactive stone formations quarryable for 25 damage per hit, crumbling into collectible **Stones** upon destruction.
-- **Ground Loot & Pickup**: Dropped logs, stones, and meat float in the world with specialized hovering cursor indicators (`grab_o.png`). Left-clicking collects them into the player pouch with floating text feedback.
+- **Ground Loot & Pickup**: Dropped logs, stones, meat, and gold coins float in the world with specialized hovering cursor indicators (`grab_o.png`). Left-clicking collects them into the player pouch with floating text feedback.
 
 ### Diablo-Style Liquid Orb HUD
 - **Custom-Drawn Spherical Gauges**:
   - **Health Orb (Left)**: Deep crimson fluid with buoyant rising bubbles and gold filigree ring frame.
   - **Power Orb (Right)**: Glowing cyan/teal reservoir showing active combat energy.
   - Custom trigonometric polygon triangulation fills the sphere according to exact current percentages.
+  - **Enlarged Decorative Ring Frames**: Wolf-head ornamental frames scaled with expanded radius (`RingRadiusOffset = 44f`) to seamlessly encapsulate the liquid orbs with proper padding.
 - **Floating Combat Text**: Real-time floating damage numbers for melee damage (yellow), skill strikes (red), heals (green), misses (grey), and loot pickups.
 - **Target Inspection Panel**: Context-sensitive HUD panel displaying selected entity name, health progress bar, and adaptive action button (*"Chop"*, *"Quarry"*, or *"Attack"*).
 - **Skill Action Bar**: Visual hotkey slots with power affordability dimming, cooldown sweep overlays, and seconds countdown timers.
@@ -102,9 +108,8 @@ Combat utilizes an active warmode auto-attack loop (1.0s interval within melee r
 ### Game State & Persistence
 - Automatically writes game state to `user://werewolves_save.json`.
 - Preserves:
-  - World coordinate index (`MapX`, `MapY`).
   - Player global position coordinates (`PlayerX`, `PlayerY`).
-  - Complete pouch item registry with freeform position offsets.
+  - Complete pouch item registry with freeform position offsets and stack counts.
 
 ---
 
@@ -120,7 +125,7 @@ Combat utilizes an active warmode auto-attack loop (1.0s interval within melee r
 | **Skill 4** | <kbd>4</kbd> | Blood Howling Buff (Power: 40) |
 | **Pouch Inventory**| <kbd>P</kbd> | Open / Close Inventory Pouch |
 | **Select / Target** | <kbd>Left Click</kbd> | Select enemy, tree, boulder, or target panel button |
-| **Collect Loot** | <kbd>Left Click</kbd> | Pick up dropped logs, stones, or meat |
+| **Collect Loot** | <kbd>Left Click</kbd> | Pick up dropped logs, stones, meat, or gold coins |
 | **Drag Window / Items** | <kbd>Left Click & Drag</kbd> | Reposition inventory window or arrange items |
 
 ---
@@ -150,10 +155,11 @@ werewolves-godot/
 │   ├── rocks/                  # Boulder variations and optimized sprites
 │   ├── trees/                  # Pine tree variants
 │   ├── werewolf/               # Werewolf spritesheets (idle, moving, attack, magic)
-│   └── villager/               # Villager sprite assets
+│   ├── villager/               # Villager spritesheet assets
+│   └── gold_coins.png          # Collectible currency sprite
 ├── scenes/                     # Packed Godot scene trees (.tscn)
 │   ├── Main.tscn               # Root scene combining World, Entities, and HUD
-│   ├── Entities/               # Entity scenes (Werewolf, Deer, Tree, Rock, House)
+│   ├── Entities/               # Entity scenes (Werewolf, Deer, Villager, Tree, Rock, House)
 │   └── UI/                     # UI scenes (ActionBar, PouchWindow, StatsPanel, TargetPanel)
 └── Scripts/                    # C# Source Code
     ├── Main.cs                 # Root initializer and node dependency binder
@@ -170,6 +176,7 @@ werewolves-godot/
     ├── Entities/               # Game objects and actors
     │   ├── Werewolf.cs         # Player controller, input, combat, animations
     │   ├── Deer.cs             # Prey AI, retaliation, pathing, death
+    │   ├── Villager.cs         # Human NPC AI, animations, combat, coin drops
     │   ├── TreeObject.cs       # Harvestable tree static body
     │   ├── RockObject.cs       # Quarryable boulder static body
     │   ├── HouseObject.cs      # Village cottage static obstacles
@@ -183,21 +190,24 @@ werewolves-godot/
     │   ├── PouchWindow.cs      # Draggable modal and freeform item slot organizer
     │   └── ActionBar.cs        # Mini HUD bar with pouch toggle button
     └── World/                  # Environment & Generation
-        └── WorldManager.cs     # Biome procedural generator & map coordinate router
+        └── WorldManager.cs     # Open-world generator, persistent landmarks & dynamic terrain
 ```
 
 ### Core Components Breakdown
 
 1. **`GameState` (`Scripts/Core/GameState.cs`)**:
-   Registered as an autoload singleton. Holds player health/power, base stats, skill cooldown arrays, current map coordinate (`Vector2I`), pouch inventory, and active target. Dispatches C# events (`OnHealthChanged`, `OnPowerChanged`, `OnMapChanged`, `OnCooldownUpdated`, `OnTargetChanged`, `OnSpawnDamageNumber`).
+   Registered as an autoload singleton. Holds player health/power, base stats, skill cooldown arrays, player world position (`Vector2`), pouch inventory, and active target. Dispatches C# events (`OnHealthChanged`, `OnPowerChanged`, `OnPositionChanged`, `OnCooldownUpdated`, `OnTargetChanged`, `OnSpawnDamageNumber`, `OnPouchToggled`, `OnPouchChanged`).
 
 2. **`WorldManager` (`Scripts/World/WorldManager.cs`)**:
-   Reacts to player screen transitions. Clears previous non-player entities and generates either the village at `[5, 5]` or procedural wilderness (lakes with collision, scatter trees, boulders, deer) across the 11×11 grid.
+   Generates the continuous 10,000×10,000 open world, static landmark locations (Awakening Grove, The Village, Silent Lake, Misty Lake, Quarry Hills), dynamic infinite terrain ground tiling snapped to camera intervals, perimeter collision boundaries, and entity containers.
 
 3. **`Werewolf` (`Scripts/Entities/Werewolf.cs`)**:
-   Main player actor (`CharacterBody2D`). Coordinates movement physics, sprite flipping, screen edge transition detection, warmode auto-attack timers, manual skill executions, and interaction triggers.
+   Main player actor (`CharacterBody2D`). Coordinates 8-directional movement physics, sprite flipping, camera tracking, warmode auto-attack timers against combatants, manual skill executions, and interaction triggers.
 
-4. **`OrbGauge` (`Scripts/UI/OrbGauge.cs`)**:
+4. **`Villager` (`Scripts/Entities/Villager.cs`)**:
+   Village human NPC (`CharacterBody2D`). Features a 3-row spritesheet state machine (wander, attack, death), wanders The Village, fights back when targeted, and drops Gold Coins upon defeat.
+
+5. **`OrbGauge` (`Scripts/UI/OrbGauge.cs`)**:
    Custom Control node utilizing Godot's `_Draw()` pipeline to render filled circular sectors, buoyant bubble particles, ornamental border rings, and value labels.
 
 ---

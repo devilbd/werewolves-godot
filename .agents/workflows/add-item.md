@@ -18,9 +18,10 @@ This playbook outlines how to create new collectible materials, drops, or pouch 
 ## Detailed Steps
 
 ### Step 1: Asset Preparation
-Ensure two textures exist in `assets/`:
+Ensure textures exist in `assets/`:
 1. Ground pickup icon: e.g. `res://assets/herb_o.png`
 2. Collected pouch icon: e.g. `res://assets/herb_collected_o.png`
+*(Note: A single shared texture like `res://assets/gold_coins.png` can also be used with scaling applied in `DroppedLoot.cs` and uniform slot sizing in `PouchWindow.cs`)*
 
 ### Step 2: Map Drop Texture in `DroppedLoot.cs`
 Add the item key to the switch block in `DroppedLoot.cs`:
@@ -30,6 +31,7 @@ Texture2D? tex = ItemType switch
     "Logs" => GD.Load<Texture2D>("res://assets/logs_o.png"),
     "Stones" => GD.Load<Texture2D>("res://assets/rock_stones_loot_o.png"),
     "Meat" => GD.Load<Texture2D>("res://assets/meat_o.png"),
+    "GoldCoins" => GD.Load<Texture2D>("res://assets/gold_coins.png"),
     "Herb" => GD.Load<Texture2D>("res://assets/herb_o.png"),
     _ => GD.Load<Texture2D>("res://assets/logs_o.png")
 };
@@ -43,6 +45,7 @@ string iconPath = itemName switch
     "Logs" => "res://assets/logs_collected_o.png",
     "Stones" => "res://assets/rock_stones_loot_collected_o.png",
     "Meat" => "res://assets/meat_collected_o.png",
+    "GoldCoins" => "res://assets/gold_coins.png",
     "Herb" => "res://assets/herb_collected_o.png",
     _ => "res://assets/logs_collected_o.png"
 };

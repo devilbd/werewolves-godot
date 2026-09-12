@@ -127,9 +127,11 @@ public partial class PouchWindow : Control
         {
             Vector2 localMouse = _itemsArea.GetLocalMousePosition();
             Vector2 newPos = localMouse - _itemDragOffset;
+            float maxX = Mathf.Max(0f, _itemsArea.Size.X - _draggedItemControl.Size.X);
+            float maxY = Mathf.Max(0f, _itemsArea.Size.Y - _draggedItemControl.Size.Y);
             newPos = new Vector2(
-                Mathf.Clamp(newPos.X, 0, _itemsArea.Size.X - 44),
-                Mathf.Clamp(newPos.Y, 0, _itemsArea.Size.Y - 44)
+                Mathf.Clamp(newPos.X, 0, maxX),
+                Mathf.Clamp(newPos.Y, 0, maxY)
             );
             _draggedItemControl.Position = newPos;
         }
@@ -164,20 +166,21 @@ public partial class PouchWindow : Control
                 ? GetDefaultSlotPosition(itemIndex)
                 : new Vector2(item.PosX, item.PosY);
 
+            string iconPath = itemName switch
+            {
+                "Logs" => "res://assets/logs_collected_o.png",
+                "Stones" => "res://assets/rock_stones_loot_collected_o.png",
+                "Meat" => "res://assets/meat_collected_o.png",
+                "GoldCoins" or "Gold Coins" or "Gold" => "res://assets/gold_coins.png",
+                _ => "res://assets/logs_collected_o.png"
+            };
+
             var itemContainer = new Control
             {
                 Position = itemPos,
                 CustomMinimumSize = new Vector2(44, 44),
                 Size = new Vector2(44, 44),
                 MouseFilter = MouseFilterEnum.Stop
-            };
-
-            string iconPath = itemName switch
-            {
-                "Logs" => "res://assets/logs_collected_o.png",
-                "Stones" => "res://assets/rock_stones_loot_collected_o.png",
-                "Meat" => "res://assets/meat_collected_o.png",
-                _ => "res://assets/logs_collected_o.png"
             };
 
             var iconTex = new TextureRect
@@ -193,12 +196,14 @@ public partial class PouchWindow : Control
             var countLabel = new Label
             {
                 Text = item.Count.ToString(),
-                Position = new Vector2(24, 24),
+                Position = new Vector2(22, 24),
                 Size = new Vector2(20, 16),
                 HorizontalAlignment = HorizontalAlignment.Right
             };
             countLabel.AddThemeFontSizeOverride("font_size", 12);
             countLabel.AddThemeColorOverride("font_color", new Color(1f, 1f, 0.4f));
+            countLabel.AddThemeColorOverride("font_outline_color", Colors.Black);
+            countLabel.AddThemeConstantOverride("outline_size", 2);
             itemContainer.AddChild(countLabel);
 
             // Item dragging

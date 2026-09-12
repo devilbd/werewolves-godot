@@ -12,7 +12,7 @@ This directory contains specialized role instructions, task playbooks, and devel
 ├── roles/                     # Domain-specific persona guidelines
 │   ├── gameplay-engineer.md   # Mechanics, combat, state machine, entity behaviors
 │   ├── ui-ux-engineer.md      # HUD, Diablo orbs, CanvasLayer, responsive layouts, pouch UI
-│   ├── world-architect.md     # Procedural generation, grid maps, biomes, collision
+│   ├── world-architect.md     # Open-world generation, landmarks, dynamic terrain, biomes, collision
 │   └── qa-engineer.md         # Build verification, unit/smoke testing, save file testing
 └── workflows/                 # Actionable, step-by-step feature playbooks
     ├── add-skill.md           # Guide to adding new werewolf combat skills

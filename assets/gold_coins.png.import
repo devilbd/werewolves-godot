@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dij7bchs7pehx"
-path="res://.godot/imported/villager_1.png-8d7bf3fa2fab52df409428097bbff79d.ctex"
+uid="uid://c5tpc05pfnckb"
+path="res://.godot/imported/gold_coins.png-f1d5d98478d3234d664f855696be5f3b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/villager/villager_1.png"
-dest_files=["res://.godot/imported/villager_1.png-8d7bf3fa2fab52df409428097bbff79d.ctex"]
+source_file="res://assets/gold_coins.png"
+dest_files=["res://.godot/imported/gold_coins.png-f1d5d98478d3234d664f855696be5f3b.ctex"]
 
 [params]
 

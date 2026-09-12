@@ -201,7 +201,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant
 
         float dist = GlobalPosition.DistanceTo(target.GlobalPosition);
 
-        if (target is Deer deer)
+        if (target is ICombatant combatant && target is ISelectableTarget selectableTarget)
         {
             if (dist <= MeleeRange && !_isAttacking)
             {
@@ -209,8 +209,8 @@ public partial class Werewolf : CharacterBody2D, ICombatant
                 if (_autoAttackTimer >= AutoAttackInterval)
                 {
                     _autoAttackTimer = 0f;
-                    ExecuteMeleeHit(deer);
-                    if (deer.Health <= 0f || deer.IsDead)
+                    ExecuteMeleeHit(combatant, selectableTarget);
+                    if (combatant.Health <= 0f || combatant.IsDead)
                     {
                         SetAutoInteract(false);
                     }
@@ -253,19 +253,19 @@ public partial class Werewolf : CharacterBody2D, ICombatant
         }
     }
 
-    private void ExecuteMeleeHit(Deer deer)
+    private void ExecuteMeleeHit(ICombatant combatant, ISelectableTarget selectableTarget)
     {
         TriggerAttackAnimation(0);
 
-        if (Formulas.IsHitSuccessful(this, deer))
+        if (Formulas.IsHitSuccessful(this, combatant))
         {
-            float dmg = Formulas.CalculateDamage(this, deer);
-            deer.TakeDamage(dmg);
-            GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), deer.FloatingTextPosition, new Color(1f, 1f, 0.4f));
+            float dmg = Formulas.CalculateDamage(this, combatant);
+            combatant.TakeDamage(dmg);
+            GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), selectableTarget.FloatingTextPosition, new Color(1f, 1f, 0.4f));
         }
         else
         {
-            GameState.Instance.TriggerDamageNumber("Miss", deer.FloatingTextPosition, new Color(0.8f, 0.8f, 0.8f));
+            GameState.Instance.TriggerDamageNumber("Miss", selectableTarget.FloatingTextPosition, new Color(0.8f, 0.8f, 0.8f));
         }
     }
 
@@ -293,13 +293,13 @@ public partial class Werewolf : CharacterBody2D, ICombatant
                 GameState.Instance.StartSkillCooldown(0);
                 TriggerAttackAnimation(0);
 
-                if (GameState.Instance.SelectedTarget is Deer target && !target.IsDead && GlobalPosition.DistanceTo(target.GlobalPosition) <= MeleeRange * 1.3f)
+                if (GameState.Instance.SelectedTarget is ICombatant target && GameState.Instance.SelectedTarget is ISelectableTarget selTarget && !target.IsDead && GlobalPosition.DistanceTo(target.GlobalPosition) <= MeleeRange * 1.3f)
                 {
                     if (Formulas.IsHitSuccessful(this, target))
                     {
                         float dmg = Formulas.CalculateScratchHitDamage(this, target);
                         target.TakeDamage(dmg, isSkill: true);
-                        GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), target.FloatingTextPosition, new Color(1f, 0.2f, 0.2f));
+                        GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), selTarget.FloatingTextPosition, new Color(1f, 0.2f, 0.2f));
                     }
                 }
                 break;
@@ -310,7 +310,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant
                     GameState.Instance.TriggerDamageNumber("Need 25 Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
                     return;
                 }
-                if (GameState.Instance.SelectedTarget is not Deer chargeTarget || chargeTarget.IsDead)
+                if (GameState.Instance.SelectedTarget is not ICombatant chargeTarget || GameState.Instance.SelectedTarget is not ISelectableTarget selCharge || chargeTarget.IsDead)
                 {
                     GameState.Instance.TriggerDamageNumber("Need Target!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.7f, 0.3f));
                     return;
@@ -330,7 +330,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant
                         {
                             float dmg = Formulas.CalculateChargeAttackDamage(this, chargeTarget);
                             chargeTarget.TakeDamage(dmg, isSkill: true);
-                            GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), chargeTarget.FloatingTextPosition, new Color(1f, 0.2f, 0.2f));
+                            GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), selCharge.FloatingTextPosition, new Color(1f, 0.2f, 0.2f));
                         }
                     }
                 };
@@ -342,7 +342,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant
                     GameState.Instance.TriggerDamageNumber("Need 20 Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
                     return;
                 }
-                if (GameState.Instance.SelectedTarget is not Deer biteTarget || biteTarget.IsDead)
+                if (GameState.Instance.SelectedTarget is not ICombatant biteTarget || GameState.Instance.SelectedTarget is not ISelectableTarget selBite || biteTarget.IsDead)
                 {
                     GameState.Instance.TriggerDamageNumber("Need Target!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.7f, 0.3f));
                     return;
@@ -368,7 +368,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant
                     biteTarget.TakeDamage(dmg, isSkill: true);
                     GameState.Instance.ModifyHealth(20f); // Heal werewolf 20 HP
                     GameState.Instance.TriggerDamageNumber("+20 HP", GlobalPosition + new Vector2(0, -85), new Color(0.2f, 1f, 0.4f));
-                    GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), biteTarget.FloatingTextPosition, new Color(1f, 0.2f, 0.2f));
+                    GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), selBite.FloatingTextPosition, new Color(1f, 0.2f, 0.2f));
                 }
                 break;
 
@@ -450,17 +450,17 @@ public partial class Werewolf : CharacterBody2D, ICombatant
                 GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
             }
         }
-        else if (GameState.Instance.SelectedTarget is Deer deer)
+        else if (GameState.Instance.SelectedTarget is ICombatant combatant && GameState.Instance.SelectedTarget is ISelectableTarget selCombatant)
         {
-            if (GlobalPosition.DistanceTo(deer.GlobalPosition) <= MeleeRange && !_isAttacking)
+            if (GlobalPosition.DistanceTo(combatant.GlobalPosition) <= MeleeRange && !_isAttacking)
             {
-                ExecuteMeleeHit(deer);
-                if (deer.Health <= 0f || deer.IsDead)
+                ExecuteMeleeHit(combatant, selCombatant);
+                if (combatant.Health <= 0f || combatant.IsDead)
                 {
                     SetAutoInteract(false);
                 }
             }
-            else if (GlobalPosition.DistanceTo(deer.GlobalPosition) > MeleeRange)
+            else if (GlobalPosition.DistanceTo(combatant.GlobalPosition) > MeleeRange)
             {
                 GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
             }

@@ -10,7 +10,7 @@
    - Maintain 8-directional or 4-directional WASD movement with smooth `Velocity` interpolation and `MoveAndSlide()`.
    - Control sprint speed multiplier (default 1.6×) and frame timer adjustments.
    - Synchronize spritesheet rows/frames for idle variants, run cycles, attack strikes, and magic invocations.
-   - Handle screen edge boundaries and fire `OnExitedScreenEdge`.
+   - Clamp position within world boundaries (`GameState.WorldBoundRadius = 5000f`) and update `GameState.Instance.PlayerPosition`.
 
 2. **Combat Systems & Math (`Formulas.cs` & `GameState.cs`)**:
    - Maintain `ICombatant` contract: `BaseDamage`, `Accuracy`, `BaseDefense`, `Evasion`, `Health`, `MaxHealth`, `IsDead`, `TakeDamage()`.
@@ -18,13 +18,13 @@
      - Regular attacks: $\max(0, \text{Damage} - \frac{\text{Defense}}{2})$.
      - Bonus damage per skill (+12 Scratch, +20 Charge, +15 Bite).
      - Hit probability: $\text{GD.Randf}() < (\text{Accuracy} - \text{Evasion})$.
-   - Auto-attack warmode: Melee range check (110px) on 1.0s interval.
+   - Auto-attack warmode: Melee range check (110px) on 1.0s interval against valid `ICombatant` targets.
 
-3. **Entity AI (`Deer.cs` & Future Creatures)**:
+3. **Entity AI (`Deer.cs`, `Villager.cs` & Future Creatures)**:
    - State machine: Passive Wander $\leftrightarrow$ Pause $\leftrightarrow$ Retaliatory Aggro $\leftrightarrow$ Attack $\leftrightarrow$ Death.
    - Retaliation trigger: Enter aggro state when `TakeDamage()` is invoked, targeting the attacker.
-   - Boundary collisions: Bounce or steer away from screen edges.
-   - Death sequence: Stop velocity, modulate alpha to 0 over ~1 second, instantiate `DroppedLoot`, clear target from `GameState`, and call `QueueFree()`.
+   - Boundary collisions: Bounce or steer away from obstacles and boundaries.
+   - Death sequence: Stop velocity, modulate alpha to 0 over ~1 second (or play death animation row), instantiate `DroppedLoot` (`Meat` for deer, `GoldCoins` for villagers), clear target from `GameState`, and call `QueueFree()`.
 
 4. **Combat Feedback**:
    - Dispatch floating combat text via `GameState.Instance.TriggerDamageNumber(...)`.

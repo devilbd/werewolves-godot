@@ -19,19 +19,20 @@
      {
        "mapX": 0,
        "mapY": 0,
-       "playerX": 960.0,
-       "playerY": 540.0,
+       "playerX": 0.0,
+       "playerY": 0.0,
        "pouchItems": {
          "Logs": { "count": 5, "posX": 20.0, "posY": 20.0 },
-         "Stones": { "count": 2, "posX": 80.0, "posY": 20.0 }
+         "Stones": { "count": 2, "posX": 80.0, "posY": 20.0 },
+         "GoldCoins": { "count": 6, "posX": 140.0, "posY": 20.0 }
        }
      }
      ```
-   - Test edge cases: missing file, corrupted JSON, missing keys, out-of-bounds coordinates (must clamp to `[-5, 5]`).
+   - Test edge cases: missing file, corrupted JSON, missing keys, out-of-bounds coordinates (clamped to world radius `5000f`).
 
 3. **Critical Edge Case Checklist**:
-   - **Boundary Wrapping**: Player moving at extreme sprint speed across corners must wrap correctly without falling off-screen.
-   - **Targeting Null Safety**: If a target dies or is removed while selected in `TargetPanel`, verify the panel hides and does not throw null reference exceptions.
+   - **Boundary Clamping & Collision**: Player moving at maximum sprint speed toward world margins ($\pm 5000$) must be stopped by perimeter collision walls without clipping through.
+   - **Targeting Null Safety**: If a target (Deer, Villager, Tree, Rock) dies or is harvested while selected in `TargetPanel`, verify the panel hides and does not throw null reference exceptions.
    - **Zero Power / Skill Cooldowns**: Verify skills cannot be activated if power is insufficient or skill is currently on cooldown.
    - **Cursor Reset**: Verify mouse cursor returns to `normal_o.png` even if the hovered target is killed or collected immediately.
    - **UI Dragging Boundaries**: Dragging the pouch modal or inventory items must remain clamped within viewport and item area boundaries.

@@ -32,7 +32,7 @@ Expand the cooldown array sizes and assign default duration:
 ```csharp
 // Change array size from 4 to 5
 public float[] SkillCooldownRemaining { get; } = new float[5];
-public float[] SkillCooldownTotal { get; } = new float[] { 2.0f, 2.0f, 2.0f, 60.0f, 15.0f };
+public float[] SkillCooldownTotal { get; } = new float[] { 5.0f, 8.0f, 10.0f, 30.0f, 15.0f };
 ```
 
 ### Step 3: Add Formula in `Formulas.cs`

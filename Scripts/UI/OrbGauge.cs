@@ -24,6 +24,7 @@ public partial class OrbGauge : Control
     }
 
     [Export] public float OrbRadius { get; set; } = 82f;
+    [Export] public float RingRadiusOffset { get; set; } = 44f;
 
     private readonly List<Bubble> _bubbles = new();
 
@@ -123,7 +124,8 @@ public partial class OrbGauge : Control
         // Draw ornamental ring frame texture
         if (RingTexture != null)
         {
-            Rect2 ringRect = new Rect2(center - new Vector2(OrbRadius + 22, OrbRadius + 22), new Vector2((OrbRadius + 22) * 2, (OrbRadius + 22) * 2));
+            float ringHalf = OrbRadius + RingRadiusOffset;
+            Rect2 ringRect = new Rect2(center - new Vector2(ringHalf, ringHalf), new Vector2(ringHalf * 2, ringHalf * 2));
             DrawTextureRect(RingTexture, ringRect, false);
         }
         else
