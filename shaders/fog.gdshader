@@ -2,11 +2,11 @@ shader_type canvas_item;
 
 uniform sampler2D noise_texture : repeat_enable, filter_linear;
 uniform vec4 fog_color : source_color = vec4(0.88, 0.94, 1.0, 0.92);
-uniform vec2 scroll_speed1 = vec2(0.018, 0.012);
-uniform vec2 scroll_speed2 = vec2(-0.012, 0.016);
-uniform float density : hint_range(0.0, 3.0) = 1.15;
-uniform float coverage : hint_range(0.0, 1.0) = 0.58;
-uniform float disappear_cycle_speed : hint_range(0.01, 1.0) = 0.08;
+uniform vec2 scroll_speed1 = vec2(0.009, 0.006);
+uniform vec2 scroll_speed2 = vec2(-0.006, 0.008);
+uniform float density : hint_range(0.0, 3.0) = 0.60;
+uniform float coverage : hint_range(0.0, 1.0) = 0.55;
+uniform float disappear_cycle_speed : hint_range(0.01, 1.0) = 0.04;
 uniform float time_offset = 0.0;
 uniform float radial_falloff : hint_range(0.0, 1.0) = 0.45;
 

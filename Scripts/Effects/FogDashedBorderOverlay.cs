@@ -14,7 +14,7 @@ public partial class FogDashedBorderOverlay : Node2D
 {
     [Export] public float DashLength { get; set; } = 7.5f;
     [Export] public float GapLength { get; set; } = 5.0f;
-    [Export] public float DashSpeed { get; set; } = 22.0f;
+    [Export] public float DashSpeed { get; set; } = 12.0f;
     [Export] public float BoundsPadding { get; set; } = 4.0f;
     [Export] public float MaxRenderDistance { get; set; } = 1350.0f;
 
@@ -68,7 +68,7 @@ public partial class FogDashedBorderOverlay : Node2D
         }
 
         _dashOffset = (_dashOffset + dt * DashSpeed) % (DashLength + GapLength);
-        _pulseTimer += dt * 2.8f;
+        _pulseTimer += dt * 1.8f;
 
         QueueRedraw();
     }

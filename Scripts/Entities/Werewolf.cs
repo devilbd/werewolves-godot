@@ -20,7 +20,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
     public bool IsDead => Health <= 0;
 
     // IFogBorderable implementation (personal hero in fog clouds)
-    public Rect2 FogBounds => new Rect2(-38f, -88f, 76f, 92f);
+    public Rect2 FogBounds => new Rect2(-43f, -100f, 86f, 104f);
     public Color FogBorderColor => new Color(0.65f, 0.90f, 1.0f, 0.95f); // Luminous moonlight cyan
 
     private Sprite2D _sprite = null!;
@@ -59,7 +59,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
     // Auto-attack timer (1 second interval)
     private float _autoAttackTimer = 0f;
     private const float AutoAttackInterval = 1.0f;
-    private const float MeleeRange = 125f;
+    private const float MeleeRange = 135f;
 
     private Camera2D? _camera;
     public Camera2D? Camera => _camera;
@@ -96,16 +96,16 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
         _sprite.Hframes = 3;
         _sprite.Vframes = 3;
         _sprite.Frame = 0;
-        _sprite.Scale = new Vector2(0.75f, 0.75f);
+        _sprite.Scale = new Vector2(0.85f, 0.85f);
         _sprite.Offset = new Vector2(0, -50);
 
         _collision = GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
         if (_collision == null)
         {
             _collision = new CollisionShape2D { Name = "CollisionShape2D" };
-            var shape = new CircleShape2D { Radius = 27f };
+            var shape = new CircleShape2D { Radius = 30f };
             _collision.Shape = shape;
-            _collision.Position = new Vector2(0, -7);
+            _collision.Position = new Vector2(0, -8);
             AddChild(_collision);
         }
 

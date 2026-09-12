@@ -8,9 +8,9 @@ public partial class FogZone : Node2D
 {
     [Export] public float ZoneRadius { get; set; } = 600f;
     [Export] public Color FogColor { get; set; } = new Color(0.88f, 0.94f, 1.0f, 0.92f);
-    [Export] public float Density { get; set; } = 1.15f;
-    [Export] public float Coverage { get; set; } = 0.58f;
-    [Export] public float DisappearCycleSpeed { get; set; } = 0.08f;
+    [Export] public float Density { get; set; } = 0.60f;
+    [Export] public float Coverage { get; set; } = 0.55f;
+    [Export] public float DisappearCycleSpeed { get; set; } = 0.04f;
     [Export] public float TimeOffset { get; set; } = 0.0f;
     [Export] public float RadialFalloff { get; set; } = 0.45f;
 
@@ -87,9 +87,9 @@ public partial class FogZone : Node2D
         Vector2 position,
         float radius,
         Color color,
-        float density = 1.15f,
-        float coverage = 0.58f,
-        float cycleSpeed = 0.08f,
+        float density = 0.60f,
+        float coverage = 0.55f,
+        float cycleSpeed = 0.04f,
         float timeOffset = -1f)
     {
         return new FogZone

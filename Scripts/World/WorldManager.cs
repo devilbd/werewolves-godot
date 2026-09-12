@@ -548,9 +548,9 @@ public partial class WorldManager : Node2D
 			position: MistyLakePosition,
 			radius: 900f,
 			color: new Color(0.88f, 0.94f, 1.0f, 0.94f),
-			density: 1.25f,
-			coverage: 0.65f,
-			cycleSpeed: 0.07f
+			density: 0.70f,
+			coverage: 0.60f,
+			cycleSpeed: 0.035f
 		);
 		mistyLakeFog.Name = "FogZone_MistyLake";
 		_fogContainer.AddChild(mistyLakeFog);
@@ -560,9 +560,9 @@ public partial class WorldManager : Node2D
 			position: SilentLakePosition,
 			radius: 800f,
 			color: new Color(0.85f, 0.92f, 0.98f, 0.92f),
-			density: 1.20f,
-			coverage: 0.62f,
-			cycleSpeed: 0.065f
+			density: 0.65f,
+			coverage: 0.58f,
+			cycleSpeed: 0.032f
 		);
 		silentLakeFog.Name = "FogZone_SilentLake";
 		_fogContainer.AddChild(silentLakeFog);
@@ -572,9 +572,9 @@ public partial class WorldManager : Node2D
 			position: AwakeningGrovePosition,
 			radius: 550f,
 			color: new Color(0.92f, 0.94f, 0.96f, 0.85f),
-			density: 1.05f,
-			coverage: 0.55f,
-			cycleSpeed: 0.08f
+			density: 0.58f,
+			coverage: 0.52f,
+			cycleSpeed: 0.04f
 		);
 		groveFog.Name = "FogZone_AwakeningGrove";
 		_fogContainer.AddChild(groveFog);
@@ -610,24 +610,24 @@ public partial class WorldManager : Node2D
 			if (sizeTier < 0.35f)
 			{
 				radius = (float)GD.RandRange(350f, 500f);
-				density = (float)GD.RandRange(1.05f, 1.25f);
-				coverage = (float)GD.RandRange(0.55f, 0.65f);
+				density = (float)GD.RandRange(0.50f, 0.60f);
+				coverage = (float)GD.RandRange(0.50f, 0.58f);
 			}
 			else if (sizeTier < 0.75f)
 			{
 				radius = (float)GD.RandRange(550f, 850f);
-				density = (float)GD.RandRange(1.15f, 1.35f);
-				coverage = (float)GD.RandRange(0.58f, 0.70f);
+				density = (float)GD.RandRange(0.58f, 0.68f);
+				coverage = (float)GD.RandRange(0.55f, 0.62f);
 			}
 			else
 			{
 				radius = (float)GD.RandRange(900f, 1300f);
-				density = (float)GD.RandRange(1.20f, 1.45f);
-				coverage = (float)GD.RandRange(0.62f, 0.75f);
+				density = (float)GD.RandRange(0.65f, 0.75f);
+				coverage = (float)GD.RandRange(0.58f, 0.66f);
 			}
 
 			Color color = mistPalette[i % mistPalette.Length];
-			float cycleSpeed = (float)GD.RandRange(0.045f, 0.095f);
+			float cycleSpeed = (float)GD.RandRange(0.025f, 0.045f);
 			float timeOffset = (float)GD.RandRange(0.0f, 500.0f);
 
 			var zone = FogZone.Instantiate(pos, radius, color, density, coverage, cycleSpeed, timeOffset);

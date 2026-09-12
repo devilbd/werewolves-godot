@@ -39,7 +39,8 @@ public partial class GameState : Node
     public float PlayerMaxHealth { get; private set; } = 100f;
     public float PlayerPower { get; private set; } = 100f;
     public float PlayerMaxPower { get; private set; } = 100f;
-    public float PowerRegenRate { get; set; } = 4.0f;
+    public float PowerRegenRate { get; set; } = 0.20f;
+    public float HealthRegenRate { get; set; } = 0.10f;
 
     public float BaseDamage { get; set; } = 25f;
     public float BaseDefense { get; set; } = 10f;
@@ -158,6 +159,17 @@ public partial class GameState : Node
             if (BuffTimeRemaining <= 0f)
             {
                 RemoveBuff();
+            }
+        }
+
+        // Process passive health regeneration over time
+        if (PlayerHealth > 0f && PlayerHealth < PlayerMaxHealth)
+        {
+            float oldHealth = PlayerHealth;
+            PlayerHealth = Mathf.Min(PlayerMaxHealth, PlayerHealth + HealthRegenRate * dt);
+            if (PlayerHealth != oldHealth)
+            {
+                SafeInvoke(OnHealthChanged, PlayerHealth, PlayerMaxHealth);
             }
         }
 

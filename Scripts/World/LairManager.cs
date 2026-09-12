@@ -209,9 +209,9 @@ public partial class LairManager : Node2D
                 position: new Vector2(0f, 0f),
                 radius: 950f,
                 color: new Color(0.72f, 0.82f, 0.95f, 0.22f),
-                density: 0.45f,
+                density: 0.25f,
                 coverage: 0.40f,
-                cycleSpeed: 0.05f
+                cycleSpeed: 0.025f
             );
             fogContainer.AddChild(chamberFog);
 
@@ -220,9 +220,9 @@ public partial class LairManager : Node2D
                 position: new Vector2(-1350f, 0f),
                 radius: 520f,
                 color: new Color(0.72f, 0.82f, 0.95f, 0.18f),
-                density: 0.38f,
+                density: 0.20f,
                 coverage: 0.34f,
-                cycleSpeed: 0.06f
+                cycleSpeed: 0.03f
             );
             fogContainer.AddChild(corridorFog);
         }

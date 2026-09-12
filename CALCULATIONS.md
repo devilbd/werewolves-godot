@@ -28,11 +28,14 @@ The Werewolf player has 4 active skills mapped to hotkeys <kbd>1</kbd>–<kbd>4<
 | **Execute Bite** | <kbd>3</kbd> | $20$ | $10.0\text{s}$ | $+15$ | $\max(1, \text{Atk} - \frac{\text{Def}}{2} + 15)$ | Target HP $\le 25\%$ |
 | **Blood Howling** | <kbd>4</kbd> | $40$ | $30.0\text{s}$ | N/A | $+30\%$ to Damage, Defense, Speed, Accuracy, Evasion | $10\text{s}$ self-buff duration |
 
-### 1.4 Power Regeneration Economy
-- **Passive Regeneration Rate**: $4.0\text{ units/sec}$.
-- **Max Power Pool**: $100\text{ units}$.
-- **Time to full recharge from empty**: $100 / 4.0 = 25.0\text{ seconds}$.
-- **Total burst rotation cost** (Scratch + Charge + Howl): $15 + 25 + 40 = 80\text{ Power}$.
+### 1.4 Health & Power Regeneration Economy (10-Second Point Calibration)
+- **Passive Health Regeneration Rate**: $0.10\text{ units/sec}$ ($\mathbf{1.0\text{ point per } 10\text{ seconds}}$).
+  - Takes $10\text{ seconds}$ to recover $1.0\text{ HP}$.
+  - Full recovery from near-zero to $100\text{ HP}$ takes $1000\text{ seconds}$ ($\sim 16.6\text{ minutes}$).
+- **Passive Power Regeneration Rate**: $0.20\text{ units/sec}$ ($\mathbf{2.0\text{ points per } 10\text{ seconds}}$, tuned slightly faster than health recovery).
+  - Takes $5\text{ seconds}$ to recover $1.0\text{ Power}$ ($2.0\text{ Power}$ per $10\text{s}$).
+  - Full power pool recharge ($100\text{ Power}$) takes $500\text{ seconds}$ ($\sim 8.3\text{ minutes}$).
+- **Survival Design Context**: Out in the wilderness, passive regeneration is heavily slowed down, emphasizing the tactical value of consuming gathered Meat items or returning to the safe haven of the Werewolf's Lair to rest and recover.
 - Attacks consume power on cast; basic melee attacks require zero power.
 
 ---
