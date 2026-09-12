@@ -112,7 +112,7 @@ All scripts are designed to work under two scenarios:
   - **Misty Lake** at Map `(-2200, 2200)` [World `(-2200, -2200)`]: Second natural lake formation (North-West).
   - **Quarry Hills** at Map `(2200, -2200)` [World `(2200, 2200)`]: Dense cluster of minable boulders (`RockObject`) (South-East).
   - **Hunting Grounds**: Open clearings at Map `(0, 2400)`, `(-2400, 0)`, etc. with roaming herds of deer (`Deer`).
-  - **The Deep Wilderness**: ~450 pine trees (15% interactive `TreeObject`) and scattered rocks.
+  - **The Deep Wilderness**: ~450 pine trees (all interactive/choppable `TreeObject`) and scattered rocks.
 
 ### 3.5 Custom UI Rendering (`OrbGauge.cs` & `PouchWindow.cs`)
 - **`OrbGauge`**:

@@ -10,7 +10,6 @@ public partial class PouchWindow : Control
     private TextureRect _bagTexture = null!;
     private Control _itemsArea = null!;
     private Button _closeButton = null!;
-    private TextureRect? _grabber = null;
 
     // Dragging window state
     private bool _isDraggingWindow = false;
@@ -79,33 +78,10 @@ public partial class PouchWindow : Control
             AddChild(_itemsArea);
         }
 
-        _grabber = GetNodeOrNull<TextureRect>("Grabber");
-        if (_grabber == null)
-        {
-            _grabber = new TextureRect
-            {
-                Name = "Grabber",
-                Texture = GD.Load<Texture2D>("res://assets/handle_bar_bag_o.png"),
-                Position = new Vector2(145, 45),
-                CustomMinimumSize = new Vector2(160, 50),
-                Size = new Vector2(160, 50),
-                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-                MouseFilter = MouseFilterEnum.Stop,
-                MouseDefaultCursorShape = CursorShape.Drag
-            };
-            AddChild(_grabber);
-        }
-        else
-        {
-            _grabber.Position = new Vector2(145, 45);
-            _grabber.MouseFilter = MouseFilterEnum.Stop;
-            _grabber.MouseDefaultCursorShape = CursorShape.Drag;
-        }
+        GetNodeOrNull<Node>("Grabber")?.QueueFree();
 
         _closeButton.Pressed += () => GameState.Instance.TogglePouch();
         _bagTexture.GuiInput += OnBagGuiInput;
-        _grabber.GuiInput += OnBagGuiInput;
 
         Visible = false;
         GameState.Instance.OnPouchToggled += (visible) =>

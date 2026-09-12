@@ -116,7 +116,7 @@ public partial class WorldManager : Node2D
 
 	public static string GetRegionName(Vector2 pos)
 	{
-		if (pos.DistanceTo(VillagePosition) <= 650f) return "The Village";
+		if (pos.DistanceTo(VillagePosition) <= 1150f) return "The Village";
 		if (pos.DistanceTo(SilentLakePosition) <= 500f) return "Silent Lake";
 		if (pos.DistanceTo(MistyLakePosition) <= 500f) return "Misty Lake";
 		if (pos.DistanceTo(QuarryPosition) <= 500f) return "Quarry Hills";
@@ -189,46 +189,108 @@ public partial class WorldManager : Node2D
 
 	private void BuildVillage(Vector2 center)
 	{
-		// Village path ground texture
-		var pathSprite = new Sprite2D
+		// 1. Village cobblestone path network (covering central crossroads and radiating streets)
+		Vector2[] pathOffsets =
 		{
-			Texture = _groundVillageTex,
-			GlobalPosition = center,
-			ZIndex = -8
+			Vector2.Zero,
+			new Vector2(0f, -500f),
+			new Vector2(0f, 500f),
+			new Vector2(500f, 0f),
+			new Vector2(-500f, 0f)
 		};
-		_lakeContainer.AddChild(pathSprite);
 
-		float radius = 380f;
-		int houseCount = 8;
-
-		// Circular ring of 8 cottages
-		for (int i = 0; i < houseCount; i++)
+		foreach (var offset in pathOffsets)
 		{
-			float angle = (i / (float)houseCount) * Mathf.Pi * 2.0f;
-			Vector2 pos = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+			var pathSprite = new Sprite2D
+			{
+				Texture = _groundVillageTex,
+				GlobalPosition = center + offset,
+				ZIndex = -8
+			};
+			_lakeContainer.AddChild(pathSprite);
+		}
+
+		// 2. Inner Circle of Cottages (Town Square Plaza, radius = 450f)
+		int innerHouseCount = 8;
+		for (int i = 0; i < innerHouseCount; i++)
+		{
+			float angle = (i / (float)innerHouseCount) * Mathf.Pi * 2.0f;
+			Vector2 pos = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 450f;
 			var house = HouseObject.Instantiate((i % 4) + 1, pos);
 			_entitiesContainer.AddChild(house);
 		}
 
-		// Lantern in center
-		var lantern = new Sprite2D
+		// 3. Outer Neighborhood Cottages across all 4 quadrants (extending village range to ~850-950f)
+		Vector2[] outerHouseOffsets =
 		{
-			Texture = GD.Load<Texture2D>("res://assets/houses/lantern_light.png"),
-			GlobalPosition = center
-		};
-		_entitiesContainer.AddChild(lantern);
+			// North-East District
+			new Vector2(750f, -420f),
+			new Vector2(420f, -750f),
+			new Vector2(780f, -760f),
 
-		// Outskirts trees
-		for (int i = 0; i < 28; i++)
+			// North-West District
+			new Vector2(-750f, -420f),
+			new Vector2(-420f, -750f),
+			new Vector2(-780f, -760f),
+
+			// South-East District
+			new Vector2(750f, 420f),
+			new Vector2(420f, 750f),
+			new Vector2(780f, 760f),
+
+			// South-West District
+			new Vector2(-750f, 420f),
+			new Vector2(-420f, 750f),
+			new Vector2(-780f, 760f),
+		};
+
+		for (int i = 0; i < outerHouseOffsets.Length; i++)
+		{
+			var house = HouseObject.Instantiate(((i + 2) % 4) + 1, center + outerHouseOffsets[i]);
+			_entitiesContainer.AddChild(house);
+		}
+
+		// 4. Street Lanterns placed at multiple strategic locations throughout town
+		Vector2[] lanternOffsets =
+		{
+			// Central Square (4 corners around the plaza center)
+			new Vector2(-150f, -150f),
+			new Vector2(150f, -150f),
+			new Vector2(-150f, 150f),
+			new Vector2(150f, 150f),
+
+			// Inner thoroughfare intersections
+			new Vector2(0f, -320f),
+			new Vector2(0f, 320f),
+			new Vector2(320f, 0f),
+			new Vector2(-320f, 0f),
+
+			// Outer District crossroads
+			new Vector2(580f, -580f),
+			new Vector2(-580f, -580f),
+			new Vector2(580f, 580f),
+			new Vector2(-580f, 580f),
+
+			// Town Gateways / Entrances
+			new Vector2(0f, -880f),
+			new Vector2(0f, 880f),
+			new Vector2(880f, 0f),
+			new Vector2(-880f, 0f),
+		};
+
+		foreach (var offset in lanternOffsets)
+		{
+			var lantern = LanternObject.Instantiate(center + offset, scale: 0.18f);
+			_entitiesContainer.AddChild(lantern);
+		}
+
+		// 5. Outskirts buffer trees (lining the expanded perimeter)
+		for (int i = 0; i < 36; i++)
 		{
 			float angle = (float)GD.RandRange(0, Mathf.Pi * 2f);
-			float dist = (float)GD.RandRange(radius + 80f, radius + 260f);
+			float dist = (float)GD.RandRange(1000f, 1320f);
 			Vector2 pos = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * dist;
-			var tree = new TreeObject
-			{
-				GlobalPosition = pos,
-				IsSelectable = GD.Randf() < 0.20f
-			};
+			var tree = new TreeObject { GlobalPosition = pos };
 			_entitiesContainer.AddChild(tree);
 		}
 	}
@@ -251,7 +313,7 @@ public partial class WorldManager : Node2D
 			float angle = (float)GD.RandRange(0, Mathf.Pi * 2f);
 			float dist = (float)GD.RandRange(280f, 400f);
 			Vector2 pos = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * dist;
-			var tree = new TreeObject { GlobalPosition = pos, IsSelectable = GD.Randf() < 0.15f };
+			var tree = new TreeObject { GlobalPosition = pos };
 			_entitiesContainer.AddChild(tree);
 		}
 	}
@@ -300,15 +362,11 @@ public partial class WorldManager : Node2D
 
 			// Avoid clearing areas
 			if (IsInsideLake(pos, 60f)) continue;
-			if (pos.DistanceTo(VillagePosition) < 550f) continue;
+			if (pos.DistanceTo(VillagePosition) < 1150f) continue;
 			if (pos.DistanceTo(QuarryPosition) < 360f) continue;
 			if (pos.DistanceTo(AwakeningGrovePosition) < 160f) continue;
 
-			var tree = new TreeObject
-			{
-				GlobalPosition = pos,
-				IsSelectable = GD.Randf() < 0.15f
-			};
+			var tree = new TreeObject { GlobalPosition = pos };
 			_entitiesContainer.AddChild(tree);
 		}
 
@@ -322,7 +380,7 @@ public partial class WorldManager : Node2D
 			);
 
 			if (IsInsideLake(pos, 50f)) continue;
-			if (pos.DistanceTo(VillagePosition) < 500f) continue;
+			if (pos.DistanceTo(VillagePosition) < 1150f) continue;
 			if (pos.DistanceTo(QuarryPosition) < 350f) continue;
 
 			var rock = new RockObject { GlobalPosition = pos };

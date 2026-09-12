@@ -78,7 +78,7 @@ public partial class HUDManager : CanvasLayer
                 RingTexture = GD.Load<Texture2D>("res://assets/health_ring.png"),
                 CurrentValue = GameState.Instance.PlayerHealth,
                 MaxValue = GameState.Instance.PlayerMaxHealth,
-                Position = new Vector2(20, GetViewport().GetVisibleRect().Size.Y - 160)
+                Position = new Vector2(20, GetViewport().GetVisibleRect().Size.Y - 230)
             };
             AddChild(_healthOrb);
         }
@@ -109,7 +109,7 @@ public partial class HUDManager : CanvasLayer
                 RingTexture = GD.Load<Texture2D>("res://assets/power_ring.png"),
                 CurrentValue = GameState.Instance.PlayerPower,
                 MaxValue = GameState.Instance.PlayerMaxPower,
-                Position = new Vector2(GetViewport().GetVisibleRect().Size.X - 160, GetViewport().GetVisibleRect().Size.Y - 160)
+                Position = new Vector2(GetViewport().GetVisibleRect().Size.X - 230, GetViewport().GetVisibleRect().Size.Y - 230)
             };
             AddChild(_powerOrb);
         }
@@ -191,8 +191,8 @@ public partial class HUDManager : CanvasLayer
         {
             _positionLabel.Position = new Vector2(size.X / 2 - _positionLabel.Size.X / 2, 15);
         }
-        _healthOrb.Position = new Vector2(20, size.Y - 160);
-        _powerOrb.Position = new Vector2(size.X - 160, size.Y - 160);
+        _healthOrb.Position = new Vector2(20, size.Y - 230);
+        _powerOrb.Position = new Vector2(size.X - 230, size.Y - 230);
         _statsPanel.Position = new Vector2(size.X / 2 - 140, size.Y - 80);
         _actionBar.Position = new Vector2(size.X / 2 + 150, size.Y - 80);
     }

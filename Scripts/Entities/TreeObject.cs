@@ -5,7 +5,7 @@ namespace Werewolves.Entities;
 
 public partial class TreeObject : StaticBody2D, ISelectableTarget
 {
-    [Export] public bool IsSelectable { get; set; } = false;
+    [Export] public bool IsSelectable { get; set; } = true;
     public string TargetName => "Tree";
     public float Health { get; set; } = 100f;
     public float MaxHealth => 100f;
@@ -159,6 +159,12 @@ public partial class TreeObject : StaticBody2D, ISelectableTarget
             if (GameState.Instance.SelectedTarget == this)
             {
                 GameState.Instance.SelectedTarget = null;
+            }
+
+            var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
+            if (cursor != null)
+            {
+                Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
             }
 
             // Quick fade and remove

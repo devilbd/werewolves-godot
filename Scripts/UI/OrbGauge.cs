@@ -23,13 +23,14 @@ public partial class OrbGauge : Control
         public float Alpha;
     }
 
+    [Export] public float OrbRadius { get; set; } = 82f;
+
     private readonly List<Bubble> _bubbles = new();
-    private const float OrbRadius = 55f;
 
     public override void _Ready()
     {
-        CustomMinimumSize = new Vector2(140, 140);
-        for (int i = 0; i < 15; i++)
+        CustomMinimumSize = new Vector2(210, 210);
+        for (int i = 0; i < 20; i++)
         {
             _bubbles.Add(CreateRandomBubble());
         }
@@ -122,7 +123,7 @@ public partial class OrbGauge : Control
         // Draw ornamental ring frame texture
         if (RingTexture != null)
         {
-            Rect2 ringRect = new Rect2(center - new Vector2(OrbRadius + 15, OrbRadius + 15), new Vector2((OrbRadius + 15) * 2, (OrbRadius + 15) * 2));
+            Rect2 ringRect = new Rect2(center - new Vector2(OrbRadius + 22, OrbRadius + 22), new Vector2((OrbRadius + 22) * 2, (OrbRadius + 22) * 2));
             DrawTextureRect(RingTexture, ringRect, false);
         }
         else
@@ -132,13 +133,13 @@ public partial class OrbGauge : Control
 
         // Text overlay: Label and Value
         var font = ThemeDB.FallbackFont;
-        int fontSize = 13;
+        int fontSize = 16;
         string valStr = $"{Mathf.FloorToInt(CurrentValue)} / {Mathf.FloorToInt(MaxValue)}";
 
         Vector2 labelSize = font.GetStringSize(LabelText, HorizontalAlignment.Center, -1, fontSize);
         Vector2 valSize = font.GetStringSize(valStr, HorizontalAlignment.Center, -1, fontSize);
 
-        DrawString(font, center + new Vector2(-labelSize.X / 2, -5), LabelText, HorizontalAlignment.Center, -1, fontSize, Colors.White);
-        DrawString(font, center + new Vector2(-valSize.X / 2, 15), valStr, HorizontalAlignment.Center, -1, fontSize, new Color(0.9f, 0.9f, 0.9f));
+        DrawString(font, center + new Vector2(-labelSize.X / 2, -6), LabelText, HorizontalAlignment.Center, -1, fontSize, Colors.White);
+        DrawString(font, center + new Vector2(-valSize.X / 2, 18), valStr, HorizontalAlignment.Center, -1, fontSize, new Color(0.9f, 0.9f, 0.9f));
     }
 }
