@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=3 uid="uid://c6rockscene"]
+
+[ext_resource type="Script" path="res://Scripts/Entities/RockObject.cs" id="1_rock"]
+[ext_resource type="Texture2D" path="res://assets/rocks/optimized/rock_stone_o.png" id="2_rock_tex"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 15.0
+
+[node name="RockObject" type="StaticBody2D"]
+input_pickable = true
+script = ExtResource("1_rock")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.4, 0.4)
+offset = Vector2(0, -60)
+texture = ExtResource("2_rock_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -5)
+shape = SubResource("CircleShape2D_1")

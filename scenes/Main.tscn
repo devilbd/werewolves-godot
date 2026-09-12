@@ -1,0 +1,141 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Main.cs" id="1_main"]
+[ext_resource type="Script" path="res://Scripts/World/WorldManager.cs" id="2_world"]
+[ext_resource type="Texture2D" path="res://assets/pine_tree_forest_ground_1.png" id="3_ground"]
+[ext_resource type="PackedScene" path="res://scenes/Entities/Werewolf.tscn" id="4_werewolf_scene"]
+[ext_resource type="Script" path="res://Scripts/UI/HUDManager.cs" id="5_hud"]
+[ext_resource type="PackedScene" path="res://scenes/UI/TargetPanel.tscn" id="6_target_scene"]
+[ext_resource type="Script" path="res://Scripts/UI/OrbGauge.cs" id="7_orb"]
+[ext_resource type="Texture2D" path="res://assets/health_ring.png" id="8_health_ring"]
+[ext_resource type="Texture2D" path="res://assets/power_ring.png" id="9_power_ring"]
+[ext_resource type="PackedScene" path="res://scenes/UI/StatsPanel.tscn" id="10_stats_scene"]
+[ext_resource type="PackedScene" path="res://scenes/UI/ActionBar.tscn" id="11_action_scene"]
+[ext_resource type="PackedScene" path="res://scenes/UI/PouchWindow.tscn" id="12_pouch_scene"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="WorldManager" type="Node2D" parent="." node_paths=PackedStringArray("Player")]
+script = ExtResource("2_world")
+Player = NodePath("Entities/Werewolf")
+
+[node name="GroundBackground" type="TextureRect" parent="WorldManager"]
+z_index = -10
+texture_repeat = 2
+custom_minimum_size = Vector2(1920, 1080)
+offset_right = 1920.0
+offset_bottom = 1080.0
+texture = ExtResource("3_ground")
+stretch_mode = 1
+
+[node name="LakeContainer" type="Node2D" parent="WorldManager"]
+z_index = -5
+
+[node name="Entities" type="Node2D" parent="WorldManager"]
+y_sort_enabled = true
+
+[node name="Werewolf" parent="WorldManager/Entities" instance=ExtResource("4_werewolf_scene")]
+position = Vector2(960, 540)
+
+[node name="HUD" type="CanvasLayer" parent="." node_paths=PackedStringArray("Player")]
+script = ExtResource("5_hud")
+Player = NodePath("../WorldManager/Entities/Werewolf")
+
+[node name="AreaLabel" type="Label" parent="HUD"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 15.0
+offset_right = 100.0
+offset_bottom = 45.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 16
+text = "Area: [0, 0]"
+horizontal_alignment = 1
+
+[node name="TargetPanel" parent="HUD" node_paths=PackedStringArray("Player") instance=ExtResource("6_target_scene")]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 260.0
+offset_bottom = 95.0
+Player = NodePath("../../WorldManager/Entities/Werewolf")
+
+[node name="HealthOrb" type="Control" parent="HUD"]
+custom_minimum_size = Vector2(140, 140)
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -160.0
+offset_right = 160.0
+offset_bottom = -20.0
+grow_vertical = 0
+script = ExtResource("7_orb")
+LabelText = "Health"
+PrimaryColor = Color(0.55, 0, 0, 1)
+BackgroundColor = Color(0.2, 0, 0, 1)
+RingTexture = ExtResource("8_health_ring")
+
+[node name="PowerOrb" type="Control" parent="HUD"]
+custom_minimum_size = Vector2(140, 140)
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -160.0
+offset_top = -160.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+script = ExtResource("7_orb")
+LabelText = "Power"
+PrimaryColor = Color(0, 0.55, 0.55, 1)
+BackgroundColor = Color(0, 0.2, 0.2, 1)
+RingTexture = ExtResource("9_power_ring")
+
+[node name="StatsPanel" parent="HUD" node_paths=PackedStringArray("Player") instance=ExtResource("10_stats_scene")]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -140.0
+offset_top = -80.0
+offset_right = 140.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 0
+Player = NodePath("../../WorldManager/Entities/Werewolf")
+
+[node name="ActionBar" parent="HUD" instance=ExtResource("11_action_scene")]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 150.0
+offset_top = -80.0
+offset_right = 250.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="PouchWindow" parent="HUD" instance=ExtResource("12_pouch_scene")]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -225.0
+offset_top = -225.0
+offset_right = 225.0
+offset_bottom = 225.0
+grow_horizontal = 2
+grow_vertical = 2

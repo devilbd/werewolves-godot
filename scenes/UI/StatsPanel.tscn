@@ -1,0 +1,174 @@
+[gd_scene load_steps=6 format=3 uid="uid://c6statspanelscene"]
+
+[ext_resource type="Script" path="res://Scripts/UI/StatsPanel.cs" id="1_statspanel"]
+[ext_resource type="Texture2D" path="res://assets/icons/scratch_hit_icon.png" id="2_scratch"]
+[ext_resource type="Texture2D" path="res://assets/icons/charge_attack.png" id="3_charge"]
+[ext_resource type="Texture2D" path="res://assets/icons/bite.png" id="4_bite"]
+[ext_resource type="Texture2D" path="res://assets/icons/blood_howling.png" id="5_howl"]
+
+[node name="StatsPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(280, 68)
+offset_right = 280.0
+offset_bottom = 68.0
+script = ExtResource("1_statspanel")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="Slot1" type="Control" parent="HBoxContainer"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+
+[node name="Button" type="TextureButton" parent="HBoxContainer/Slot1"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 0
+offset_right = 56.0
+offset_bottom = 56.0
+ignore_texture_size = true
+stretch_mode = 0
+texture_normal = ExtResource("2_scratch")
+
+[node name="KeyLabel" type="Label" parent="HBoxContainer/Slot1"]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 2.0
+offset_right = 24.0
+offset_bottom = 22.0
+theme_override_colors/font_color = Color(1, 0.9, 0.3, 1)
+theme_override_font_sizes/font_size = 12
+text = "1"
+
+[node name="CooldownOverlay" type="ColorRect" parent="HBoxContainer/Slot1"]
+visible = false
+layout_mode = 0
+offset_right = 56.0
+offset_bottom = 56.0
+color = Color(0, 0, 0, 0.7)
+
+[node name="CooldownLabel" type="Label" parent="HBoxContainer/Slot1"]
+visible = false
+layout_mode = 0
+offset_right = 56.0
+offset_bottom = 56.0
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot2" type="Control" parent="HBoxContainer"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+
+[node name="Button" type="TextureButton" parent="HBoxContainer/Slot2"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 0
+offset_right = 56.0
+offset_bottom = 56.0
+ignore_texture_size = true
+stretch_mode = 0
+texture_normal = ExtResource("3_charge")
+
+[node name="KeyLabel" type="Label" parent="HBoxContainer/Slot2"]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 2.0
+offset_right = 24.0
+offset_bottom = 22.0
+theme_override_colors/font_color = Color(1, 0.9, 0.3, 1)
+theme_override_font_sizes/font_size = 12
+text = "2"
+
+[node name="CooldownOverlay" type="ColorRect" parent="HBoxContainer/Slot2"]
+visible = false
+layout_mode = 0
+offset_right = 56.0
+offset_bottom = 56.0
+color = Color(0, 0, 0, 0.7)
+
+[node name="CooldownLabel" type="Label" parent="HBoxContainer/Slot2"]
+visible = false
+layout_mode = 0
+offset_right = 56.0
+offset_bottom = 56.0
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot3" type="Control" parent="HBoxContainer"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+
+[node name="Button" type="TextureButton" parent="HBoxContainer/Slot3"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 0
+offset_right = 56.0
+offset_bottom = 56.0
+ignore_texture_size = true
+stretch_mode = 0
+texture_normal = ExtResource("4_bite")
+
+[node name="KeyLabel" type="Label" parent="HBoxContainer/Slot3"]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 2.0
+offset_right = 24.0
+offset_bottom = 22.0
+theme_override_colors/font_color = Color(1, 0.9, 0.3, 1)
+theme_override_font_sizes/font_size = 12
+text = "3"
+
+[node name="CooldownOverlay" type="ColorRect" parent="HBoxContainer/Slot3"]
+visible = false
+layout_mode = 0
+offset_right = 56.0
+offset_bottom = 56.0
+color = Color(0, 0, 0, 0.7)
+
+[node name="CooldownLabel" type="Label" parent="HBoxContainer/Slot3"]
+visible = false
+layout_mode = 0
+offset_right = 56.0
+offset_bottom = 56.0
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot4" type="Control" parent="HBoxContainer"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+
+[node name="Button" type="TextureButton" parent="HBoxContainer/Slot4"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 0
+offset_right = 56.0
+offset_bottom = 56.0
+ignore_texture_size = true
+stretch_mode = 0
+texture_normal = ExtResource("5_howl")
+
+[node name="KeyLabel" type="Label" parent="HBoxContainer/Slot4"]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 2.0
+offset_right = 24.0
+offset_bottom = 22.0
+theme_override_colors/font_color = Color(1, 0.9, 0.3, 1)
+theme_override_font_sizes/font_size = 12
+text = "4"
+
+[node name="CooldownOverlay" type="ColorRect" parent="HBoxContainer/Slot4"]
+visible = false
+layout_mode = 0
+offset_right = 56.0
+offset_bottom = 56.0
+color = Color(0, 0, 0, 0.7)
+
+[node name="CooldownLabel" type="Label" parent="HBoxContainer/Slot4"]
+visible = false
+layout_mode = 0
+offset_right = 56.0
+offset_bottom = 56.0
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+vertical_alignment = 1

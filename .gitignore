@@ -1,0 +1,90 @@
+# ==========================================
+# Godot Engine 4 Specific Ignores
+# ==========================================
+.godot/
+*.translation
+
+# ==========================================
+# .NET / C# / MSBuild Ignores
+# ==========================================
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+bld/
+*.DotSettings.user
+*.user
+*.userosv
+*.suo
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.sln.docstates
+
+# NuGet Packages
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+project.lock.json
+project.assets.json
+
+# ==========================================
+# IDE & Editor Specific Ignores
+# ==========================================
+# Visual Studio
+.vs/
+*.sln.ide/
+
+# Visual Studio Code
+.vscode/
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# MonoDevelop / SharpDevelop
+*.usertasks
+
+# ==========================================
+# Platform & Mobile Builds
+# ==========================================
+/android/
+/ios/
+
+# ==========================================
+# OS Generated Files
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# Temporary, Backup & Swap Files
+*~
+*.swp
+*.swo
+*.tmp
+*.bak
+*.log
+crash-*.txt
+
+# ==========================================
+# Local Save States & Data Dumps
+# ==========================================
+*.save
+*.save.json
+werewolves_save.json

@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/ActionBar.cs" id="1_actionbar"]
+[ext_resource type="Texture2D" path="res://assets/pouch_bag_o.png" id="2_bag"]
+
+[node name="ActionBar" type="Control"]
+custom_minimum_size = Vector2(100, 60)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 100.0
+offset_bottom = 60.0
+script = ExtResource("1_actionbar")
+
+[node name="PouchButton" type="TextureButton" parent="."]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 0
+offset_left = 25.0
+offset_top = 5.0
+offset_right = 75.0
+offset_bottom = 55.0
+ignore_texture_size = true
+stretch_mode = 5
+texture_normal = ExtResource("2_bag")

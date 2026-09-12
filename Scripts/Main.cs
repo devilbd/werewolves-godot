@@ -1,0 +1,78 @@
+using Godot;
+using Werewolves.Core;
+using Werewolves.Entities;
+using Werewolves.UI;
+using Werewolves.World;
+
+namespace Werewolves;
+
+public partial class Main : Node2D
+{
+	private Werewolf _player = null!;
+	private WorldManager _worldManager = null!;
+	private HUDManager _hud = null!;
+
+	public override void _Ready()
+	{
+		// 1. Initialize GameState singleton if not present
+		if (GameState.Instance == null)
+		{
+			var gameState = new GameState { Name = "GameState" };
+			AddChild(gameState);
+		}
+
+		// 2. Set default game cursor
+		var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
+		if (cursor != null)
+		{
+			Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
+		}
+
+		// 3. Find or Create Player (Werewolf)
+		_player = GetNodeOrNull<Werewolf>("WorldManager/Entities/Werewolf")
+			   ?? GetNodeOrNull<Werewolf>("Entities/Werewolf")
+			   ?? GetNodeOrNull<Werewolf>("WerewolfPlayer");
+
+		if (_player == null)
+		{
+			_player = new Werewolf
+			{
+				Name = "WerewolfPlayer",
+				GlobalPosition = SaveManager.LoadedPlayerPosition
+			};
+			AddChild(_player);
+		}
+
+		// 4. Find or Create WorldManager
+		_worldManager = GetNodeOrNull<WorldManager>("WorldManager");
+		if (_worldManager == null)
+		{
+			_worldManager = new WorldManager
+			{
+				Name = "WorldManager",
+				Player = _player
+			};
+			AddChild(_worldManager);
+		}
+		else
+		{
+			_worldManager.Player = _player;
+		}
+
+		// 5. Find or Create HUD
+		_hud = GetNodeOrNull<HUDManager>("HUD");
+		if (_hud == null)
+		{
+			_hud = new HUDManager
+			{
+				Name = "HUD",
+				Player = _player
+			};
+			AddChild(_hud);
+		}
+		else
+		{
+			_hud.Player = _player;
+		}
+	}
+}
