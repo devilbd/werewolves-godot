@@ -84,15 +84,32 @@ public partial class PouchWindow : Control
         _bagTexture.GuiInput += OnBagGuiInput;
 
         Visible = false;
-        GameState.Instance.OnPouchToggled += (visible) =>
-        {
-            Visible = visible;
-            if (visible) RefreshItems();
-        };
-
-        GameState.Instance.OnPouchChanged += RefreshItems;
+        GameState.Instance.OnPouchToggled += OnGameStatePouchToggled;
+        GameState.Instance.OnPouchChanged += OnGameStatePouchChanged;
 
         RefreshItems();
+    }
+
+    private void OnGameStatePouchToggled(bool visible)
+    {
+        if (!GodotObject.IsInstanceValid(this)) return;
+        Visible = visible;
+        if (visible) RefreshItems();
+    }
+
+    private void OnGameStatePouchChanged()
+    {
+        if (!GodotObject.IsInstanceValid(this)) return;
+        RefreshItems();
+    }
+
+    public override void _ExitTree()
+    {
+        if (GameState.Instance != null)
+        {
+            GameState.Instance.OnPouchToggled -= OnGameStatePouchToggled;
+            GameState.Instance.OnPouchChanged -= OnGameStatePouchChanged;
+        }
     }
 
     private void OnBagGuiInput(InputEvent @event)
@@ -150,6 +167,9 @@ public partial class PouchWindow : Control
 
     public void RefreshItems()
     {
+        if (!GodotObject.IsInstanceValid(this) || _itemsArea == null || !GodotObject.IsInstanceValid(_itemsArea))
+            return;
+
         foreach (Node child in _itemsArea.GetChildren())
         {
             child.QueueFree();

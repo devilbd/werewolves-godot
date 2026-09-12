@@ -56,6 +56,9 @@ public partial class GameState : Node
     public float[] SkillCooldownRemaining { get; } = new float[4];
     public float[] SkillCooldownTotal { get; } = new float[] { 5.0f, 8.0f, 10.0f, 30.0f };
 
+    // World state
+    public bool IsInLair { get; set; } = false;
+
     // World position (continuous open world coordinates)
     private Vector2 _playerPosition = Vector2.Zero;
     public Vector2 PlayerPosition
@@ -66,7 +69,7 @@ public partial class GameState : Node
             if (_playerPosition != value)
             {
                 _playerPosition = value;
-                OnPositionChanged?.Invoke(_playerPosition);
+                SafeInvoke(OnPositionChanged, _playerPosition);
             }
         }
     }
@@ -95,7 +98,7 @@ public partial class GameState : Node
                     newTarget.OnSelected();
                 }
 
-                OnTargetChanged?.Invoke(_selectedTarget);
+                SafeInvoke(OnTargetChanged, _selectedTarget);
             }
         }
     }
@@ -133,13 +136,13 @@ public partial class GameState : Node
     {
         float dt = (float)delta;
 
-        // Process cooldowns
+        // Process skill cooldown timers
         for (int i = 0; i < SkillCooldownRemaining.Length; i++)
         {
             if (SkillCooldownRemaining[i] > 0f)
             {
                 SkillCooldownRemaining[i] = Math.Max(0f, SkillCooldownRemaining[i] - dt);
-                OnCooldownUpdated?.Invoke(i, SkillCooldownRemaining[i], SkillCooldownTotal[i]);
+                SafeInvoke(OnCooldownUpdated, i, SkillCooldownRemaining[i], SkillCooldownTotal[i]);
             }
         }
 
@@ -160,7 +163,7 @@ public partial class GameState : Node
             PlayerPower = Mathf.Min(PlayerMaxPower, PlayerPower + PowerRegenRate * dt);
             if (PlayerPower != oldPower)
             {
-                OnPowerChanged?.Invoke(PlayerPower, PlayerMaxPower);
+                SafeInvoke(OnPowerChanged, PlayerPower, PlayerMaxPower);
             }
         }
 
@@ -177,13 +180,13 @@ public partial class GameState : Node
     public void ModifyHealth(float delta)
     {
         PlayerHealth = Mathf.Clamp(PlayerHealth + delta, 0f, PlayerMaxHealth);
-        OnHealthChanged?.Invoke(PlayerHealth, PlayerMaxHealth);
+        SafeInvoke(OnHealthChanged, PlayerHealth, PlayerMaxHealth);
     }
 
     public void ModifyPower(float delta)
     {
         PlayerPower = Mathf.Clamp(PlayerPower + delta, 0f, PlayerMaxPower);
-        OnPowerChanged?.Invoke(PlayerPower, PlayerMaxPower);
+        SafeInvoke(OnPowerChanged, PlayerPower, PlayerMaxPower);
     }
 
     public void StartSkillCooldown(int skillIndex)
@@ -191,7 +194,7 @@ public partial class GameState : Node
         if (skillIndex >= 0 && skillIndex < SkillCooldownRemaining.Length)
         {
             SkillCooldownRemaining[skillIndex] = SkillCooldownTotal[skillIndex];
-            OnCooldownUpdated?.Invoke(skillIndex, SkillCooldownRemaining[skillIndex], SkillCooldownTotal[skillIndex]);
+            SafeInvoke(OnCooldownUpdated, skillIndex, SkillCooldownRemaining[skillIndex], SkillCooldownTotal[skillIndex]);
         }
     }
 
@@ -241,7 +244,7 @@ public partial class GameState : Node
         }
 
         item.Count += count;
-        OnPouchChanged?.Invoke();
+        SafeInvoke(OnPouchChanged);
         SaveManager.SaveGame();
     }
 
@@ -258,11 +261,73 @@ public partial class GameState : Node
     public void TogglePouch()
     {
         IsPouchOpen = !IsPouchOpen;
-        OnPouchToggled?.Invoke(IsPouchOpen);
+        SafeInvoke(OnPouchToggled, IsPouchOpen);
     }
 
     public void TriggerDamageNumber(string text, Vector2 position, Color color)
     {
-        OnSpawnDamageNumber?.Invoke(text, position, color);
+        SafeInvoke(OnSpawnDamageNumber, text, position, color);
     }
+
+    #region Safe Delegate Invocations
+    private static void SafeInvoke(Action? action)
+    {
+        if (action == null) return;
+        foreach (Action handler in action.GetInvocationList())
+        {
+            try
+            {
+                if (handler.Target is GodotObject godotObj && !GodotObject.IsInstanceValid(godotObj))
+                    continue;
+                handler();
+            }
+            catch (ObjectDisposedException) { }
+        }
+    }
+
+    private static void SafeInvoke<T>(Action<T>? action, T arg)
+    {
+        if (action == null) return;
+        foreach (Action<T> handler in action.GetInvocationList())
+        {
+            try
+            {
+                if (handler.Target is GodotObject godotObj && !GodotObject.IsInstanceValid(godotObj))
+                    continue;
+                handler(arg);
+            }
+            catch (ObjectDisposedException) { }
+        }
+    }
+
+    private static void SafeInvoke<T1, T2>(Action<T1, T2>? action, T1 arg1, T2 arg2)
+    {
+        if (action == null) return;
+        foreach (Action<T1, T2> handler in action.GetInvocationList())
+        {
+            try
+            {
+                if (handler.Target is GodotObject godotObj && !GodotObject.IsInstanceValid(godotObj))
+                    continue;
+                handler(arg1, arg2);
+            }
+            catch (ObjectDisposedException) { }
+        }
+    }
+
+    private static void SafeInvoke<T1, T2, T3>(Action<T1, T2, T3>? action, T1 arg1, T2 arg2, T3 arg3)
+    {
+        if (action == null) return;
+        foreach (Action<T1, T2, T3> handler in action.GetInvocationList())
+        {
+            try
+            {
+                if (handler.Target is GodotObject godotObj && !GodotObject.IsInstanceValid(godotObj))
+                    continue;
+                handler(arg1, arg2, arg3);
+            }
+            catch (ObjectDisposedException) { }
+        }
+    }
+    #endregion
 }

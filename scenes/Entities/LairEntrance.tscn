@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://rkotoybg2da1"]
+
+[ext_resource type="Script" path="res://Scripts/Entities/LairEntranceObject.cs" id="1_entrance"]
+[ext_resource type="Texture2D" path="res://assets/liar/liar_entrance.png" id="2_entrance_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(380, 90)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 190.0
+
+[node name="LairEntrance" type="StaticBody2D"]
+input_pickable = false
+script = ExtResource("1_entrance")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.75, 0.75)
+offset = Vector2(0, -120)
+texture = ExtResource("2_entrance_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -70)
+shape = SubResource("RectangleShape2D_1")
+
+[node name="TriggerArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TriggerArea"]
+position = Vector2(0, -20)
+shape = SubResource("CircleShape2D_1")
+
+[node name="PromptLabel" type="Label" parent="."]
+visible = false
+z_index = 25
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -285.0
+offset_right = 250.0
+offset_bottom = -245.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.93, 0.45, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 18
+text = "Hit Enter to enter the cave"
+horizontal_alignment = 1
+vertical_alignment = 1

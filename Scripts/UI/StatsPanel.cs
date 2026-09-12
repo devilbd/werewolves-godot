@@ -265,19 +265,34 @@ public partial class StatsPanel : PanelContainer
 
     private void OnCooldownUpdated(int index, float remaining, float total)
     {
+        if (!GodotObject.IsInstanceValid(this)) return;
+
         if (index >= 0 && index < _cooldownOverlays.Count)
         {
+            var overlay = _cooldownOverlays[index];
+            var label = _cooldownLabels[index];
+            if (overlay == null || !GodotObject.IsInstanceValid(overlay) || label == null || !GodotObject.IsInstanceValid(label))
+                return;
+
             if (remaining > 0.05f)
             {
-                _cooldownOverlays[index].Visible = true;
-                _cooldownLabels[index].Visible = true;
-                _cooldownLabels[index].Text = remaining >= 1.0f ? $"{Mathf.CeilToInt(remaining)}s" : $"{remaining:0.0}s";
+                overlay.Visible = true;
+                label.Visible = true;
+                label.Text = remaining >= 1.0f ? $"{Mathf.CeilToInt(remaining)}s" : $"{remaining:0.0}s";
             }
             else
             {
-                _cooldownOverlays[index].Visible = false;
-                _cooldownLabels[index].Visible = false;
+                overlay.Visible = false;
+                label.Visible = false;
             }
+        }
+    }
+
+    public override void _ExitTree()
+    {
+        if (GameState.Instance != null)
+        {
+            GameState.Instance.OnCooldownUpdated -= OnCooldownUpdated;
         }
     }
 

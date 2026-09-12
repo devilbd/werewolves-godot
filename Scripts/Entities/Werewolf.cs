@@ -55,9 +55,21 @@ public partial class Werewolf : CharacterBody2D, ICombatant
     // Auto-attack timer (1 second interval)
     private float _autoAttackTimer = 0f;
     private const float AutoAttackInterval = 1.0f;
-    private const float MeleeRange = 110f;
+    private const float MeleeRange = 125f;
 
     private Camera2D? _camera;
+    public Camera2D? Camera => _camera;
+
+    public void SetCameraLimits(int left, int top, int right, int bottom)
+    {
+        if (_camera != null)
+        {
+            _camera.LimitLeft = left;
+            _camera.LimitTop = top;
+            _camera.LimitRight = right;
+            _camera.LimitBottom = bottom;
+        }
+    }
 
     public bool IsAutoInteracting { get; private set; } = false;
     public event Action<bool>? OnAutoInteractToggled;
@@ -80,16 +92,16 @@ public partial class Werewolf : CharacterBody2D, ICombatant
         _sprite.Hframes = 3;
         _sprite.Vframes = 3;
         _sprite.Frame = 0;
-        _sprite.Scale = new Vector2(0.5f, 0.5f);
+        _sprite.Scale = new Vector2(0.75f, 0.75f);
         _sprite.Offset = new Vector2(0, -50);
 
         _collision = GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
         if (_collision == null)
         {
             _collision = new CollisionShape2D { Name = "CollisionShape2D" };
-            var shape = new CircleShape2D { Radius = 18f };
+            var shape = new CircleShape2D { Radius = 27f };
             _collision.Shape = shape;
-            _collision.Position = new Vector2(0, -5);
+            _collision.Position = new Vector2(0, -7);
             AddChild(_collision);
         }
 
@@ -99,6 +111,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant
             _camera = new Camera2D
             {
                 Name = "Camera2D",
+                Zoom = Vector2.One,
                 PositionSmoothingEnabled = true,
                 PositionSmoothingSpeed = 5.0f,
                 LimitLeft = -5000,
@@ -108,17 +121,32 @@ public partial class Werewolf : CharacterBody2D, ICombatant
             };
             AddChild(_camera);
         }
+        else
+        {
+            _camera.Zoom = Vector2.One;
+        }
 
         GlobalPosition = SaveManager.LoadedPlayerPosition;
         GameState.Instance.PlayerPosition = GlobalPosition;
 
-        GameState.Instance.OnTargetChanged += (target) =>
+        GameState.Instance.OnTargetChanged += OnGameStateTargetChanged;
+    }
+
+    private void OnGameStateTargetChanged(Node2D? target)
+    {
+        if (!GodotObject.IsInstanceValid(this)) return;
+        if (target == null)
         {
-            if (target == null)
-            {
-                SetAutoInteract(false);
-            }
-        };
+            SetAutoInteract(false);
+        }
+    }
+
+    public override void _ExitTree()
+    {
+        if (GameState.Instance != null)
+        {
+            GameState.Instance.OnTargetChanged -= OnGameStateTargetChanged;
+        }
     }
 
     public override void _PhysicsProcess(double delta)
@@ -182,6 +210,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant
 
         // Update animation
         UpdateAnimation(dt);
+
     }
 
     private void ProcessAutoAttack(float dt)

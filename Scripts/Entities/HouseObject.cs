@@ -30,20 +30,17 @@ public partial class HouseObject : StaticBody2D
 
         string path = $"res://assets/houses/house_{Mathf.Clamp(HouseVariant, 1, 4)}.png";
         _sprite.Texture = GD.Load<Texture2D>(path);
-        _sprite.Scale = new Vector2(0.5f, 0.5f);
+        _sprite.Scale = new Vector2(1.25f, 1.25f);
         _sprite.Offset = new Vector2(0, -_sprite.Texture.GetHeight() * 0.35f);
 
+        // Houses allow the werewolf to pass through freely without stopping
+        CollisionLayer = 0;
+        CollisionMask = 0;
+
         _collision = GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
-        if (_collision == null)
+        if (_collision != null)
         {
-            _collision = new CollisionShape2D { Name = "CollisionShape2D" };
-            var box = new RectangleShape2D
-            {
-                Size = new Vector2(_sprite.Texture.GetWidth() * 0.45f, _sprite.Texture.GetHeight() * 0.22f)
-            };
-            _collision.Shape = box;
-            _collision.Position = new Vector2(0, -10);
-            AddChild(_collision);
+            _collision.Disabled = true;
         }
     }
 }

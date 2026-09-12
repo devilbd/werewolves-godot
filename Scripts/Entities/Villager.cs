@@ -15,14 +15,14 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget
     public float Health { get; set; } = 80f;
     public float MaxHealth => 80f;
     public bool IsDead => Health <= 0f;
-    public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -75);
-    public Rect2 TargetBounds => new Rect2(-28f, -68f, 56f, 68f);
+    public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -100);
+    public Rect2 TargetBounds => new Rect2(-42f, -102f, 84f, 102f);
 
     private float _speed = 65f;
     private bool _isAggro = false;
     private float _attackCooldown = 0f;
     private const float AttackCooldownTotal = 2.5f;
-    private const float AttackRange = 75f;
+    private const float AttackRange = 95f;
     private const float AttackDuration = 0.45f;
     private float _attackAnimTimer = 0f;
     private bool _isAttacking = false;
@@ -68,16 +68,16 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget
         _sprite.Hframes = 3;
         _sprite.Vframes = 3;
         _sprite.Frame = 0;
-        _sprite.Scale = new Vector2(0.5f, 0.5f);
+        _sprite.Scale = new Vector2(0.75f, 0.75f);
         _sprite.Offset = new Vector2(0, -45);
 
         _collision = GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
         if (_collision == null)
         {
             _collision = new CollisionShape2D { Name = "CollisionShape2D" };
-            var shape = new CircleShape2D { Radius = 18f };
+            var shape = new CircleShape2D { Radius = 27f };
             _collision.Shape = shape;
-            _collision.Position = new Vector2(0, -5);
+            _collision.Position = new Vector2(0, -7);
             AddChild(_collision);
         }
 
@@ -87,8 +87,8 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget
             _clickArea = new Area2D { Name = "ClickArea" };
             var clickShape = new CollisionShape2D
             {
-                Shape = new CapsuleShape2D { Radius = 24f, Height = 70f },
-                Position = new Vector2(0, -35)
+                Shape = new CapsuleShape2D { Radius = 36f, Height = 105f },
+                Position = new Vector2(0, -52)
             };
             _clickArea.AddChild(clickShape);
             AddChild(_clickArea);
@@ -168,9 +168,25 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget
             {
                 ResetCursor();
 
-                int coinCount = GD.RandRange(2, 8);
-                var loot = DroppedLoot.Instantiate("GoldCoins", GlobalPosition, coinCount);
-                GetParent()?.AddChild(loot);
+                var lootResult = Formulas.RollVillagerLoot();
+                if (lootResult.GoldCoins > 0 && lootResult.Meat > 0)
+                {
+                    var goldLoot = DroppedLoot.Instantiate("GoldCoins", GlobalPosition + new Vector2(-18f, 0f), lootResult.GoldCoins);
+                    GetParent()?.AddChild(goldLoot);
+
+                    var meatLoot = DroppedLoot.Instantiate("Meat", GlobalPosition + new Vector2(18f, 0f), lootResult.Meat);
+                    GetParent()?.AddChild(meatLoot);
+                }
+                else if (lootResult.GoldCoins > 0)
+                {
+                    var goldLoot = DroppedLoot.Instantiate("GoldCoins", GlobalPosition, lootResult.GoldCoins);
+                    GetParent()?.AddChild(goldLoot);
+                }
+                else if (lootResult.Meat > 0)
+                {
+                    var meatLoot = DroppedLoot.Instantiate("Meat", GlobalPosition, lootResult.Meat);
+                    GetParent()?.AddChild(meatLoot);
+                }
 
                 if (GameState.Instance.SelectedTarget == this)
                 {

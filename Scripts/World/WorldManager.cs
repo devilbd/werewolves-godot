@@ -12,6 +12,7 @@ public partial class WorldManager : Node2D
 
 	// Known landmark positions in the open world
 	public static readonly Vector2 AwakeningGrovePosition = Vector2.Zero;
+	public static readonly Vector2 LairEntrancePosition = new Vector2(-650f, -450f);
 	public static readonly Vector2 VillagePosition = new Vector2(2500f, -1800f);
 	public static readonly Vector2 SilentLakePosition = new Vector2(-2000f, 2000f);
 	public static readonly Vector2 MistyLakePosition = new Vector2(-2200f, -2200f);
@@ -23,6 +24,7 @@ public partial class WorldManager : Node2D
 	public static Vector2 ToMapCoordinates(Vector2 worldPos) => new Vector2(worldPos.X, -worldPos.Y);
 	public static Vector2 ToWorldCoordinates(Vector2 mapPos) => new Vector2(mapPos.X, -mapPos.Y);
 
+	public static Vector2 LairEntranceMapPosition => ToMapCoordinates(LairEntrancePosition);
 	public static Vector2 VillageMapPosition => ToMapCoordinates(VillagePosition);
 	public static Vector2 SilentLakeMapPosition => ToMapCoordinates(SilentLakePosition);
 	public static Vector2 MistyLakeMapPosition => ToMapCoordinates(MistyLakePosition);
@@ -103,17 +105,30 @@ public partial class WorldManager : Node2D
 			_entitiesContainer.AddChild(Player);
 		}
 
-		GameState.Instance.OnSpawnDamageNumber += (text, pos, color) =>
-		{
-			var dn = Effects.DamageNumber.Instantiate(text, pos, color);
-			_entitiesContainer.AddChild(dn);
-		};
+		GameState.Instance.OnSpawnDamageNumber += OnGameStateSpawnDamageNumber;
 
 		// Attach selection reticle
 		_targetReticle = new Effects.TargetReticle { Name = "TargetReticle" };
 		AddChild(_targetReticle);
 
 		GenerateOpenWorld();
+	}
+
+	private void OnGameStateSpawnDamageNumber(string text, Vector2 pos, Color color)
+	{
+		if (!GodotObject.IsInstanceValid(this) || _entitiesContainer == null || !GodotObject.IsInstanceValid(_entitiesContainer))
+			return;
+
+		var dn = Effects.DamageNumber.Instantiate(text, pos, color);
+		_entitiesContainer.AddChild(dn);
+	}
+
+	public override void _ExitTree()
+	{
+		if (GameState.Instance != null)
+		{
+			GameState.Instance.OnSpawnDamageNumber -= OnGameStateSpawnDamageNumber;
+		}
 	}
 
 	public override void _UnhandledInput(InputEvent @event)
@@ -145,7 +160,8 @@ public partial class WorldManager : Node2D
 
 	public static string GetRegionName(Vector2 pos)
 	{
-		if (pos.DistanceTo(VillagePosition) <= 1150f) return "The Village";
+		if (pos.DistanceTo(VillagePosition) <= 1450f) return "The Village";
+		if (pos.DistanceTo(LairEntrancePosition) <= 450f) return "Werewolf's Lair";
 		if (pos.DistanceTo(SilentLakePosition) <= 500f) return "Silent Lake";
 		if (pos.DistanceTo(MistyLakePosition) <= 500f) return "Misty Lake";
 		if (pos.DistanceTo(QuarryPosition) <= 500f) return "Quarry Hills";
@@ -190,13 +206,16 @@ public partial class WorldManager : Node2D
 		// 4. Build Deer Grazing Meadows
 		BuildDeerHerds();
 
-		// 5. Build Wilderness Trees & Rocks
+		// 5. Build Werewolf's Lair Outside Landmark
+		BuildLairEntrance(LairEntrancePosition);
+
+		// 6. Build Wilderness Trees & Rocks
 		BuildWildernessVegetation();
 
-		// 6. Build World Boundary Barriers
+		// 7. Build World Boundary Barriers
 		BuildWorldBoundaries();
 
-		// 7. Build Atmospheric Fog Zones
+		// 8. Build Atmospheric Fog Zones
 		BuildFogZones();
 	}
 
@@ -231,10 +250,10 @@ public partial class WorldManager : Node2D
 		Vector2[] pathOffsets =
 		{
 			Vector2.Zero,
-			new Vector2(0f, -500f),
-			new Vector2(0f, 500f),
-			new Vector2(500f, 0f),
-			new Vector2(-500f, 0f)
+			new Vector2(0f, -650f),
+			new Vector2(0f, 650f),
+			new Vector2(650f, 0f),
+			new Vector2(-650f, 0f)
 		};
 
 		foreach (var offset in pathOffsets)
@@ -248,38 +267,38 @@ public partial class WorldManager : Node2D
 			_lakeContainer.AddChild(pathSprite);
 		}
 
-		// 2. Inner Circle of Cottages (Town Square Plaza, radius = 450f)
+		// 2. Inner Circle of Cottages (Town Square Plaza, radius = 850f)
 		int innerHouseCount = 8;
 		for (int i = 0; i < innerHouseCount; i++)
 		{
 			float angle = (i / (float)innerHouseCount) * Mathf.Pi * 2.0f;
-			Vector2 pos = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 450f;
+			Vector2 pos = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 850f;
 			var house = HouseObject.Instantiate((i % 4) + 1, pos);
 			_entitiesContainer.AddChild(house);
 		}
 
-		// 3. Outer Neighborhood Cottages across all 4 quadrants (extending village range to ~850-950f)
+		// 3. Outer Neighborhood Cottages across all 4 quadrants (extending village range)
 		Vector2[] outerHouseOffsets =
 		{
 			// North-East District
-			new Vector2(750f, -420f),
-			new Vector2(420f, -750f),
-			new Vector2(780f, -760f),
+			new Vector2(1350f, -700f),
+			new Vector2(700f, -1350f),
+			new Vector2(1450f, -1400f),
 
 			// North-West District
-			new Vector2(-750f, -420f),
-			new Vector2(-420f, -750f),
-			new Vector2(-780f, -760f),
+			new Vector2(-1350f, -700f),
+			new Vector2(-700f, -1350f),
+			new Vector2(-1450f, -1400f),
 
 			// South-East District
-			new Vector2(750f, 420f),
-			new Vector2(420f, 750f),
-			new Vector2(780f, 760f),
+			new Vector2(1350f, 700f),
+			new Vector2(700f, 1350f),
+			new Vector2(1450f, 1400f),
 
 			// South-West District
-			new Vector2(-750f, 420f),
-			new Vector2(-420f, 750f),
-			new Vector2(-780f, 760f),
+			new Vector2(-1350f, 700f),
+			new Vector2(-700f, 1350f),
+			new Vector2(-1450f, 1400f),
 		};
 
 		for (int i = 0; i < outerHouseOffsets.Length; i++)
@@ -292,28 +311,28 @@ public partial class WorldManager : Node2D
 		Vector2[] lanternOffsets =
 		{
 			// Central Square (4 corners around the plaza center)
-			new Vector2(-150f, -150f),
-			new Vector2(150f, -150f),
-			new Vector2(-150f, 150f),
-			new Vector2(150f, 150f),
+			new Vector2(-220f, -220f),
+			new Vector2(220f, -220f),
+			new Vector2(-220f, 220f),
+			new Vector2(220f, 220f),
 
 			// Inner thoroughfare intersections
-			new Vector2(0f, -320f),
-			new Vector2(0f, 320f),
-			new Vector2(320f, 0f),
-			new Vector2(-320f, 0f),
+			new Vector2(0f, -480f),
+			new Vector2(0f, 480f),
+			new Vector2(480f, 0f),
+			new Vector2(-480f, 0f),
 
 			// Outer District crossroads
-			new Vector2(580f, -580f),
-			new Vector2(-580f, -580f),
-			new Vector2(580f, 580f),
-			new Vector2(-580f, 580f),
+			new Vector2(800f, -800f),
+			new Vector2(-800f, -800f),
+			new Vector2(800f, 800f),
+			new Vector2(-800f, 800f),
 
 			// Town Gateways / Entrances
-			new Vector2(0f, -880f),
-			new Vector2(0f, 880f),
-			new Vector2(880f, 0f),
-			new Vector2(-880f, 0f),
+			new Vector2(0f, -1200f),
+			new Vector2(0f, 1200f),
+			new Vector2(1200f, 0f),
+			new Vector2(-1200f, 0f),
 		};
 
 		foreach (var offset in lanternOffsets)
@@ -323,10 +342,10 @@ public partial class WorldManager : Node2D
 		}
 
 		// 5. Outskirts buffer trees (lining the expanded perimeter)
-		for (int i = 0; i < 36; i++)
+		for (int i = 0; i < 40; i++)
 		{
 			float angle = (float)GD.RandRange(0, Mathf.Pi * 2f);
-			float dist = (float)GD.RandRange(1000f, 1320f);
+			float dist = (float)GD.RandRange(1350f, 1650f);
 			Vector2 pos = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * dist;
 			var tree = new TreeObject { GlobalPosition = pos };
 			_entitiesContainer.AddChild(tree);
@@ -338,18 +357,18 @@ public partial class WorldManager : Node2D
 		Vector2[] spawnOffsets =
 		{
 			// Central Square Plaza
-			new Vector2(-60f, -50f),
-			new Vector2(70f, 60f),
+			new Vector2(-100f, -80f),
+			new Vector2(110f, 90f),
 
 			// Inner thoroughfares / streets
-			new Vector2(-30f, -280f),
-			new Vector2(40f, 280f),
-			new Vector2(280f, -30f),
-			new Vector2(-280f, 40f),
+			new Vector2(-40f, -420f),
+			new Vector2(50f, 420f),
+			new Vector2(420f, -40f),
+			new Vector2(-420f, 50f),
 
 			// Outer neighborhood pathways
-			new Vector2(520f, -480f),
-			new Vector2(-480f, 520f),
+			new Vector2(750f, -700f),
+			new Vector2(-700f, 750f),
 		};
 
 		foreach (var offset in spawnOffsets)
@@ -363,6 +382,12 @@ public partial class WorldManager : Node2D
 			};
 			_entitiesContainer.AddChild(villager);
 		}
+	}
+
+	private void BuildLairEntrance(Vector2 pos)
+	{
+		var entrance = LairEntranceObject.Instantiate(pos);
+		_entitiesContainer.AddChild(entrance);
 	}
 
 	private void BuildQuarryHills(Vector2 center)
@@ -432,7 +457,8 @@ public partial class WorldManager : Node2D
 
 			// Avoid clearing areas
 			if (IsInsideLake(pos, 60f)) continue;
-			if (pos.DistanceTo(VillagePosition) < 1150f) continue;
+			if (pos.DistanceTo(VillagePosition) < 1450f) continue;
+			if (pos.DistanceTo(LairEntrancePosition) < 300f) continue;
 			if (pos.DistanceTo(QuarryPosition) < 360f) continue;
 			if (pos.DistanceTo(AwakeningGrovePosition) < 160f) continue;
 
@@ -450,7 +476,8 @@ public partial class WorldManager : Node2D
 			);
 
 			if (IsInsideLake(pos, 50f)) continue;
-			if (pos.DistanceTo(VillagePosition) < 1150f) continue;
+			if (pos.DistanceTo(VillagePosition) < 1450f) continue;
+			if (pos.DistanceTo(LairEntrancePosition) < 300f) continue;
 			if (pos.DistanceTo(QuarryPosition) < 350f) continue;
 
 			var rock = new RockObject { GlobalPosition = pos };
@@ -565,8 +592,9 @@ public partial class WorldManager : Node2D
 				(float)GD.RandRange(-WorldRadius + 500f, WorldRadius - 500f)
 			);
 
-			// Avoid placing fog directly over the central village square
-			if (pos.DistanceTo(VillagePosition) < 650f) continue;
+			// Avoid placing fog directly over the central village square or lair entrance
+			if (pos.DistanceTo(VillagePosition) < 850f) continue;
+			if (pos.DistanceTo(LairEntrancePosition) < 300f) continue;
 
 			// Variable sizes: small rolling patches (350-500f), medium banks (550-850f), massive expanses (900-1300f)
 			float sizeTier = GD.Randf();

@@ -41,12 +41,7 @@ public partial class HUDManager : CanvasLayer
             _positionLabel.HorizontalAlignment = HorizontalAlignment.Center;
         }
 
-        GameState.Instance.OnPositionChanged += (pos) =>
-        {
-            Vector2 mapPos = World.WorldManager.ToMapCoordinates(pos);
-            string region = World.WorldManager.GetRegionName(pos);
-            _positionLabel.Text = $"{region} | Pos: ({(int)mapPos.X}, {(int)mapPos.Y})";
-        };
+        GameState.Instance.OnPositionChanged += OnGameStatePositionChanged;
 
         // 2. Target Panel (Top Left)
         _targetPanel = GetNodeOrNull<TargetPanel>("TargetPanel");
@@ -90,11 +85,7 @@ public partial class HUDManager : CanvasLayer
             _healthOrb.MaxValue = GameState.Instance.PlayerMaxHealth;
         }
 
-        GameState.Instance.OnHealthChanged += (current, max) =>
-        {
-            _healthOrb.CurrentValue = current;
-            _healthOrb.MaxValue = max;
-        };
+        GameState.Instance.OnHealthChanged += OnGameStateHealthChanged;
 
         // 4. Power Orb (Bottom Right)
         _powerOrb = GetNodeOrNull<OrbGauge>("PowerOrb");
@@ -121,11 +112,7 @@ public partial class HUDManager : CanvasLayer
             _powerOrb.MaxValue = GameState.Instance.PlayerMaxPower;
         }
 
-        GameState.Instance.OnPowerChanged += (current, max) =>
-        {
-            _powerOrb.CurrentValue = current;
-            _powerOrb.MaxValue = max;
-        };
+        GameState.Instance.OnPowerChanged += OnGameStatePowerChanged;
 
         // 5. Stats Panel (Bottom Center)
         _statsPanel = GetNodeOrNull<StatsPanel>("StatsPanel");
@@ -173,27 +160,98 @@ public partial class HUDManager : CanvasLayer
         OnViewportSizeChanged();
     }
 
-    public override void _Process(double delta)
+    private void OnGameStatePositionChanged(Vector2 pos)
     {
-        if (_positionLabel != null)
+        if (!GodotObject.IsInstanceValid(this) || _positionLabel == null || !GodotObject.IsInstanceValid(_positionLabel))
+            return;
+
+        UpdatePositionText(pos);
+    }
+
+    private void OnGameStateHealthChanged(float current, float max)
+    {
+        if (!GodotObject.IsInstanceValid(this) || _healthOrb == null || !GodotObject.IsInstanceValid(_healthOrb))
+            return;
+
+        _healthOrb.CurrentValue = current;
+        _healthOrb.MaxValue = max;
+    }
+
+    private void OnGameStatePowerChanged(float current, float max)
+    {
+        if (!GodotObject.IsInstanceValid(this) || _powerOrb == null || !GodotObject.IsInstanceValid(_powerOrb))
+            return;
+
+        _powerOrb.CurrentValue = current;
+        _powerOrb.MaxValue = max;
+    }
+
+    private void UpdatePositionText(Vector2 pos)
+    {
+        if (GameState.Instance.IsInLair)
         {
-            Vector2 pos = Player != null ? Player.GlobalPosition : GameState.Instance.PlayerPosition;
+            _positionLabel.Text = $"Werewolf's Lair | Hideout ({(int)pos.X}, {(int)pos.Y})";
+        }
+        else
+        {
             Vector2 mapPos = World.WorldManager.ToMapCoordinates(pos);
             string region = World.WorldManager.GetRegionName(pos);
             _positionLabel.Text = $"{region} | Pos: ({(int)mapPos.X}, {(int)mapPos.Y})";
         }
     }
 
+    public override void _Process(double delta)
+    {
+        if (_positionLabel != null && GodotObject.IsInstanceValid(_positionLabel))
+        {
+            Vector2 pos = Player != null ? Player.GlobalPosition : GameState.Instance.PlayerPosition;
+            UpdatePositionText(pos);
+        }
+    }
+
     private void OnViewportSizeChanged()
     {
-        Vector2 size = GetViewport().GetVisibleRect().Size;
-        if (_positionLabel != null)
+        if (!GodotObject.IsInstanceValid(this)) return;
+
+        var vp = GetViewport();
+        if (vp == null || !GodotObject.IsInstanceValid(vp)) return;
+
+        Vector2 size = vp.GetVisibleRect().Size;
+        if (_positionLabel != null && GodotObject.IsInstanceValid(_positionLabel))
         {
             _positionLabel.Position = new Vector2(size.X / 2 - _positionLabel.Size.X / 2, 15);
         }
-        _healthOrb.Position = new Vector2(24, size.Y - 234);
-        _powerOrb.Position = new Vector2(size.X - 234, size.Y - 234);
-        _statsPanel.Position = new Vector2(size.X / 2 - 140, size.Y - 80);
-        _actionBar.Position = new Vector2(size.X / 2 + 150, size.Y - 80);
+        if (_healthOrb != null && GodotObject.IsInstanceValid(_healthOrb))
+        {
+            _healthOrb.Position = new Vector2(24, size.Y - 234);
+        }
+        if (_powerOrb != null && GodotObject.IsInstanceValid(_powerOrb))
+        {
+            _powerOrb.Position = new Vector2(size.X - 234, size.Y - 234);
+        }
+        if (_statsPanel != null && GodotObject.IsInstanceValid(_statsPanel))
+        {
+            _statsPanel.Position = new Vector2(size.X / 2 - 140, size.Y - 80);
+        }
+        if (_actionBar != null && GodotObject.IsInstanceValid(_actionBar))
+        {
+            _actionBar.Position = new Vector2(size.X / 2 + 150, size.Y - 80);
+        }
+    }
+
+    public override void _ExitTree()
+    {
+        if (GameState.Instance != null)
+        {
+            GameState.Instance.OnPositionChanged -= OnGameStatePositionChanged;
+            GameState.Instance.OnHealthChanged -= OnGameStateHealthChanged;
+            GameState.Instance.OnPowerChanged -= OnGameStatePowerChanged;
+        }
+
+        var vp = GetViewport();
+        if (vp != null && GodotObject.IsInstanceValid(vp))
+        {
+            vp.SizeChanged -= OnViewportSizeChanged;
+        }
     }
 }

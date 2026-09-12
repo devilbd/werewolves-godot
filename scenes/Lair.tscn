@@ -1,0 +1,127 @@
+[gd_scene format=3 uid="uid://c6lairscene"]
+
+[ext_resource type="Script" path="res://Scripts/World/LairManager.cs" id="1_lair"]
+[ext_resource type="PackedScene" path="res://scenes/Entities/Werewolf.tscn" id="3_werewolf_scene"]
+[ext_resource type="Script" path="res://Scripts/UI/HUDManager.cs" id="4_hud"]
+[ext_resource type="PackedScene" path="res://scenes/UI/TargetPanel.tscn" id="5_target_scene"]
+[ext_resource type="Script" path="res://Scripts/UI/OrbGauge.cs" id="6_orb"]
+[ext_resource type="Texture2D" path="res://assets/health_ring.png" id="7_health_ring"]
+[ext_resource type="Texture2D" path="res://assets/power_ring.png" id="8_power_ring"]
+[ext_resource type="PackedScene" path="res://scenes/UI/StatsPanel.tscn" id="9_stats_scene"]
+[ext_resource type="PackedScene" path="res://scenes/UI/ActionBar.tscn" id="10_action_scene"]
+[ext_resource type="PackedScene" path="res://scenes/UI/PouchWindow.tscn" id="11_pouch_scene"]
+
+[node name="Lair" type="Node2D" node_paths=PackedStringArray("Player")]
+script = ExtResource("1_lair")
+Player = NodePath("Entities/Werewolf")
+
+[node name="FloorContainer" type="Node2D" parent="."]
+z_index = -10
+
+[node name="Entities" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Werewolf" parent="Entities" instance=ExtResource("3_werewolf_scene")]
+position = Vector2(-1650, 0)
+
+[node name="HUD" type="CanvasLayer" parent="." node_paths=PackedStringArray("Player")]
+script = ExtResource("4_hud")
+Player = NodePath("../Entities/Werewolf")
+
+[node name="PositionLabel" type="Label" parent="HUD"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -180.0
+offset_top = 15.0
+offset_right = 180.0
+offset_bottom = 45.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 16
+text = "Werewolf's Lair | Hideout"
+horizontal_alignment = 1
+
+[node name="TargetPanel" parent="HUD" node_paths=PackedStringArray("Player") instance=ExtResource("5_target_scene")]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 260.0
+offset_bottom = 165.0
+Player = NodePath("../../Entities/Werewolf")
+
+[node name="HealthOrb" type="Control" parent="HUD"]
+custom_minimum_size = Vector2(210, 210)
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -234.0
+offset_right = 234.0
+offset_bottom = -24.0
+grow_vertical = 0
+script = ExtResource("6_orb")
+LabelText = "Health"
+PrimaryColor = Color(0.55, 0, 0, 1)
+BackgroundColor = Color(0.2, 0, 0, 1)
+RingTexture = ExtResource("7_health_ring")
+
+[node name="PowerOrb" type="Control" parent="HUD"]
+custom_minimum_size = Vector2(210, 210)
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -234.0
+offset_top = -234.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 0
+grow_vertical = 0
+script = ExtResource("6_orb")
+LabelText = "Power"
+PrimaryColor = Color(0, 0.55, 0.55, 1)
+BackgroundColor = Color(0, 0.2, 0.2, 1)
+RingTexture = ExtResource("8_power_ring")
+
+[node name="StatsPanel" parent="HUD" node_paths=PackedStringArray("Player") instance=ExtResource("9_stats_scene")]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -140.0
+offset_top = -80.0
+offset_right = 140.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 0
+Player = NodePath("../../Entities/Werewolf")
+
+[node name="ActionBar" parent="HUD" instance=ExtResource("10_action_scene")]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 150.0
+offset_top = -80.0
+offset_right = 250.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="PouchWindow" parent="HUD" instance=ExtResource("11_pouch_scene")]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -225.0
+offset_top = -225.0
+offset_right = 225.0
+offset_bottom = 225.0
+grow_horizontal = 2
+grow_vertical = 2

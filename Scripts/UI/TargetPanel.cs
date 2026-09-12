@@ -378,17 +378,30 @@ public partial class TargetPanel : PanelContainer
 
     private void OnTargetChanged(Node2D? target)
     {
+        if (!GodotObject.IsInstanceValid(this) || _healthBar == null || !GodotObject.IsInstanceValid(_healthBar))
+            return;
+
         if (target is ISelectableTarget selectable && !selectable.IsDead && selectable.Health > 0f)
         {
             Visible = true;
-            _nameLabel.Text = selectable.TargetName;
+            if (_nameLabel != null && GodotObject.IsInstanceValid(_nameLabel))
+                _nameLabel.Text = selectable.TargetName;
             _healthBar.MaxValue = selectable.MaxHealth;
             _healthBar.Value = selectable.Health;
-            _hpLabel.Text = $"{(int)selectable.Health} / {(int)selectable.MaxHealth}";
+            if (_hpLabel != null && GodotObject.IsInstanceValid(_hpLabel))
+                _hpLabel.Text = $"{(int)selectable.Health} / {(int)selectable.MaxHealth}";
         }
         else
         {
             Visible = false;
+        }
+    }
+
+    public override void _ExitTree()
+    {
+        if (GameState.Instance != null)
+        {
+            GameState.Instance.OnTargetChanged -= OnTargetChanged;
         }
     }
 

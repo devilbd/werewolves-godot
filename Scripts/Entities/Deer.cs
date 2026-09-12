@@ -26,7 +26,7 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget
     private Vector2 _wanderVelocity = Vector2.Zero;
     private float _wanderTimer = 0f;
     private float _pauseTimer = 0f;
-    public Rect2 TargetBounds => new Rect2(-34f, -66f, 68f, 64f);
+    public Rect2 TargetBounds => new Rect2(-51f, -99f, 102f, 96f);
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;
@@ -59,16 +59,16 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget
         _sprite.Hframes = 4;
         _sprite.Vframes = 4; // 150x150 cells in 600x600 sheet (4 cols, 4 rows)
         _sprite.Frame = 0;
-        _sprite.Scale = new Vector2(0.5f, 0.5f);
+        _sprite.Scale = new Vector2(0.75f, 0.75f);
         _sprite.Offset = new Vector2(0, -40);
 
         _collision = GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
         if (_collision == null)
         {
             _collision = new CollisionShape2D { Name = "CollisionShape2D" };
-            var shape = new CircleShape2D { Radius = 18f };
+            var shape = new CircleShape2D { Radius = 27f };
             _collision.Shape = shape;
-            _collision.Position = new Vector2(0, -5);
+            _collision.Position = new Vector2(0, -7);
             AddChild(_collision);
         }
 

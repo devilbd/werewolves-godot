@@ -4,18 +4,18 @@
 [ext_resource type="Texture2D" path="res://assets/deer.png" id="2_deer_tex"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_1"]
-radius = 18.0
+radius = 27.0
 
 [node name="Deer" type="CharacterBody2D"]
 script = ExtResource("1_deer")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.75, 0.75)
 offset = Vector2(0, -40)
 texture = ExtResource("2_deer_tex")
 hframes = 4
 vframes = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, -5)
+position = Vector2(0, -7)
 shape = SubResource("CircleShape2D_1")
