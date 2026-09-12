@@ -73,12 +73,12 @@ werewolves-godot/
 - **Strongly-typed C# events** (`System.Action`) are preferred over Godot string signals for performance and type safety:
   - `OnHealthChanged(float current, float max)`
   - `OnPowerChanged(float current, float max)`
-  - `OnMapChanged(Vector2I coords)`
+  - `OnPositionChanged(Vector2 position)`
   - `OnPouchChanged()`
   - `OnTargetChanged(Node2D? target)`
   - `OnCooldownUpdated(int index, float remaining, float total)`
   - `OnPouchToggled(bool isOpen)`
-  - `OnSpawnDamageNumber(string text, float posX, Color color)`
+  - `OnSpawnDamageNumber(string text, Vector2 position, Color color)`
 
 ### 3.2 Dual-Mode Node Initialization
 All scripts are designed to work under two scenarios:
@@ -98,19 +98,18 @@ All scripts are designed to work under two scenarios:
   Successful auto-attacks generate dynamic power:
   $$\text{Power} = 12.5 \times (\text{rand}(0, 4) + 1)$$
 
-### 3.4 World Map Grid & Area Generation (`WorldManager.cs`)
-- Map matrix bounds: `GameState.WorldMin = -5` to `GameState.WorldMax = 5` (11×11 cells).
-- Screen edges detect player crossing and trigger coordinate step (`dir.X`, `dir.Y`).
-- Entities are cleaned via `QueueFree()` on transition (except `Player`).
-- **Village Coordinate `[5, 5]`**:
-  - 8 cottages arranged in a circle ($r = 380\text{px}$) around a central lantern.
-  - Path ground texture `res://assets/houses/simple_path_cross_prim.png`.
-- **Wilderness Coordinates**:
-  - Tiled forest ground `res://assets/pine_tree_forest_ground_1.png`.
-  - 25% chance of dynamic lake with collision body (avoids spawning trees/rocks inside bounds).
-  - 60 pine trees (15% interactive `TreeObject`).
-  - 2 quarry boulders (`RockObject`).
-  - 30% chance of wild deer (`Deer`).
+### 3.4 Open World Map & Persistent Landmarks (`WorldManager.cs`)
+- **World Bounds**: 10,000 × 10,000 units (`WorldRadius = 5000f`), surrounded by perimeter collision walls and dense border trees.
+- **Camera2D Tracking**: Smooth camera attached to the `Werewolf` player (`PositionSmoothingEnabled = true`, limits clamped to world boundaries).
+- **Dynamic Terrain Tiling**: Forest ground texture (`pine_tree_forest_ground_1.png`) is dynamically snapped to 350px tile intervals centered on the player/camera for seamless infinite scrolling.
+- **Points of Interest (Landmarks)**:
+  - **The Village** at `(2500, -1800)`: 8 cottages arranged in a circle around the central lantern with cobblestone pathing.
+  - **Silent Lake** at `(-2000, 2000)`: Dynamic lake with water body collision.
+  - **Misty Lake** at `(-2200, -2200)`: Second natural lake formation.
+  - **Quarry Hills** at `(2200, 2200)`: Dense cluster of minable boulders (`RockObject`).
+  - **Hunting Grounds**: Open clearings at `(0, -2400)`, `(-2400, 0)`, etc. with roaming herds of deer (`Deer`).
+  - **The Deep Wilderness**: ~450 pine trees (15% interactive `TreeObject`) and scattered rocks.
+  - **Awakening Grove** at `(0, 0)`: Central clearing where the player awakens.
 
 ### 3.5 Custom UI Rendering (`OrbGauge.cs` & `PouchWindow.cs`)
 - **`OrbGauge`**:
@@ -124,7 +123,7 @@ All scripts are designed to work under two scenarios:
 ### 3.6 State Persistence (`SaveManager.cs`)
 - Serializes `SaveData` to `user://werewolves_save.json` using `System.Text.Json`.
 - Automatically invoked on:
-  - Coordinate change (`GameState.SetMapPosition`)
+  - Position changes / movement (`GameState.SetPlayerPosition` / `LoadedPlayerPosition`)
   - Item collection (`GameState.AddPouchItem`)
   - Item repositioning in pouch (`GameState.UpdatePouchItemPosition`)
 

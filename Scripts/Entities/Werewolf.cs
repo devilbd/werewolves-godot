@@ -56,7 +56,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant
     private const float AutoAttackInterval = 1.0f;
     private const float MeleeRange = 110f;
 
-    public event Action<Vector2>? OnExitedScreenEdge;
+    private Camera2D? _camera;
 
     public override void _Ready()
     {
@@ -89,10 +89,24 @@ public partial class Werewolf : CharacterBody2D, ICombatant
             AddChild(_collision);
         }
 
-        if (GlobalPosition == Vector2.Zero)
+        _camera = GetNodeOrNull<Camera2D>("Camera2D");
+        if (_camera == null)
         {
-            GlobalPosition = SaveManager.LoadedPlayerPosition;
+            _camera = new Camera2D
+            {
+                Name = "Camera2D",
+                PositionSmoothingEnabled = true,
+                PositionSmoothingSpeed = 5.0f,
+                LimitLeft = -5000,
+                LimitTop = -5000,
+                LimitRight = 5000,
+                LimitBottom = 5000
+            };
+            AddChild(_camera);
         }
+
+        GlobalPosition = SaveManager.LoadedPlayerPosition;
+        GameState.Instance.PlayerPosition = GlobalPosition;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -146,9 +160,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant
         }
 
         SaveManager.LoadedPlayerPosition = GlobalPosition;
-
-        // Handle Screen Edge boundary check for area transition
-        CheckScreenEdgeTransition();
+        GameState.Instance.PlayerPosition = GlobalPosition;
 
         // Handle auto-attack in warmode
         ProcessAutoAttack(dt);
@@ -158,47 +170,6 @@ public partial class Werewolf : CharacterBody2D, ICombatant
 
         // Update animation
         UpdateAnimation(dt);
-    }
-
-    private void CheckScreenEdgeTransition()
-    {
-        var viewportRect = GetViewportRect();
-        float margin = 10f;
-        Vector2 pos = GlobalPosition;
-        bool transitioned = false;
-        Vector2 dir = Vector2.Zero;
-
-        if (pos.X < -margin)
-        {
-            dir.X = -1;
-            pos.X = viewportRect.Size.X - 20;
-            transitioned = true;
-        }
-        else if (pos.X > viewportRect.Size.X + margin)
-        {
-            dir.X = 1;
-            pos.X = 20;
-            transitioned = true;
-        }
-
-        if (pos.Y < -margin)
-        {
-            dir.Y = -1;
-            pos.Y = viewportRect.Size.Y - 20;
-            transitioned = true;
-        }
-        else if (pos.Y > viewportRect.Size.Y + margin)
-        {
-            dir.Y = 1;
-            pos.Y = 20;
-            transitioned = true;
-        }
-
-        if (transitioned)
-        {
-            GlobalPosition = pos;
-            OnExitedScreenEdge?.Invoke(dir);
-        }
     }
 
     private void ProcessAutoAttack(float dt)

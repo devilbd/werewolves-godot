@@ -14,12 +14,12 @@ public static class SaveManager
     {
         [JsonPropertyName("mapX")] public int MapX { get; set; } = 0;
         [JsonPropertyName("mapY")] public int MapY { get; set; } = 0;
-        [JsonPropertyName("playerX")] public float PlayerX { get; set; } = 960f;
-        [JsonPropertyName("playerY")] public float PlayerY { get; set; } = 540f;
+        [JsonPropertyName("playerX")] public float PlayerX { get; set; } = 0f;
+        [JsonPropertyName("playerY")] public float PlayerY { get; set; } = 0f;
         [JsonPropertyName("pouchItems")] public Dictionary<string, PouchItemData> PouchItems { get; set; } = new();
     }
 
-    public static Vector2 LoadedPlayerPosition { get; set; } = new Vector2(960f, 540f);
+    public static Vector2 LoadedPlayerPosition { get; set; } = Vector2.Zero;
 
     public static void SaveGame()
     {
@@ -27,8 +27,8 @@ public static class SaveManager
         {
             var data = new SaveData
             {
-                MapX = GameState.Instance.CurrentMapPosition.X,
-                MapY = GameState.Instance.CurrentMapPosition.Y,
+                MapX = 0,
+                MapY = 0,
                 PlayerX = LoadedPlayerPosition.X,
                 PlayerY = LoadedPlayerPosition.Y,
                 PouchItems = GameState.Instance.PouchItems
@@ -63,12 +63,8 @@ public static class SaveManager
             var data = JsonSerializer.Deserialize<SaveData>(json);
             if (data == null) return;
 
-            GameState.Instance.CurrentMapPosition = new Vector2I(
-                Mathf.Clamp(data.MapX, GameState.WorldMin, GameState.WorldMax),
-                Mathf.Clamp(data.MapY, GameState.WorldMin, GameState.WorldMax)
-            );
-
             LoadedPlayerPosition = new Vector2(data.PlayerX, data.PlayerY);
+            GameState.Instance.PlayerPosition = LoadedPlayerPosition;
 
             GameState.Instance.PouchItems.Clear();
             if (data.PouchItems != null)

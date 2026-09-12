@@ -35,9 +35,16 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget
     private const float AnimSpeed = 0.12f;
 
     public Werewolf? TargetWerewolf { get; set; }
+    [Export] public Vector2 HomePosition { get; set; } = Vector2.Zero;
+    private const float MaxWanderDistance = 450f;
 
     public override void _Ready()
     {
+        if (HomePosition == Vector2.Zero)
+        {
+            HomePosition = GlobalPosition;
+        }
+
         _sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
         if (_sprite == null)
         {
@@ -175,15 +182,11 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget
                 Velocity = _wanderVelocity;
                 _sprite.FlipH = Velocity.X < 0;
 
-                // Screen boundary bounce
-                var viewportRect = GetViewportRect();
-                if ((GlobalPosition.X < 40 && Velocity.X < 0) || (GlobalPosition.X > viewportRect.Size.X - 40 && Velocity.X > 0))
+                // Tethered wandering relative to HomePosition
+                if (GlobalPosition.DistanceTo(HomePosition) > MaxWanderDistance)
                 {
-                    _wanderVelocity.X = -_wanderVelocity.X;
-                }
-                if ((GlobalPosition.Y < 40 && Velocity.Y < 0) || (GlobalPosition.Y > viewportRect.Size.Y - 40 && Velocity.Y > 0))
-                {
-                    _wanderVelocity.Y = -_wanderVelocity.Y;
+                    Vector2 returnDir = (HomePosition - GlobalPosition).Normalized();
+                    _wanderVelocity = returnDir * _speed;
                 }
 
                 if (_wanderTimer <= 0f)

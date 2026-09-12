@@ -9,7 +9,6 @@ public partial class DroppedLoot : Area2D
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;
-    private bool _isHovered = false;
 
     public static DroppedLoot Instantiate(string itemType, Vector2 position)
     {
@@ -47,7 +46,6 @@ public partial class DroppedLoot : Area2D
 
     private void OnMouseEntered()
     {
-        _isHovered = true;
         var cursor = GD.Load<Resource>("res://assets/cursors/grab_o.png");
         if (cursor != null)
         {
@@ -57,7 +55,6 @@ public partial class DroppedLoot : Area2D
 
     private void OnMouseExited()
     {
-        _isHovered = false;
         var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
         if (cursor != null)
         {

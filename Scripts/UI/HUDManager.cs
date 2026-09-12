@@ -8,7 +8,7 @@ public partial class HUDManager : CanvasLayer
 {
     [Export] public Werewolf? Player { get; set; }
 
-    private Label _areaLabel = null!;
+    private Label _positionLabel = null!;
     private OrbGauge _healthOrb = null!;
     private OrbGauge _powerOrb = null!;
     private StatsPanel _statsPanel = null!;
@@ -18,26 +18,33 @@ public partial class HUDManager : CanvasLayer
 
     public override void _Ready()
     {
-        // 1. Area Label (Top Center)
-        _areaLabel = GetNodeOrNull<Label>("AreaLabel");
-        if (_areaLabel == null)
+        // 1. Position Label (Top Center)
+        _positionLabel = GetNodeOrNull<Label>("PositionLabel") ?? GetNodeOrNull<Label>("AreaLabel");
+        if (_positionLabel == null)
         {
-            _areaLabel = new Label
+            _positionLabel = new Label
             {
-                Name = "AreaLabel",
-                Text = $"Area: [{GameState.Instance.CurrentMapPosition.X}, {GameState.Instance.CurrentMapPosition.Y}]",
+                Name = "PositionLabel",
+                Text = "Wilderness | Pos: (0, 0)",
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Size = new Vector2(200, 30),
-                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 - 100, 15)
+                Size = new Vector2(360, 30),
+                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 - 180, 15)
             };
-            _areaLabel.AddThemeFontSizeOverride("font_size", 16);
-            _areaLabel.AddThemeColorOverride("font_color", new Color(0.9f, 0.9f, 0.9f));
-            AddChild(_areaLabel);
+            _positionLabel.AddThemeFontSizeOverride("font_size", 16);
+            _positionLabel.AddThemeColorOverride("font_color", new Color(0.9f, 0.9f, 0.9f));
+            AddChild(_positionLabel);
+        }
+        else
+        {
+            _positionLabel.Name = "PositionLabel";
+            _positionLabel.Size = new Vector2(360, 30);
+            _positionLabel.HorizontalAlignment = HorizontalAlignment.Center;
         }
 
-        GameState.Instance.OnMapChanged += (coords) =>
+        GameState.Instance.OnPositionChanged += (pos) =>
         {
-            _areaLabel.Text = $"Area: [{coords.X}, {coords.Y}]";
+            string region = World.WorldManager.GetRegionName(pos);
+            _positionLabel.Text = $"{region} | Pos: ({(int)pos.X}, {(int)pos.Y})";
         };
 
         // 2. Target Panel (Top Left)
@@ -165,10 +172,23 @@ public partial class HUDManager : CanvasLayer
         OnViewportSizeChanged();
     }
 
+    public override void _Process(double delta)
+    {
+        if (_positionLabel != null)
+        {
+            Vector2 pos = Player != null ? Player.GlobalPosition : GameState.Instance.PlayerPosition;
+            string region = World.WorldManager.GetRegionName(pos);
+            _positionLabel.Text = $"{region} | Pos: ({(int)pos.X}, {(int)pos.Y})";
+        }
+    }
+
     private void OnViewportSizeChanged()
     {
         Vector2 size = GetViewport().GetVisibleRect().Size;
-        _areaLabel.Position = new Vector2(size.X / 2 - 100, 15);
+        if (_positionLabel != null)
+        {
+            _positionLabel.Position = new Vector2(size.X / 2 - _positionLabel.Size.X / 2, 15);
+        }
         _healthOrb.Position = new Vector2(20, size.Y - 160);
         _powerOrb.Position = new Vector2(size.X - 160, size.Y - 160);
         _statsPanel.Position = new Vector2(size.X / 2 - 140, size.Y - 80);

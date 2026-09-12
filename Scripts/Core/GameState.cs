@@ -22,8 +22,7 @@ public partial class GameState : Node
         private set => _instance = value;
     }
 
-    public const int WorldMin = -5;
-    public const int WorldMax = 5;
+    public const float WorldBoundRadius = 5000f;
 
     // Player stats
     public float PlayerHealth { get; private set; } = 100f;
@@ -46,8 +45,20 @@ public partial class GameState : Node
     public float[] SkillCooldownRemaining { get; } = new float[4];
     public float[] SkillCooldownTotal { get; } = new float[] { 2.0f, 2.0f, 2.0f, 60.0f };
 
-    // World coordinate
-    public Vector2I CurrentMapPosition { get; set; } = new Vector2I(0, 0);
+    // World position (continuous open world coordinates)
+    private Vector2 _playerPosition = Vector2.Zero;
+    public Vector2 PlayerPosition
+    {
+        get => _playerPosition;
+        set
+        {
+            if (_playerPosition != value)
+            {
+                _playerPosition = value;
+                OnPositionChanged?.Invoke(_playerPosition);
+            }
+        }
+    }
 
     // Inventory
     public Dictionary<string, PouchItemData> PouchItems { get; } = new();
@@ -72,12 +83,12 @@ public partial class GameState : Node
     // Events
     public event Action<float, float>? OnHealthChanged;
     public event Action<float, float>? OnPowerChanged;
-    public event Action<Vector2I>? OnMapChanged;
+    public event Action<Vector2>? OnPositionChanged;
     public event Action? OnPouchChanged;
     public event Action<Node2D?>? OnTargetChanged;
     public event Action<int, float, float>? OnCooldownUpdated;
     public event Action<bool>? OnPouchToggled;
-    public event Action<string, float, Color>? OnSpawnDamageNumber;
+    public event Action<string, Vector2, Color>? OnSpawnDamageNumber;
 
     public override void _EnterTree()
     {
@@ -173,13 +184,9 @@ public partial class GameState : Node
         Evasion /= 1.3f;
     }
 
-    public void SetMapPosition(Vector2I pos)
+    public void SetPlayerPosition(Vector2 pos)
     {
-        CurrentMapPosition = new Vector2I(
-            Mathf.Clamp(pos.X, WorldMin, WorldMax),
-            Mathf.Clamp(pos.Y, WorldMin, WorldMax)
-        );
-        OnMapChanged?.Invoke(CurrentMapPosition);
+        PlayerPosition = pos;
         SaveManager.SaveGame();
     }
 
@@ -214,6 +221,6 @@ public partial class GameState : Node
 
     public void TriggerDamageNumber(string text, Vector2 position, Color color)
     {
-        OnSpawnDamageNumber?.Invoke(text, position.X, color);
+        OnSpawnDamageNumber?.Invoke(text, position, color);
     }
 }
