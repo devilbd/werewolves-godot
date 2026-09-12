@@ -18,6 +18,16 @@ public partial class WorldManager : Node2D
 	public static readonly Vector2 QuarryPosition = new Vector2(2200f, 2200f);
 	public const float WorldRadius = 5000f;
 
+	// Coordinate transformation helpers between Godot world coordinates and map coordinates
+	// Inverts Y so North (Up) is positive, and keeps X so East (Right) is positive (Cartesian standard)
+	public static Vector2 ToMapCoordinates(Vector2 worldPos) => new Vector2(worldPos.X, -worldPos.Y);
+	public static Vector2 ToWorldCoordinates(Vector2 mapPos) => new Vector2(mapPos.X, -mapPos.Y);
+
+	public static Vector2 VillageMapPosition => ToMapCoordinates(VillagePosition);
+	public static Vector2 SilentLakeMapPosition => ToMapCoordinates(SilentLakePosition);
+	public static Vector2 MistyLakeMapPosition => ToMapCoordinates(MistyLakePosition);
+	public static Vector2 QuarryMapPosition => ToMapCoordinates(QuarryPosition);
+
 	private TextureRect _groundBackground = null!;
 	private Node2D _lakeContainer = null!;
 	private Node2D _entitiesContainer = null!;

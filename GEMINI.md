@@ -102,14 +102,17 @@ All scripts are designed to work under two scenarios:
 - **World Bounds**: 10,000 × 10,000 units (`WorldRadius = 5000f`), surrounded by perimeter collision walls and dense border trees.
 - **Camera2D Tracking**: Smooth camera attached to the `Werewolf` player (`PositionSmoothingEnabled = true`, limits clamped to world boundaries).
 - **Dynamic Terrain Tiling**: Forest ground texture (`pine_tree_forest_ground_1.png`) is dynamically snapped to 350px tile intervals centered on the player/camera for seamless infinite scrolling.
+- **Coordinate System & Map Coordinates**:
+  - Internal world coordinates use Godot 2D (`+X` Right, `+Y` Down).
+  - Map / HUD coordinates use standard Cartesian coordinates (`WorldManager.ToMapCoordinates`): `+X` East/Right, `+Y` North/Up (inverting Godot's vertical axis).
 - **Points of Interest (Landmarks)**:
-  - **The Village** at `(2500, -1800)`: 8 cottages arranged in a circle around the central lantern with cobblestone pathing.
-  - **Silent Lake** at `(-2000, 2000)`: Dynamic lake with water body collision.
-  - **Misty Lake** at `(-2200, -2200)`: Second natural lake formation.
-  - **Quarry Hills** at `(2200, 2200)`: Dense cluster of minable boulders (`RockObject`).
-  - **Hunting Grounds**: Open clearings at `(0, -2400)`, `(-2400, 0)`, etc. with roaming herds of deer (`Deer`).
+  - **Awakening Grove** at Map `(0, 0)` [World `(0, 0)`]: Central clearing where the player awakens.
+  - **The Village** at Map `(2500, 1800)` [World `(2500, -1800)`]: 8 cottages arranged in a circle around the central lantern with cobblestone pathing (North-East).
+  - **Silent Lake** at Map `(-2000, -2000)` [World `(-2000, 2000)`]: Dynamic lake with water body collision (South-West).
+  - **Misty Lake** at Map `(-2200, 2200)` [World `(-2200, -2200)`]: Second natural lake formation (North-West).
+  - **Quarry Hills** at Map `(2200, -2200)` [World `(2200, 2200)`]: Dense cluster of minable boulders (`RockObject`) (South-East).
+  - **Hunting Grounds**: Open clearings at Map `(0, 2400)`, `(-2400, 0)`, etc. with roaming herds of deer (`Deer`).
   - **The Deep Wilderness**: ~450 pine trees (15% interactive `TreeObject`) and scattered rocks.
-  - **Awakening Grove** at `(0, 0)`: Central clearing where the player awakens.
 
 ### 3.5 Custom UI Rendering (`OrbGauge.cs` & `PouchWindow.cs`)
 - **`OrbGauge`**:

@@ -58,6 +58,9 @@ public partial class Werewolf : CharacterBody2D, ICombatant
 
     private Camera2D? _camera;
 
+    public bool IsAutoInteracting { get; private set; } = false;
+    public event Action<bool>? OnAutoInteractToggled;
+
     public override void _Ready()
     {
         _texMoving = GD.Load<Texture2D>("res://assets/werewolf/optimized/w_moving.png");
@@ -107,6 +110,14 @@ public partial class Werewolf : CharacterBody2D, ICombatant
 
         GlobalPosition = SaveManager.LoadedPlayerPosition;
         GameState.Instance.PlayerPosition = GlobalPosition;
+
+        GameState.Instance.OnTargetChanged += (target) =>
+        {
+            if (target == null)
+            {
+                SetAutoInteract(false);
+            }
+        };
     }
 
     public override void _PhysicsProcess(double delta)
@@ -174,9 +185,23 @@ public partial class Werewolf : CharacterBody2D, ICombatant
 
     private void ProcessAutoAttack(float dt)
     {
-        if (GameState.Instance.SelectedTarget is Deer deer && !deer.IsDead)
+        if (!IsAutoInteracting)
         {
-            float dist = GlobalPosition.DistanceTo(deer.GlobalPosition);
+            _autoAttackTimer = 0f;
+            return;
+        }
+
+        var target = GameState.Instance.SelectedTarget;
+        if (target == null || (target is ISelectableTarget selectable && (selectable.IsDead || selectable.Health <= 0)))
+        {
+            SetAutoInteract(false);
+            return;
+        }
+
+        float dist = GlobalPosition.DistanceTo(target.GlobalPosition);
+
+        if (target is Deer deer)
+        {
             if (dist <= MeleeRange && !_isAttacking)
             {
                 _autoAttackTimer += dt;
@@ -184,11 +209,45 @@ public partial class Werewolf : CharacterBody2D, ICombatant
                 {
                     _autoAttackTimer = 0f;
                     ExecuteMeleeHit(deer);
+                    if (deer.Health <= 0f || deer.IsDead)
+                    {
+                        SetAutoInteract(false);
+                    }
                 }
             }
-            else
+        }
+        else if (target is TreeObject tree)
+        {
+            if (dist <= MeleeRange * 1.5f && !_isAttacking)
             {
-                _autoAttackTimer = 0f;
+                _autoAttackTimer += dt;
+                if (_autoAttackTimer >= AutoAttackInterval)
+                {
+                    _autoAttackTimer = 0f;
+                    TriggerAttackAnimation(0);
+                    tree.Interact();
+                    if (tree.Health <= 0f || tree.IsDead)
+                    {
+                        SetAutoInteract(false);
+                    }
+                }
+            }
+        }
+        else if (target is RockObject rock)
+        {
+            if (dist <= MeleeRange * 1.5f && !_isAttacking)
+            {
+                _autoAttackTimer += dt;
+                if (_autoAttackTimer >= AutoAttackInterval)
+                {
+                    _autoAttackTimer = 0f;
+                    TriggerAttackAnimation(0);
+                    rock.Interact();
+                    if (rock.Health <= 0f || rock.IsDead)
+                    {
+                        SetAutoInteract(false);
+                    }
+                }
             }
         }
     }
@@ -304,39 +363,89 @@ public partial class Werewolf : CharacterBody2D, ICombatant
         }
     }
 
-    public void TriggerInteractAction()
+    public void ToggleAutoInteract()
+    {
+        SetAutoInteract(!IsAutoInteracting);
+    }
+
+    public void SetAutoInteract(bool enabled)
+    {
+        var target = GameState.Instance.SelectedTarget;
+        if (enabled && (target == null || (target is ISelectableTarget selectable && (selectable.IsDead || selectable.Health <= 0))))
+        {
+            IsAutoInteracting = false;
+            OnAutoInteractToggled?.Invoke(false);
+            return;
+        }
+
+        IsAutoInteracting = enabled;
+        OnAutoInteractToggled?.Invoke(IsAutoInteracting);
+
+        if (IsAutoInteracting)
+        {
+            PerformSingleInteractAction();
+            _autoAttackTimer = 0f;
+        }
+        else
+        {
+            _autoAttackTimer = 0f;
+        }
+    }
+
+    private void PerformSingleInteractAction()
     {
         if (GameState.Instance.SelectedTarget is TreeObject tree)
         {
-            if (GlobalPosition.DistanceTo(tree.GlobalPosition) <= MeleeRange * 1.5f)
+            if (GlobalPosition.DistanceTo(tree.GlobalPosition) <= MeleeRange * 1.5f && !_isAttacking)
             {
                 TriggerAttackAnimation(0);
                 tree.Interact();
+                if (tree.Health <= 0f || tree.IsDead)
+                {
+                    SetAutoInteract(false);
+                }
             }
-            else
+            else if (GlobalPosition.DistanceTo(tree.GlobalPosition) > MeleeRange * 1.5f)
             {
-                GameState.Instance.TriggerDamageNumber("Too far away", GlobalPosition + new Vector2(0, -50), new Color(0.8f, 0.8f, 0.8f));
+                GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -50), new Color(0.9f, 0.85f, 0.5f));
             }
         }
         else if (GameState.Instance.SelectedTarget is RockObject rock)
         {
-            if (GlobalPosition.DistanceTo(rock.GlobalPosition) <= MeleeRange * 1.5f)
+            if (GlobalPosition.DistanceTo(rock.GlobalPosition) <= MeleeRange * 1.5f && !_isAttacking)
             {
                 TriggerAttackAnimation(0);
                 rock.Interact();
+                if (rock.Health <= 0f || rock.IsDead)
+                {
+                    SetAutoInteract(false);
+                }
             }
-            else
+            else if (GlobalPosition.DistanceTo(rock.GlobalPosition) > MeleeRange * 1.5f)
             {
-                GameState.Instance.TriggerDamageNumber("Too far away", GlobalPosition + new Vector2(0, -50), new Color(0.8f, 0.8f, 0.8f));
+                GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -50), new Color(0.9f, 0.85f, 0.5f));
             }
         }
         else if (GameState.Instance.SelectedTarget is Deer deer)
         {
-            if (GlobalPosition.DistanceTo(deer.GlobalPosition) <= MeleeRange)
+            if (GlobalPosition.DistanceTo(deer.GlobalPosition) <= MeleeRange && !_isAttacking)
             {
                 ExecuteMeleeHit(deer);
+                if (deer.Health <= 0f || deer.IsDead)
+                {
+                    SetAutoInteract(false);
+                }
+            }
+            else if (GlobalPosition.DistanceTo(deer.GlobalPosition) > MeleeRange)
+            {
+                GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -50), new Color(0.9f, 0.85f, 0.5f));
             }
         }
+    }
+
+    public void TriggerInteractAction()
+    {
+        ToggleAutoInteract();
     }
 
     private void TriggerAttackAnimation(int type)

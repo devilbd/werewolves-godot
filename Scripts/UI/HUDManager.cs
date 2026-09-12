@@ -43,8 +43,9 @@ public partial class HUDManager : CanvasLayer
 
         GameState.Instance.OnPositionChanged += (pos) =>
         {
+            Vector2 mapPos = World.WorldManager.ToMapCoordinates(pos);
             string region = World.WorldManager.GetRegionName(pos);
-            _positionLabel.Text = $"{region} | Pos: ({(int)pos.X}, {(int)pos.Y})";
+            _positionLabel.Text = $"{region} | Pos: ({(int)mapPos.X}, {(int)mapPos.Y})";
         };
 
         // 2. Target Panel (Top Left)
@@ -177,8 +178,9 @@ public partial class HUDManager : CanvasLayer
         if (_positionLabel != null)
         {
             Vector2 pos = Player != null ? Player.GlobalPosition : GameState.Instance.PlayerPosition;
+            Vector2 mapPos = World.WorldManager.ToMapCoordinates(pos);
             string region = World.WorldManager.GetRegionName(pos);
-            _positionLabel.Text = $"{region} | Pos: ({(int)pos.X}, {(int)pos.Y})";
+            _positionLabel.Text = $"{region} | Pos: ({(int)mapPos.X}, {(int)mapPos.Y})";
         }
     }
 

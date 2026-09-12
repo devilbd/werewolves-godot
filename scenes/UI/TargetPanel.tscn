@@ -3,14 +3,14 @@
 [ext_resource type="Script" path="res://Scripts/UI/TargetPanel.cs" id="1_targetpanel"]
 
 [node name="TargetPanel" type="PanelContainer"]
-custom_minimum_size = Vector2(240, 75)
+custom_minimum_size = Vector2(240, 145)
 offset_right = 240.0
-offset_bottom = 75.0
+offset_bottom = 145.0
 script = ExtResource("1_targetpanel")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 6
 
 [node name="Header" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
@@ -18,15 +18,92 @@ layout_mode = 2
 [node name="NameLabel" type="Label" parent="VBoxContainer/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.98, 0.88, 0.65, 1)
+theme_override_font_sizes/font_size = 15
 text = "Target"
 
-[node name="AttackButton" type="Button" parent="VBoxContainer/Header"]
-custom_minimum_size = Vector2(70, 24)
+[node name="CloseButton" type="Button" parent="VBoxContainer/Header"]
+custom_minimum_size = Vector2(24, 20)
 layout_mode = 2
-text = "Attack"
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 0.8)
+theme_override_font_sizes/font_size = 12
+flat = true
+text = "✕"
 
-[node name="HealthBar" type="ProgressBar" parent="VBoxContainer"]
-custom_minimum_size = Vector2(220, 16)
+[node name="HealthBarContainer" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(216, 18)
 layout_mode = 2
+
+[node name="HealthBar" type="ProgressBar" parent="VBoxContainer/HealthBarContainer"]
+custom_minimum_size = Vector2(216, 18)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 value = 100.0
+show_percentage = false
+
+[node name="HpLabel" type="Label" parent="VBoxContainer/HealthBarContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.95)
+theme_override_font_sizes/font_size = 11
+text = "100 / 100"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ButtonCenter" type="CenterContainer" parent="VBoxContainer"]
+custom_minimum_size = Vector2(216, 56)
+layout_mode = 2
+
+[node name="ActionBox" type="VBoxContainer" parent="VBoxContainer/ButtonCenter"]
+layout_mode = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="CircleRoot" type="Control" parent="VBoxContainer/ButtonCenter/ActionBox"]
+custom_minimum_size = Vector2(52, 52)
+layout_mode = 2
+
+[node name="CircleBg" type="Panel" parent="VBoxContainer/ButtonCenter/ActionBox/CircleRoot"]
+custom_minimum_size = Vector2(52, 52)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ActiveRing" type="Panel" parent="VBoxContainer/ButtonCenter/ActionBox/CircleRoot"]
+visible = false
+custom_minimum_size = Vector2(52, 52)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ActionButton" type="TextureButton" parent="VBoxContainer/ButtonCenter/ActionBox/CircleRoot"]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 48.0
+offset_bottom = 48.0
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="ActionLabel" type="Label" parent="VBoxContainer/ButtonCenter/ActionBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_font_sizes/font_size = 11
+text = "Attack"
+horizontal_alignment = 1
