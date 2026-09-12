@@ -15,6 +15,7 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget
     public float Health { get; set; } = 80f;
     public float MaxHealth => 80f;
     public bool IsDead => Health <= 0f;
+    public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -75);
 
     private float _speed = 70f;
     private bool _isAggro = false;
@@ -28,6 +29,7 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;
+    private Tween? _shakeTween;
     private bool _isSelected = false;
     private float _animTimer = 0f;
     private int _animFrame = 0;
@@ -155,11 +157,11 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget
                     {
                         float dmg = Formulas.CalculateDamage(this, TargetWerewolf);
                         TargetWerewolf.TakeDamage(dmg);
-                        GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), TargetWerewolf.GlobalPosition + new Vector2(0, -50), new Color(1f, 0.3f, 0.3f));
+                        GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), TargetWerewolf.GlobalPosition + new Vector2(0, -85), new Color(1f, 0.3f, 0.3f));
                     }
                     else
                     {
-                        GameState.Instance.TriggerDamageNumber("Miss", TargetWerewolf.GlobalPosition + new Vector2(0, -50), new Color(0.8f, 0.8f, 0.8f));
+                        GameState.Instance.TriggerDamageNumber("Miss", TargetWerewolf.GlobalPosition + new Vector2(0, -85), new Color(0.8f, 0.8f, 0.8f));
                     }
                 }
             }
@@ -230,10 +232,26 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget
         _wanderTimer = (float)GD.RandRange(2.0, 5.0);
     }
 
+    public void Vibrate(float intensity = 5f, float duration = 0.18f)
+    {
+        if (_sprite == null) return;
+        _shakeTween?.Kill();
+        _sprite.Position = Vector2.Zero;
+        _shakeTween = CreateTween();
+
+        float stepTime = duration / 5f;
+        _shakeTween.TweenProperty(_sprite, "position", new Vector2(-intensity, 0), stepTime);
+        _shakeTween.TweenProperty(_sprite, "position", new Vector2(intensity * 0.8f, 0), stepTime);
+        _shakeTween.TweenProperty(_sprite, "position", new Vector2(-intensity * 0.5f, 0), stepTime);
+        _shakeTween.TweenProperty(_sprite, "position", new Vector2(intensity * 0.25f, 0), stepTime);
+        _shakeTween.TweenProperty(_sprite, "position", Vector2.Zero, stepTime);
+    }
+
     public void TakeDamage(float amount, bool isSkill = false)
     {
         if (IsDead) return;
 
+        Vibrate(6f, 0.2f);
         Health -= amount;
         _isAggro = true;
 

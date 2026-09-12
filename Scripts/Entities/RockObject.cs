@@ -9,9 +9,11 @@ public partial class RockObject : StaticBody2D, ISelectableTarget
     public float Health { get; set; } = 100f;
     public float MaxHealth => 100f;
     public bool IsDead => Health <= 0;
+    public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -70);
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;
+    private Tween? _shakeTween;
     private bool _isSelected = false;
     private bool _isBlinking = false;
     private float _blinkTimer = 0f;
@@ -137,15 +139,31 @@ public partial class RockObject : StaticBody2D, ISelectableTarget
         QueueRedraw();
     }
 
+    public void Vibrate(float intensity = 5f, float duration = 0.18f)
+    {
+        if (_sprite == null) return;
+        _shakeTween?.Kill();
+        _sprite.Position = Vector2.Zero;
+        _shakeTween = CreateTween();
+
+        float stepTime = duration / 5f;
+        _shakeTween.TweenProperty(_sprite, "position", new Vector2(-intensity, 0), stepTime);
+        _shakeTween.TweenProperty(_sprite, "position", new Vector2(intensity * 0.8f, 0), stepTime);
+        _shakeTween.TweenProperty(_sprite, "position", new Vector2(-intensity * 0.5f, 0), stepTime);
+        _shakeTween.TweenProperty(_sprite, "position", new Vector2(intensity * 0.25f, 0), stepTime);
+        _shakeTween.TweenProperty(_sprite, "position", Vector2.Zero, stepTime);
+    }
+
     public void Interact()
     {
         if (IsDead) return;
 
+        Vibrate(5f, 0.18f);
         _isBlinking = true;
         _blinkTimer = _blinkDuration;
         Health -= 25f;
 
-        GameState.Instance.TriggerDamageNumber("Quarry!", GlobalPosition + new Vector2(0, -50), new Color(0.8f, 0.8f, 0.8f));
+        GameState.Instance.TriggerDamageNumber("Quarry!", FloatingTextPosition, new Color(0.9f, 0.9f, 0.9f));
 
         if (Health <= 0f)
         {

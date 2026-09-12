@@ -13,9 +13,18 @@ public partial class GameState : Node
         {
             if (_instance == null)
             {
-                _instance = new GameState { Name = "GameState" };
                 var tree = Engine.GetMainLoop() as SceneTree;
-                tree?.Root.CallDeferred("add_child", _instance);
+                var root = tree?.Root;
+                var autoload = root?.GetNodeOrNull<GameState>("GameState");
+                if (autoload != null)
+                {
+                    _instance = autoload;
+                }
+                else
+                {
+                    _instance = new GameState { Name = "GameState" };
+                    root?.CallDeferred("add_child", _instance);
+                }
             }
             return _instance;
         }
@@ -27,8 +36,9 @@ public partial class GameState : Node
     // Player stats
     public float PlayerHealth { get; private set; } = 100f;
     public float PlayerMaxHealth { get; private set; } = 100f;
-    public float PlayerPower { get; private set; } = 0f;
+    public float PlayerPower { get; private set; } = 100f;
     public float PlayerMaxPower { get; private set; } = 100f;
+    public float PowerRegenRate { get; set; } = 4.0f;
 
     public float BaseDamage { get; set; } = 25f;
     public float BaseDefense { get; set; } = 10f;
@@ -41,9 +51,9 @@ public partial class GameState : Node
     public float BuffTimeRemaining { get; private set; } = 0f;
     public const float BuffDuration = 10f;
 
-    // Skill cooldowns (0: Scratch [2s], 1: Charge [2s], 2: Bite [2s], 3: Howl [60s])
+    // Skill cooldowns (0: Scratch [5s], 1: Charge [8s], 2: Bite [10s], 3: Howl [30s])
     public float[] SkillCooldownRemaining { get; } = new float[4];
-    public float[] SkillCooldownTotal { get; } = new float[] { 2.0f, 2.0f, 2.0f, 60.0f };
+    public float[] SkillCooldownTotal { get; } = new float[] { 5.0f, 8.0f, 10.0f, 30.0f };
 
     // World position (continuous open world coordinates)
     private Vector2 _playerPosition = Vector2.Zero;
@@ -92,11 +102,11 @@ public partial class GameState : Node
 
     public override void _EnterTree()
     {
-        if (Instance == null)
+        if (_instance == null)
         {
-            Instance = this;
+            _instance = this;
         }
-        else
+        else if (_instance != this)
         {
             QueueFree();
         }
@@ -128,6 +138,17 @@ public partial class GameState : Node
             if (BuffTimeRemaining <= 0f)
             {
                 RemoveBuff();
+            }
+        }
+
+        // Process passive power regeneration over time
+        if (PlayerPower < PlayerMaxPower)
+        {
+            float oldPower = PlayerPower;
+            PlayerPower = Mathf.Min(PlayerMaxPower, PlayerPower + PowerRegenRate * dt);
+            if (PlayerPower != oldPower)
+            {
+                OnPowerChanged?.Invoke(PlayerPower, PlayerMaxPower);
             }
         }
     }

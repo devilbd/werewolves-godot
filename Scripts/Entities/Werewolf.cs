@@ -21,6 +21,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;
+    private Tween? _shakeTween;
     private BuffAura? _activeBuffAura = null;
 
     // Sprite textures
@@ -260,12 +261,11 @@ public partial class Werewolf : CharacterBody2D, ICombatant
         {
             float dmg = Formulas.CalculateDamage(this, deer);
             deer.TakeDamage(dmg);
-            GameState.Instance.ModifyPower(Formulas.CalculatePowerGain());
-            GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), deer.GlobalPosition + new Vector2(0, -50), new Color(1f, 1f, 0.4f));
+            GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), deer.FloatingTextPosition, new Color(1f, 1f, 0.4f));
         }
         else
         {
-            GameState.Instance.TriggerDamageNumber("Miss", deer.GlobalPosition + new Vector2(0, -50), new Color(0.8f, 0.8f, 0.8f));
+            GameState.Instance.TriggerDamageNumber("Miss", deer.FloatingTextPosition, new Color(0.8f, 0.8f, 0.8f));
         }
     }
 
@@ -283,82 +283,106 @@ public partial class Werewolf : CharacterBody2D, ICombatant
 
         switch (skillIndex)
         {
-            case 0: // Scratch Hit
-                if (GameState.Instance.PlayerPower >= 15f)
+            case 0: // Scratch Hit (5s cooldown)
+                if (GameState.Instance.PlayerPower < 15f)
                 {
-                    GameState.Instance.ModifyPower(-15f);
-                    GameState.Instance.StartSkillCooldown(0);
-                    TriggerAttackAnimation(0);
+                    GameState.Instance.TriggerDamageNumber("Need 15 Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
+                    return;
+                }
+                GameState.Instance.ModifyPower(-15f);
+                GameState.Instance.StartSkillCooldown(0);
+                TriggerAttackAnimation(0);
 
-                    if (GameState.Instance.SelectedTarget is Deer target && !target.IsDead && GlobalPosition.DistanceTo(target.GlobalPosition) <= MeleeRange * 1.3f)
+                if (GameState.Instance.SelectedTarget is Deer target && !target.IsDead && GlobalPosition.DistanceTo(target.GlobalPosition) <= MeleeRange * 1.3f)
+                {
+                    if (Formulas.IsHitSuccessful(this, target))
                     {
-                        if (Formulas.IsHitSuccessful(this, target))
-                        {
-                            float dmg = Formulas.CalculateScratchHitDamage(this, target);
-                            target.TakeDamage(dmg, isSkill: true);
-                            GameState.Instance.ModifyPower(Formulas.CalculatePowerGain());
-                            GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), target.GlobalPosition + new Vector2(0, -50), new Color(1f, 0.2f, 0.2f));
-                        }
+                        float dmg = Formulas.CalculateScratchHitDamage(this, target);
+                        target.TakeDamage(dmg, isSkill: true);
+                        GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), target.FloatingTextPosition, new Color(1f, 0.2f, 0.2f));
                     }
                 }
                 break;
 
-            case 1: // Charge Attack
-                if (GameState.Instance.PlayerPower >= 25f && GameState.Instance.SelectedTarget is Deer chargeTarget && !chargeTarget.IsDead)
+            case 1: // Charge Attack (8s cooldown)
+                if (GameState.Instance.PlayerPower < 25f)
                 {
-                    GameState.Instance.ModifyPower(-25f);
-                    GameState.Instance.StartSkillCooldown(1);
-                    _isCharging = true;
-                    _chargeTargetPos = chargeTarget.GlobalPosition;
-                    TriggerAttackAnimation(1);
-
-                    // Execute strike on impact
-                    GetTree().CreateTimer(0.2).Timeout += () =>
-                    {
-                        if (!chargeTarget.IsDead && GlobalPosition.DistanceTo(chargeTarget.GlobalPosition) <= MeleeRange * 1.5f)
-                        {
-                            if (Formulas.IsHitSuccessful(this, chargeTarget))
-                            {
-                                float dmg = Formulas.CalculateChargeAttackDamage(this, chargeTarget);
-                                chargeTarget.TakeDamage(dmg, isSkill: true);
-                                GameState.Instance.ModifyPower(Formulas.CalculatePowerGain());
-                                GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), chargeTarget.GlobalPosition + new Vector2(0, -50), new Color(1f, 0.2f, 0.2f));
-                            }
-                        }
-                    };
+                    GameState.Instance.TriggerDamageNumber("Need 25 Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
+                    return;
                 }
-                break;
-
-            case 2: // Bite (Execute below 25% HP)
-                if (GameState.Instance.PlayerPower >= 20f && GameState.Instance.SelectedTarget is Deer biteTarget && !biteTarget.IsDead)
+                if (GameState.Instance.SelectedTarget is not Deer chargeTarget || chargeTarget.IsDead)
                 {
-                    if (biteTarget.Health / biteTarget.MaxHealth <= 0.25f && GlobalPosition.DistanceTo(biteTarget.GlobalPosition) <= MeleeRange)
-                    {
-                        GameState.Instance.ModifyPower(-20f);
-                        GameState.Instance.StartSkillCooldown(2);
-                        TriggerAttackAnimation(2);
+                    GameState.Instance.TriggerDamageNumber("Need Target!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.7f, 0.3f));
+                    return;
+                }
+                GameState.Instance.ModifyPower(-25f);
+                GameState.Instance.StartSkillCooldown(1);
+                _isCharging = true;
+                _chargeTargetPos = chargeTarget.GlobalPosition;
+                TriggerAttackAnimation(1);
 
-                        if (Formulas.IsHitSuccessful(this, biteTarget))
+                // Execute strike on impact
+                GetTree().CreateTimer(0.2).Timeout += () =>
+                {
+                    if (!chargeTarget.IsDead && GlobalPosition.DistanceTo(chargeTarget.GlobalPosition) <= MeleeRange * 1.5f)
+                    {
+                        if (Formulas.IsHitSuccessful(this, chargeTarget))
                         {
-                            float dmg = Formulas.CalculateBiteDamage(this, biteTarget);
-                            biteTarget.TakeDamage(dmg, isSkill: true);
-                            GameState.Instance.ModifyHealth(20f); // Heal werewolf 20 HP
-                            GameState.Instance.TriggerDamageNumber("+20 HP", GlobalPosition + new Vector2(0, -60), new Color(0.2f, 1f, 0.4f));
-                            GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), biteTarget.GlobalPosition + new Vector2(0, -50), new Color(1f, 0.2f, 0.2f));
+                            float dmg = Formulas.CalculateChargeAttackDamage(this, chargeTarget);
+                            chargeTarget.TakeDamage(dmg, isSkill: true);
+                            GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), chargeTarget.FloatingTextPosition, new Color(1f, 0.2f, 0.2f));
                         }
                     }
+                };
+                break;
+
+            case 2: // Bite (Execute below 25% HP, 10s cooldown)
+                if (GameState.Instance.PlayerPower < 20f)
+                {
+                    GameState.Instance.TriggerDamageNumber("Need 20 Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
+                    return;
+                }
+                if (GameState.Instance.SelectedTarget is not Deer biteTarget || biteTarget.IsDead)
+                {
+                    GameState.Instance.TriggerDamageNumber("Need Target!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.7f, 0.3f));
+                    return;
+                }
+                if (biteTarget.Health / biteTarget.MaxHealth > 0.25f)
+                {
+                    GameState.Instance.TriggerDamageNumber("Target HP > 25%!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.7f, 0.3f));
+                    return;
+                }
+                if (GlobalPosition.DistanceTo(biteTarget.GlobalPosition) > MeleeRange * 1.4f)
+                {
+                    GameState.Instance.TriggerDamageNumber("Out of Range!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.7f, 0.3f));
+                    return;
+                }
+
+                GameState.Instance.ModifyPower(-20f);
+                GameState.Instance.StartSkillCooldown(2);
+                TriggerAttackAnimation(2);
+
+                if (Formulas.IsHitSuccessful(this, biteTarget))
+                {
+                    float dmg = Formulas.CalculateBiteDamage(this, biteTarget);
+                    biteTarget.TakeDamage(dmg, isSkill: true);
+                    GameState.Instance.ModifyHealth(20f); // Heal werewolf 20 HP
+                    GameState.Instance.TriggerDamageNumber("+20 HP", GlobalPosition + new Vector2(0, -85), new Color(0.2f, 1f, 0.4f));
+                    GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), biteTarget.FloatingTextPosition, new Color(1f, 0.2f, 0.2f));
                 }
                 break;
 
-            case 3: // Blood Howling (Ultimate buff)
-                if (GameState.Instance.PlayerPower >= 40f)
+            case 3: // Blood Howling (Ultimate buff, 30s cooldown)
+                if (GameState.Instance.PlayerPower < 40f)
                 {
-                    GameState.Instance.ModifyPower(-40f);
-                    GameState.Instance.StartSkillCooldown(3);
-                    TriggerAttackAnimation(3);
-                    GameState.Instance.ApplyHowlBuff();
-                    GameState.Instance.TriggerDamageNumber("HOWL BUFF!", GlobalPosition + new Vector2(0, -60), new Color(0.8f, 0.2f, 1f));
+                    GameState.Instance.TriggerDamageNumber("Need 40 Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
+                    return;
                 }
+                GameState.Instance.ModifyPower(-40f);
+                GameState.Instance.StartSkillCooldown(3);
+                TriggerAttackAnimation(3);
+                GameState.Instance.ApplyHowlBuff();
+                GameState.Instance.TriggerDamageNumber("HOWL BUFF!", GlobalPosition + new Vector2(0, -85), new Color(0.8f, 0.2f, 1f));
                 break;
         }
     }
@@ -407,7 +431,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant
             }
             else if (GlobalPosition.DistanceTo(tree.GlobalPosition) > MeleeRange * 1.5f)
             {
-                GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -50), new Color(0.9f, 0.85f, 0.5f));
+                GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
             }
         }
         else if (GameState.Instance.SelectedTarget is RockObject rock)
@@ -423,7 +447,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant
             }
             else if (GlobalPosition.DistanceTo(rock.GlobalPosition) > MeleeRange * 1.5f)
             {
-                GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -50), new Color(0.9f, 0.85f, 0.5f));
+                GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
             }
         }
         else if (GameState.Instance.SelectedTarget is Deer deer)
@@ -438,7 +462,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant
             }
             else if (GlobalPosition.DistanceTo(deer.GlobalPosition) > MeleeRange)
             {
-                GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -50), new Color(0.9f, 0.85f, 0.5f));
+                GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
             }
         }
     }
@@ -538,8 +562,24 @@ public partial class Werewolf : CharacterBody2D, ICombatant
         }
     }
 
+    public void Vibrate(float intensity = 5f, float duration = 0.18f)
+    {
+        if (_sprite == null) return;
+        _shakeTween?.Kill();
+        _sprite.Position = Vector2.Zero;
+        _shakeTween = CreateTween();
+
+        float stepTime = duration / 5f;
+        _shakeTween.TweenProperty(_sprite, "position", new Vector2(-intensity, 0), stepTime);
+        _shakeTween.TweenProperty(_sprite, "position", new Vector2(intensity * 0.8f, 0), stepTime);
+        _shakeTween.TweenProperty(_sprite, "position", new Vector2(-intensity * 0.5f, 0), stepTime);
+        _shakeTween.TweenProperty(_sprite, "position", new Vector2(intensity * 0.25f, 0), stepTime);
+        _shakeTween.TweenProperty(_sprite, "position", Vector2.Zero, stepTime);
+    }
+
     public void TakeDamage(float amount, bool isSkill = false)
     {
+        Vibrate(6f, 0.2f);
         Health -= amount;
         if (Health <= 0)
         {

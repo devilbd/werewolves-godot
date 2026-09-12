@@ -38,6 +38,9 @@ y_sort_enabled = true
 [node name="Werewolf" parent="WorldManager/Entities" instance=ExtResource("4_werewolf_scene")]
 position = Vector2(0, 0)
 
+[node name="FogContainer" type="Node2D" parent="WorldManager"]
+z_index = 15
+
 [node name="HUD" type="CanvasLayer" parent="." node_paths=PackedStringArray("Player")]
 script = ExtResource("5_hud")
 Player = NodePath("../WorldManager/Entities/Werewolf")

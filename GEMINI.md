@@ -94,9 +94,13 @@ All scripts are designed to work under two scenarios:
   - Scratch Hit: $\max(0, \text{Damage} - \frac{\text{Defense}}{2} + 12)$
   - Charge Attack: $\max(0, \text{Damage} - \frac{\text{Defense}}{2} + 20)$
   - Execute Bite: $\max(0, \text{Damage} - \frac{\text{Defense}}{2} + 15)$ *(Target must be $\le 25\%$ HP)*
-- **Power Gain**:
-  Successful auto-attacks generate dynamic power:
-  $$\text{Power} = 12.5 \times (\text{rand}(0, 4) + 1)$$
+- **Power Mechanics**:
+  - Power regenerates passively over time at 4.0 units/sec up to `PlayerMaxPower` (100).
+  - Hits and skills strictly consume power and do not generate dynamic power on hit:
+    - Scratch Hit: 15 Power
+    - Charge Attack: 25 Power
+    - Execute Bite: 20 Power
+    - Blood Howling: 40 Power
 
 ### 3.4 Open World Map & Persistent Landmarks (`WorldManager.cs`)
 - **World Bounds**: 10,000 × 10,000 units (`WorldRadius = 5000f`), surrounded by perimeter collision walls and dense border trees.

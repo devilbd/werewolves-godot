@@ -23,12 +23,11 @@ theme_override_font_sizes/font_size = 15
 text = "Target"
 
 [node name="CloseButton" type="Button" parent="VBoxContainer/Header"]
-custom_minimum_size = Vector2(24, 20)
+custom_minimum_size = Vector2(22, 22)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 0.8)
+theme_override_colors/font_color = Color(0.85, 0.8, 0.75, 1)
 theme_override_font_sizes/font_size = 12
-flat = true
-text = "✕"
+text = "X"
 
 [node name="HealthBarContainer" type="Control" parent="VBoxContainer"]
 custom_minimum_size = Vector2(216, 18)
@@ -67,12 +66,12 @@ layout_mode = 2
 theme_override_constants/separation = 2
 alignment = 1
 
-[node name="CircleRoot" type="Control" parent="VBoxContainer/ButtonCenter/ActionBox"]
-custom_minimum_size = Vector2(52, 52)
+[node name="SlotRoot" type="Control" parent="VBoxContainer/ButtonCenter/ActionBox"]
+custom_minimum_size = Vector2(50, 50)
 layout_mode = 2
 
-[node name="CircleBg" type="Panel" parent="VBoxContainer/ButtonCenter/ActionBox/CircleRoot"]
-custom_minimum_size = Vector2(52, 52)
+[node name="SlotBg" type="Panel" parent="VBoxContainer/ButtonCenter/ActionBox/SlotRoot"]
+custom_minimum_size = Vector2(50, 50)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -80,24 +79,13 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ActiveRing" type="Panel" parent="VBoxContainer/ButtonCenter/ActionBox/CircleRoot"]
-visible = false
-custom_minimum_size = Vector2(52, 52)
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="ActionButton" type="TextureButton" parent="VBoxContainer/ButtonCenter/ActionBox/CircleRoot"]
+[node name="ActionButton" type="TextureButton" parent="VBoxContainer/ButtonCenter/ActionBox/SlotRoot"]
 custom_minimum_size = Vector2(44, 44)
 layout_mode = 0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = 48.0
-offset_bottom = 48.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 47.0
+offset_bottom = 47.0
 ignore_texture_size = true
 stretch_mode = 5
 

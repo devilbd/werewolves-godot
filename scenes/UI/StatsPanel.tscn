@@ -21,38 +21,56 @@ theme_override_constants/separation = 10
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 
-[node name="Button" type="TextureButton" parent="HBoxContainer/Slot1"]
+[node name="SlotBg" type="Panel" parent="HBoxContainer/Slot1"]
 custom_minimum_size = Vector2(56, 56)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Button" type="TextureButton" parent="HBoxContainer/Slot1"]
+custom_minimum_size = Vector2(50, 50)
 layout_mode = 0
-offset_right = 56.0
-offset_bottom = 56.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 53.0
+offset_bottom = 53.0
 ignore_texture_size = true
-stretch_mode = 0
+stretch_mode = 5
 texture_normal = ExtResource("2_scratch")
 
 [node name="KeyLabel" type="Label" parent="HBoxContainer/Slot1"]
 layout_mode = 0
-offset_left = 4.0
-offset_top = 2.0
-offset_right = 24.0
-offset_bottom = 22.0
-theme_override_colors/font_color = Color(1, 0.9, 0.3, 1)
+offset_left = 5.0
+offset_top = 3.0
+offset_right = 25.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(1, 0.9, 0.35, 1)
 theme_override_font_sizes/font_size = 12
 text = "1"
 
 [node name="CooldownOverlay" type="ColorRect" parent="HBoxContainer/Slot1"]
 visible = false
 layout_mode = 0
-offset_right = 56.0
-offset_bottom = 56.0
-color = Color(0, 0, 0, 0.7)
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 53.0
+offset_bottom = 53.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.75)
 
 [node name="CooldownLabel" type="Label" parent="HBoxContainer/Slot1"]
 visible = false
 layout_mode = 0
-offset_right = 56.0
-offset_bottom = 56.0
-theme_override_font_sizes/font_size = 14
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 53.0
+offset_bottom = 53.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -60,38 +78,56 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 
-[node name="Button" type="TextureButton" parent="HBoxContainer/Slot2"]
+[node name="SlotBg" type="Panel" parent="HBoxContainer/Slot2"]
 custom_minimum_size = Vector2(56, 56)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Button" type="TextureButton" parent="HBoxContainer/Slot2"]
+custom_minimum_size = Vector2(50, 50)
 layout_mode = 0
-offset_right = 56.0
-offset_bottom = 56.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 53.0
+offset_bottom = 53.0
 ignore_texture_size = true
-stretch_mode = 0
+stretch_mode = 5
 texture_normal = ExtResource("3_charge")
 
 [node name="KeyLabel" type="Label" parent="HBoxContainer/Slot2"]
 layout_mode = 0
-offset_left = 4.0
-offset_top = 2.0
-offset_right = 24.0
-offset_bottom = 22.0
-theme_override_colors/font_color = Color(1, 0.9, 0.3, 1)
+offset_left = 5.0
+offset_top = 3.0
+offset_right = 25.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(1, 0.9, 0.35, 1)
 theme_override_font_sizes/font_size = 12
 text = "2"
 
 [node name="CooldownOverlay" type="ColorRect" parent="HBoxContainer/Slot2"]
 visible = false
 layout_mode = 0
-offset_right = 56.0
-offset_bottom = 56.0
-color = Color(0, 0, 0, 0.7)
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 53.0
+offset_bottom = 53.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.75)
 
 [node name="CooldownLabel" type="Label" parent="HBoxContainer/Slot2"]
 visible = false
 layout_mode = 0
-offset_right = 56.0
-offset_bottom = 56.0
-theme_override_font_sizes/font_size = 14
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 53.0
+offset_bottom = 53.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -99,38 +135,56 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 
-[node name="Button" type="TextureButton" parent="HBoxContainer/Slot3"]
+[node name="SlotBg" type="Panel" parent="HBoxContainer/Slot3"]
 custom_minimum_size = Vector2(56, 56)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Button" type="TextureButton" parent="HBoxContainer/Slot3"]
+custom_minimum_size = Vector2(50, 50)
 layout_mode = 0
-offset_right = 56.0
-offset_bottom = 56.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 53.0
+offset_bottom = 53.0
 ignore_texture_size = true
-stretch_mode = 0
+stretch_mode = 5
 texture_normal = ExtResource("4_bite")
 
 [node name="KeyLabel" type="Label" parent="HBoxContainer/Slot3"]
 layout_mode = 0
-offset_left = 4.0
-offset_top = 2.0
-offset_right = 24.0
-offset_bottom = 22.0
-theme_override_colors/font_color = Color(1, 0.9, 0.3, 1)
+offset_left = 5.0
+offset_top = 3.0
+offset_right = 25.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(1, 0.9, 0.35, 1)
 theme_override_font_sizes/font_size = 12
 text = "3"
 
 [node name="CooldownOverlay" type="ColorRect" parent="HBoxContainer/Slot3"]
 visible = false
 layout_mode = 0
-offset_right = 56.0
-offset_bottom = 56.0
-color = Color(0, 0, 0, 0.7)
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 53.0
+offset_bottom = 53.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.75)
 
 [node name="CooldownLabel" type="Label" parent="HBoxContainer/Slot3"]
 visible = false
 layout_mode = 0
-offset_right = 56.0
-offset_bottom = 56.0
-theme_override_font_sizes/font_size = 14
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 53.0
+offset_bottom = 53.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -138,37 +192,55 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 
-[node name="Button" type="TextureButton" parent="HBoxContainer/Slot4"]
+[node name="SlotBg" type="Panel" parent="HBoxContainer/Slot4"]
 custom_minimum_size = Vector2(56, 56)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Button" type="TextureButton" parent="HBoxContainer/Slot4"]
+custom_minimum_size = Vector2(50, 50)
 layout_mode = 0
-offset_right = 56.0
-offset_bottom = 56.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 53.0
+offset_bottom = 53.0
 ignore_texture_size = true
-stretch_mode = 0
+stretch_mode = 5
 texture_normal = ExtResource("5_howl")
 
 [node name="KeyLabel" type="Label" parent="HBoxContainer/Slot4"]
 layout_mode = 0
-offset_left = 4.0
-offset_top = 2.0
-offset_right = 24.0
-offset_bottom = 22.0
-theme_override_colors/font_color = Color(1, 0.9, 0.3, 1)
+offset_left = 5.0
+offset_top = 3.0
+offset_right = 25.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(1, 0.9, 0.35, 1)
 theme_override_font_sizes/font_size = 12
 text = "4"
 
 [node name="CooldownOverlay" type="ColorRect" parent="HBoxContainer/Slot4"]
 visible = false
 layout_mode = 0
-offset_right = 56.0
-offset_bottom = 56.0
-color = Color(0, 0, 0, 0.7)
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 53.0
+offset_bottom = 53.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.75)
 
 [node name="CooldownLabel" type="Label" parent="HBoxContainer/Slot4"]
 visible = false
 layout_mode = 0
-offset_right = 56.0
-offset_bottom = 56.0
-theme_override_font_sizes/font_size = 14
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 53.0
+offset_bottom = 53.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 15
 horizontal_alignment = 1
 vertical_alignment = 1

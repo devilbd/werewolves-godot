@@ -12,10 +12,12 @@ public partial class TargetPanel : PanelContainer
     private ProgressBar _healthBar = null!;
     private Label _hpLabel = null!;
     private TextureButton _actionButton = null!;
-    private Panel _circleBg = null!;
-    private Panel _activeRing = null!;
+    private Panel _slotBg = null!;
     private Label _actionLabel = null!;
     private Button? _closeButton;
+
+    private StyleBoxFlat _inactiveSlotStyle = null!;
+    private StyleBoxFlat _activeSlotStyle = null!;
 
     private Texture2D _attackIcon = null!;
     private Texture2D _chopIcon = null!;
@@ -29,6 +31,7 @@ public partial class TargetPanel : PanelContainer
 
         CustomMinimumSize = new Vector2(240, 145);
         ApplyPanelStyle();
+        InitSlotStyles();
 
         // Find or create VBoxContainer
         var vbox = GetNodeOrNull<VBoxContainer>("VBoxContainer");
@@ -70,14 +73,13 @@ public partial class TargetPanel : PanelContainer
             _closeButton = new Button
             {
                 Name = "CloseButton",
-                Text = "✕",
-                Flat = true,
-                CustomMinimumSize = new Vector2(24, 20)
+                Text = "X",
+                CustomMinimumSize = new Vector2(22, 22),
+                Size = new Vector2(22, 22)
             };
-            _closeButton.AddThemeFontSizeOverride("font_size", 12);
-            _closeButton.AddThemeColorOverride("font_color", new Color(0.7f, 0.7f, 0.7f, 0.8f));
             header.AddChild(_closeButton);
         }
+        ApplyCloseButtonStyle();
         _closeButton.Pressed += () => GameState.Instance.SelectedTarget = null;
 
         // 2. Health Bar Container (ProgressBar + HP text overlay)
@@ -115,7 +117,6 @@ public partial class TargetPanel : PanelContainer
                 hpContainer.AddChild(_healthBar);
             }
             _healthBar.CustomMinimumSize = new Vector2(216, 18);
-            _healthBar.Size = new Vector2(216, 18);
             _healthBar.ShowPercentage = false;
         }
         ApplyHealthBarStyle();
@@ -136,7 +137,7 @@ public partial class TargetPanel : PanelContainer
             hpContainer.AddChild(_hpLabel);
         }
 
-        // 3. Circled Action Button Container at Bottom
+        // 3. Action Button Slot Container at Bottom
         var centerContainer = vbox.GetNodeOrNull<CenterContainer>("ButtonCenter");
         if (centerContainer == null)
         {
@@ -160,50 +161,41 @@ public partial class TargetPanel : PanelContainer
             centerContainer.AddChild(actionBox);
         }
 
-        var circleRoot = actionBox.GetNodeOrNull<Control>("CircleRoot");
-        if (circleRoot == null)
+        var slotRoot = actionBox.GetNodeOrNull<Control>("SlotRoot") ?? actionBox.GetNodeOrNull<Control>("CircleRoot");
+        if (slotRoot == null)
         {
-            circleRoot = new Control
+            slotRoot = new Control
             {
-                Name = "CircleRoot",
-                CustomMinimumSize = new Vector2(52, 52),
-                Size = new Vector2(52, 52)
+                Name = "SlotRoot",
+                CustomMinimumSize = new Vector2(50, 50),
+                Size = new Vector2(50, 50)
             };
-            actionBox.AddChild(circleRoot);
+            actionBox.AddChild(slotRoot);
         }
 
-        // Circular background panel
-        _circleBg = circleRoot.GetNodeOrNull<Panel>("CircleBg");
-        if (_circleBg == null)
+        // Hide legacy active ring if present
+        var legacyRing = slotRoot.GetNodeOrNull<Panel>("ActiveRing");
+        if (legacyRing != null)
         {
-            _circleBg = new Panel
-            {
-                Name = "CircleBg",
-                CustomMinimumSize = new Vector2(52, 52),
-                Size = new Vector2(52, 52)
-            };
-            circleRoot.AddChild(_circleBg);
+            legacyRing.Visible = false;
         }
-        ApplyCircleStyle();
 
-        // Circular active glowing ring overlay
-        _activeRing = circleRoot.GetNodeOrNull<Panel>("ActiveRing");
-        if (_activeRing == null)
+        // Single border slot background panel
+        _slotBg = slotRoot.GetNodeOrNull<Panel>("SlotBg") ?? slotRoot.GetNodeOrNull<Panel>("CircleBg")!;
+        if (_slotBg == null)
         {
-            _activeRing = new Panel
+            _slotBg = new Panel
             {
-                Name = "ActiveRing",
-                CustomMinimumSize = new Vector2(52, 52),
-                Size = new Vector2(52, 52),
-                Visible = false,
-                MouseFilter = MouseFilterEnum.Ignore
+                Name = "SlotBg",
+                CustomMinimumSize = new Vector2(50, 50),
+                Size = new Vector2(50, 50)
             };
-            circleRoot.AddChild(_activeRing);
+            slotRoot.AddChild(_slotBg);
         }
-        ApplyActiveRingStyle();
+        _slotBg.AddThemeStyleboxOverride("panel", _inactiveSlotStyle);
 
-        // Circular button texture
-        _actionButton = circleRoot.GetNodeOrNull<TextureButton>("ActionButton");
+        // Action button texture
+        _actionButton = slotRoot.GetNodeOrNull<TextureButton>("ActionButton")!;
         if (_actionButton == null)
         {
             _actionButton = new TextureButton
@@ -214,14 +206,19 @@ public partial class TargetPanel : PanelContainer
                 StretchMode = TextureButton.StretchModeEnum.Scale,
                 CustomMinimumSize = new Vector2(44, 44),
                 Size = new Vector2(44, 44),
-                Position = new Vector2(4, 4)
+                Position = new Vector2(3, 3)
             };
-            circleRoot.AddChild(_actionButton);
+            slotRoot.AddChild(_actionButton);
+        }
+        else
+        {
+            _actionButton.Position = new Vector2(3, 3);
+            _actionButton.Size = new Vector2(44, 44);
         }
         _actionButton.Pressed += OnActionPressed;
 
-        // Label below circled button
-        _actionLabel = actionBox.GetNodeOrNull<Label>("ActionLabel");
+        // Label below action button
+        _actionLabel = actionBox.GetNodeOrNull<Label>("ActionLabel")!;
         if (_actionLabel == null)
         {
             _actionLabel = new Label
@@ -290,42 +287,93 @@ public partial class TargetPanel : PanelContainer
         _healthBar.AddThemeStyleboxOverride("fill", fill);
     }
 
-    private void ApplyCircleStyle()
+    private void ApplyCloseButtonStyle()
     {
-        var style = new StyleBoxFlat
+        if (_closeButton == null) return;
+        _closeButton.Text = "X";
+        _closeButton.CustomMinimumSize = new Vector2(22, 22);
+        _closeButton.Size = new Vector2(22, 22);
+
+        var normal = new StyleBoxFlat
+        {
+            BgColor = new Color(0.18f, 0.14f, 0.14f, 0.75f),
+            BorderColor = new Color(0.55f, 0.40f, 0.30f, 0.65f),
+            BorderWidthLeft = 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 4,
+            CornerRadiusTopRight = 4,
+            CornerRadiusBottomLeft = 4,
+            CornerRadiusBottomRight = 4
+        };
+        var hover = new StyleBoxFlat
+        {
+            BgColor = new Color(0.65f, 0.15f, 0.15f, 0.95f),
+            BorderColor = new Color(0.95f, 0.40f, 0.40f, 1f),
+            BorderWidthLeft = 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 4,
+            CornerRadiusTopRight = 4,
+            CornerRadiusBottomLeft = 4,
+            CornerRadiusBottomRight = 4
+        };
+        var pressed = new StyleBoxFlat
+        {
+            BgColor = new Color(0.45f, 0.10f, 0.10f, 0.95f),
+            BorderColor = new Color(0.85f, 0.25f, 0.25f, 1f),
+            BorderWidthLeft = 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 4,
+            CornerRadiusTopRight = 4,
+            CornerRadiusBottomLeft = 4,
+            CornerRadiusBottomRight = 4
+        };
+
+        _closeButton.AddThemeStyleboxOverride("normal", normal);
+        _closeButton.AddThemeStyleboxOverride("hover", hover);
+        _closeButton.AddThemeStyleboxOverride("pressed", pressed);
+        _closeButton.AddThemeColorOverride("font_color", new Color(0.85f, 0.80f, 0.75f));
+        _closeButton.AddThemeColorOverride("font_hover_color", Colors.White);
+        _closeButton.AddThemeColorOverride("font_pressed_color", new Color(1f, 0.8f, 0.8f));
+        _closeButton.AddThemeFontSizeOverride("font_size", 12);
+    }
+
+    private void InitSlotStyles()
+    {
+        _inactiveSlotStyle = new StyleBoxFlat
         {
             BgColor = new Color(0.12f, 0.14f, 0.18f, 1.0f),
-            BorderColor = new Color(0.55f, 0.45f, 0.30f, 1.0f),
+            BorderColor = new Color(0.45f, 0.38f, 0.25f, 0.85f),
             BorderWidthLeft = 2,
             BorderWidthTop = 2,
             BorderWidthRight = 2,
             BorderWidthBottom = 2,
-            CornerRadiusTopLeft = 26,
-            CornerRadiusTopRight = 26,
-            CornerRadiusBottomLeft = 26,
-            CornerRadiusBottomRight = 26
+            CornerRadiusTopLeft = 6,
+            CornerRadiusTopRight = 6,
+            CornerRadiusBottomLeft = 6,
+            CornerRadiusBottomRight = 6
         };
-        _circleBg.AddThemeStyleboxOverride("panel", style);
-    }
 
-    private void ApplyActiveRingStyle()
-    {
-        var style = new StyleBoxFlat
+        _activeSlotStyle = new StyleBoxFlat
         {
-            DrawCenter = false,
-            BorderColor = new Color(1.0f, 0.80f, 0.20f, 1.0f),
-            BorderWidthLeft = 3,
-            BorderWidthTop = 3,
-            BorderWidthRight = 3,
-            BorderWidthBottom = 3,
-            CornerRadiusTopLeft = 26,
-            CornerRadiusTopRight = 26,
-            CornerRadiusBottomLeft = 26,
-            CornerRadiusBottomRight = 26,
-            ShadowColor = new Color(1.0f, 0.65f, 0.1f, 0.6f),
+            BgColor = new Color(0.20f, 0.17f, 0.10f, 1.0f),
+            BorderColor = new Color(1.0f, 0.82f, 0.25f, 1.0f),
+            BorderWidthLeft = 2,
+            BorderWidthTop = 2,
+            BorderWidthRight = 2,
+            BorderWidthBottom = 2,
+            CornerRadiusTopLeft = 6,
+            CornerRadiusTopRight = 6,
+            CornerRadiusBottomLeft = 6,
+            CornerRadiusBottomRight = 6,
+            ShadowColor = new Color(1.0f, 0.65f, 0.1f, 0.45f),
             ShadowSize = 5
         };
-        _activeRing.AddThemeStyleboxOverride("panel", style);
     }
 
     private void OnTargetChanged(Node2D? target)
@@ -379,15 +427,13 @@ public partial class TargetPanel : PanelContainer
             bool isAuto = Player != null && Player.IsAutoInteracting;
             if (isAuto)
             {
-                _activeRing.Visible = true;
-                float pulse = (Mathf.Sin(Time.GetTicksMsec() * 0.008f) + 1f) * 0.5f;
-                _activeRing.Modulate = new Color(1f, 1f, 1f, 0.5f + pulse * 0.5f);
+                _slotBg.AddThemeStyleboxOverride("panel", _activeSlotStyle);
                 _actionLabel.Text = $"AUTO {actionName.ToUpper()}";
                 _actionLabel.AddThemeColorOverride("font_color", new Color(1.0f, 0.85f, 0.3f));
             }
             else
             {
-                _activeRing.Visible = false;
+                _slotBg.AddThemeStyleboxOverride("panel", _inactiveSlotStyle);
                 _actionLabel.Text = actionName;
                 _actionLabel.AddThemeColorOverride("font_color", new Color(0.85f, 0.85f, 0.85f));
             }

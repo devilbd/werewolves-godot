@@ -35,6 +35,7 @@ public static class Formulas
         return GD.Randf() < hitChance;
     }
 
+    [Obsolete("Power is now regenerated passively over time; hits strictly consume power.")]
     public static float CalculatePowerGain()
     {
         // Equivalent to: 12.5 * (Math.random() * 4 + 1) in web game (12.5 to 62.5 power)

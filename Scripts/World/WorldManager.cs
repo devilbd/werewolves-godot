@@ -31,6 +31,7 @@ public partial class WorldManager : Node2D
 	private TextureRect _groundBackground = null!;
 	private Node2D _lakeContainer = null!;
 	private Node2D _entitiesContainer = null!;
+	private Node2D _fogContainer = null!;
 
 	private Texture2D _groundForestTex = null!;
 	private Texture2D _groundVillageTex = null!;
@@ -77,6 +78,17 @@ public partial class WorldManager : Node2D
 		{
 			_entitiesContainer = new Node2D { Name = "Entities", YSortEnabled = true };
 			AddChild(_entitiesContainer);
+		}
+
+		_fogContainer = GetNodeOrNull<Node2D>("FogContainer");
+		if (_fogContainer == null)
+		{
+			_fogContainer = new Node2D { Name = "FogContainer", ZIndex = 15 };
+			AddChild(_fogContainer);
+		}
+		else
+		{
+			_fogContainer.ZIndex = 15;
 		}
 
 		if (Player == null)
@@ -142,6 +154,11 @@ public partial class WorldManager : Node2D
 			child.QueueFree();
 		}
 
+		foreach (Node child in _fogContainer.GetChildren())
+		{
+			child.QueueFree();
+		}
+
 		// 1. Build Lakes
 		BuildLake(SilentLakePosition, 0);
 		BuildLake(MistyLakePosition, 1);
@@ -160,6 +177,9 @@ public partial class WorldManager : Node2D
 
 		// 6. Build World Boundary Barriers
 		BuildWorldBoundaries();
+
+		// 7. Build Atmospheric Fog Zones
+		BuildFogZones();
 	}
 
 	private void BuildLake(Vector2 center, int textureIndex)
@@ -437,5 +457,99 @@ public partial class WorldManager : Node2D
 			if (b.Grow(margin).HasPoint(pos)) return true;
 		}
 		return false;
+	}
+
+	private void BuildFogZones()
+	{
+		// 1. Prime Landmark Fog: Misty Lake (Massive boosted fog bank)
+		var mistyLakeFog = FogZone.Instantiate(
+			position: MistyLakePosition,
+			radius: 900f,
+			color: new Color(0.88f, 0.94f, 1.0f, 0.94f),
+			density: 1.25f,
+			coverage: 0.65f,
+			cycleSpeed: 0.07f
+		);
+		mistyLakeFog.Name = "FogZone_MistyLake";
+		_fogContainer.AddChild(mistyLakeFog);
+
+		// 2. Prime Landmark Fog: Silent Lake (Dense cool lake mist)
+		var silentLakeFog = FogZone.Instantiate(
+			position: SilentLakePosition,
+			radius: 800f,
+			color: new Color(0.85f, 0.92f, 0.98f, 0.92f),
+			density: 1.20f,
+			coverage: 0.62f,
+			cycleSpeed: 0.065f
+		);
+		silentLakeFog.Name = "FogZone_SilentLake";
+		_fogContainer.AddChild(silentLakeFog);
+
+		// 3. Awakening Grove: Soft morning glade mist
+		var groveFog = FogZone.Instantiate(
+			position: AwakeningGrovePosition,
+			radius: 550f,
+			color: new Color(0.92f, 0.94f, 0.96f, 0.85f),
+			density: 1.05f,
+			coverage: 0.55f,
+			cycleSpeed: 0.08f
+		);
+		groveFog.Name = "FogZone_AwakeningGrove";
+		_fogContainer.AddChild(groveFog);
+
+		// 4. Random Fog Zones Across the Open World with variable sizes
+		Color[] mistPalette =
+		{
+			new Color(0.88f, 0.94f, 1.0f, 0.92f),   // Cool azure white
+			new Color(0.86f, 0.92f, 0.88f, 0.90f),  // Mossy forest mist
+			new Color(0.92f, 0.93f, 0.97f, 0.92f),  // Moonlit silver mist
+			new Color(0.85f, 0.89f, 0.87f, 0.88f),  // Murky hollow vapor
+			new Color(0.90f, 0.94f, 0.95f, 0.90f)   // Deep woods fog
+		};
+
+		int randomZoneCount = 36;
+		for (int i = 0; i < randomZoneCount; i++)
+		{
+			Vector2 pos = new Vector2(
+				(float)GD.RandRange(-WorldRadius + 500f, WorldRadius - 500f),
+				(float)GD.RandRange(-WorldRadius + 500f, WorldRadius - 500f)
+			);
+
+			// Avoid placing fog directly over the central village square
+			if (pos.DistanceTo(VillagePosition) < 650f) continue;
+
+			// Variable sizes: small rolling patches (350-500f), medium banks (550-850f), massive expanses (900-1300f)
+			float sizeTier = GD.Randf();
+			float radius;
+			float density;
+			float coverage;
+
+			if (sizeTier < 0.35f)
+			{
+				radius = (float)GD.RandRange(350f, 500f);
+				density = (float)GD.RandRange(1.05f, 1.25f);
+				coverage = (float)GD.RandRange(0.55f, 0.65f);
+			}
+			else if (sizeTier < 0.75f)
+			{
+				radius = (float)GD.RandRange(550f, 850f);
+				density = (float)GD.RandRange(1.15f, 1.35f);
+				coverage = (float)GD.RandRange(0.58f, 0.70f);
+			}
+			else
+			{
+				radius = (float)GD.RandRange(900f, 1300f);
+				density = (float)GD.RandRange(1.20f, 1.45f);
+				coverage = (float)GD.RandRange(0.62f, 0.75f);
+			}
+
+			Color color = mistPalette[i % mistPalette.Length];
+			float cycleSpeed = (float)GD.RandRange(0.045f, 0.095f);
+			float timeOffset = (float)GD.RandRange(0.0f, 500.0f);
+
+			var zone = FogZone.Instantiate(pos, radius, color, density, coverage, cycleSpeed, timeOffset);
+			zone.Name = $"FogZone_Random_{i}";
+			_fogContainer.AddChild(zone);
+		}
 	}
 }
