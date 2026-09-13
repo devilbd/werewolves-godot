@@ -93,3 +93,10 @@ When performing common expansion tasks, follow the dedicated playbooks in [`.age
 > [!CAUTION]
 > **UI Input Propagation**:
 > Any custom control that accepts mouse clicks (like the Pouch window or items) must call `GetViewport().SetInputAsHandled()` if the click should not trigger in-game targeting or movement.
+
+> [!IMPORTANT]
+> **Cavern Hideout & Scene Transitions**:
+> - The subterranean sanctuary (`scenes/Lair.tscn`) and surface world (`scenes/Main.tscn`) share the autoload singleton `GameState.Instance`.
+> - Returning to the surface requires maintaining the exit spawn offset (`LairEntrancePosition + (0, 90) = (-650, -360)`) to prevent re-triggering the entrance collision immediately upon loading.
+> - While `GameState.Instance.IsInLair` is true, passive health and power regeneration are strictly suppressed. All recovery in the cave must be active (Blood Core, consumable Meat/Flasks, or Execute Bite).
+> - Always explicitly restore `res://assets/cursors/normal_o.png` upon scene exit or entity destruction to eliminate stuck cursor states.

@@ -15,18 +15,19 @@
 2. **Combat Systems & Math (`Formulas.cs` & `GameState.cs`)**:
    - Maintain `ICombatant` contract: `BaseDamage`, `Accuracy`, `BaseDefense`, `Evasion`, `Health`, `MaxHealth`, `IsDead`, `TakeDamage()`.
    - Ensure all damage calculations go through `Formulas.cs`:
-     - Regular attacks: $\max(0, \text{Damage} - \frac{\text{Defense}}{2})$.
+     - Regular attacks: $\max(1, \text{Damage} - \frac{\text{Defense}}{2})$.
      - Bonus damage per skill (+12 Scratch, +20 Charge, +15 Bite).
-     - Hit probability: $\text{GD.Randf}() < (\text{Accuracy} - \text{Evasion})$.
-   - Auto-attack warmode: Melee range check (110px) on 1.0s interval against valid `ICombatant` targets.
+     - Hit probability: $\text{GD.Randf}() < \text{Clamp}(\text{Accuracy} - \text{Evasion}, 0.05, 0.95)$.
+   - Auto-attack warmode: Melee range check on 1.0s interval against valid `ICombatant` targets.
 
 3. **Entity AI (`Deer.cs`, `Villager.cs` & Future Creatures)**:
    - State machine: Passive Wander $\leftrightarrow$ Pause $\leftrightarrow$ Retaliatory Aggro $\leftrightarrow$ Attack $\leftrightarrow$ Death.
    - Retaliation trigger: Enter aggro state when `TakeDamage()` is invoked, targeting the attacker.
    - Boundary collisions: Bounce or steer away from obstacles and boundaries.
-   - Death sequence: Stop velocity, modulate alpha to 0 over ~1 second (or play death animation row), instantiate `DroppedLoot` (`Meat` for deer, `GoldCoins` for villagers), clear target from `GameState`, and call `QueueFree()`.
+   - Death sequence: Stop velocity, fade out or play death animation, instantiate `DroppedLoot` (`Meat` for deer, `GoldCoins`/`Meat` for villagers), spawn temporary `BloodSpotObject` for living creatures (40-second ground lifetime), clear target from `GameState`, and call `QueueFree()`.
 
 4. **Combat Feedback**:
+   - Spawns randomized combat splatters (`assets/blood-hits/1..3.png`) downscaled by $\frac{1}{3}$.
    - Dispatch floating combat text via `GameState.Instance.TriggerDamageNumber(...)`.
    - Color standards:
      - Yellow `Color(1f, 1f, 0.4f)` for physical melee hits.
@@ -34,6 +35,16 @@
      - Green `Color(0.2f, 1f, 0.4f)` for healing and loot.
      - Grey `Color(0.8f, 0.8f, 0.8f)` for misses or distance warnings.
      - Violet `Color(0.8f, 0.2f, 1f)` for buffs.
+
+5. **Alchemy, Flasks & Consumption**:
+   - Walking over blood spots collects blood if the player holds `EmptyFlask` items in the pouch (+20% to 30% fill per spot).
+   - Right-click consumption:
+     - Meat: `GameState.Instance.EatMeat()` (+20 HP, +10 Power).
+     - Blood Flask: `GameState.Instance.DrinkBloodFlask(itemKey)` (restores HP & Power, yields `EmptyFlask`).
+
+6. **Cavern Recovery Rules**:
+   - In the subterranean cave hideout (`GameState.Instance.IsInLair == true`), passive health and power regeneration are **completely disabled**.
+   - Survival inside the cave is strictly active: Blood Core altar interactions ('Press E'), drinking blood flasks, eating meat, or executing living targets with bite.
 
 ---
 

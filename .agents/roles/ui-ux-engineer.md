@@ -13,9 +13,9 @@
      - Top Left: `TargetPanel`
      - Bottom Left: `HealthOrb`
      - Bottom Right: `PowerOrb`
-     - Bottom Center: `StatsPanel` and `ActionBar`
-     - Center (Modal): `PouchWindow`
-    - Bind to strongly typed events from `GameState.Instance` (`OnHealthChanged`, `OnPowerChanged`, `OnPositionChanged`, `OnCooldownUpdated`, `OnTargetChanged`, `OnPouchToggled`).
+     - Bottom Center: `StatsPanel` and `MenuBar`
+     - Center (Modals): `PouchWindow` and `HeroDetailsWindow`
+   - Bind to strongly typed events from `GameState.Instance` (`OnHealthChanged`, `OnPowerChanged`, `OnPositionChanged`, `OnCooldownUpdated`, `OnTargetChanged`, `OnPouchToggled`, `OnHeroDetailsToggled`, `OnBloodCoreReservesChanged`).
 
 2. **Custom CanvasItem Rendering (`OrbGauge.cs`)**:
    - Use `[Tool]` with `_Draw()` and `QueueRedraw()` for real-time visual updates.
@@ -27,20 +27,28 @@
      - Clip bubbles so they only render within the liquid region.
    - Overlay border frame texture (`health_ring.png` or `power_ring.png`) scaled with `RingRadiusOffset = 44f` (giving $r = 126\text{px}$) to cleanly encapsulate the orb fluid.
 
-3. **Draggable Pouch Modal (`PouchWindow.cs`)**:
-   - Provide window dragging clamped to viewport dimensions (`0` to `viewport.Size - window.Size`).
-   - Freeform item placement:
-     - Render items within `_itemsArea` with `ClipContents = true`.
-     - Support uniform 44×44px slot items while preserving texture aspect ratio (e.g. `GoldCoins`).
-     - Allow individual item dragging with local mouse offset tracking.
-     - On drag release, commit coordinates to `GameState.Instance.UpdatePouchItemPosition(...)`.
-   - Prevent UI clicks from leaking into game world via `GetViewport().SetInputAsHandled()`.
+3. **Draggable Modals (`PouchWindow.cs` & `HeroDetailsWindow.cs`)**:
+   - **`PouchWindow`**:
+     - Window dragging clamped to viewport dimensions (`0` to `viewport.Size - window.Size`).
+     - Freeform item placement within `_itemsArea` with `ClipContents = true`.
+     - Support uniform 44×44px slot items while preserving texture aspect ratio.
+     - Numerical stack badging and 5-tier flask visuals (`_0`, `_25`, `_50`, `_75`, `_100`).
+     - Right-click consumption: Eat Meat or drink Blood Flask with instant feedback.
+   - **`HeroDetailsWindow`**:
+     - Toggleable via <kbd>C</kbd> or HUD menu button; draggable across viewport.
+     - Anchors 600×650 Werewolf portrait (`solo.png`) on the left on a wooden sign background (`wooden_sign_flat.png`).
+     - Displays character plate and live combat stats (Health, Power, Damage, Defense, Speed, Accuracy, Evasion).
+   - **Input Safety**: Prevent UI clicks from leaking into game world via `GetViewport().SetInputAsHandled()`.
 
-4. **Contextual Cursors**:
+4. **HUD Menu Bar (`MenuBar.cs`) & World UI**:
+   - Secondary action bar beside the skills bar housing the Hero Details icon (`werewolf_head.png` scaled 50%) and Pouch Bag icon.
+   - Overhead progress bars: e.g. `BloodCoreObject` styled percentage bar showing reserves and interaction prompts.
+
+5. **Contextual Cursors**:
    - `assets/cursors/normal_o.png`: Default game arrow.
    - `assets/cursors/interaction_o.png`: Hovering over attackable / harvestable targets.
    - `assets/cursors/grab_o.png`: Hovering over ground loot or draggable handles.
-   - Always guarantee cursor reset when leaving hovered controls or when entities are destroyed.
+   - Always guarantee cursor reset to `normal_o.png` when leaving hovered controls, picking items, changing scenes, or when entities are destroyed.
 
 ---
 

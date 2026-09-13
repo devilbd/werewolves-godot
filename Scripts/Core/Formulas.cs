@@ -52,7 +52,7 @@ public static class Formulas
     }
 
     /// <summary>
-    /// Patch 2.0 Villager loot roll:
+    /// Version 2.0+ Villager loot roll:
     /// Drops Gold, Meat, or Both based on random principle.
     /// Supports Small Loot vs More/Large Loot tiers.
     /// </summary>

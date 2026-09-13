@@ -90,11 +90,22 @@ public override void _Draw()
 }
 ```
 
-### Step 6: Loot Drop on Death
+### Step 6: Loot Drop & Blood Spot on Death
 When `Health <= 0`:
 ```csharp
+// 1. Instantiate resource loot drop
 var loot = DroppedLoot.Instantiate("Meat", GlobalPosition);
 GetParent()?.AddChild(loot);
+
+// 2. Spawn collectible ground blood puddle for living creatures (40s life)
+var bloodSpot = BloodSpotObject.Instantiate(GlobalPosition);
+GetParent()?.AddChild(bloodSpot);
+
+// 3. Reset cursor to normal to prevent sticky cursor state
+var defaultCursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
+Input.SetCustomMouseCursor(defaultCursor, Input.CursorShape.Arrow);
+
+// 4. Clear targeting from GameState and free node
 if (GameState.Instance.SelectedTarget == this)
 {
     GameState.Instance.SelectedTarget = null;

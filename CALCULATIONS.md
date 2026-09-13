@@ -28,19 +28,22 @@ The Werewolf player has 4 active skills mapped to hotkeys <kbd>1</kbd>–<kbd>4<
 | **Execute Bite** | <kbd>3</kbd> | $20$ | $10.0\text{s}$ | $+15$ | $\max(1, \text{Atk} - \frac{\text{Def}}{2} + 15)$ | Target HP $\le 25\%$ |
 | **Blood Howling** | <kbd>4</kbd> | $40$ | $30.0\text{s}$ | N/A | $+30\%$ to Damage, Defense, Speed, Accuracy, Evasion | $10\text{s}$ self-buff duration |
 
-### 1.4 Health & Power Regeneration Economy (10-Second Point Calibration)
-- **Passive Health Regeneration Rate**: $0.10\text{ units/sec}$ ($\mathbf{1.0\text{ point per } 10\text{ seconds}}$).
-  - Takes $10\text{ seconds}$ to recover $1.0\text{ HP}$.
-  - Full recovery from near-zero to $100\text{ HP}$ takes $1000\text{ seconds}$ ($\sim 16.6\text{ minutes}$).
-- **Passive Power Regeneration Rate**: $0.20\text{ units/sec}$ ($\mathbf{2.0\text{ points per } 10\text{ seconds}}$, tuned slightly faster than health recovery).
-  - Takes $5\text{ seconds}$ to recover $1.0\text{ Power}$ ($2.0\text{ Power}$ per $10\text{s}$).
-  - Full power pool recharge ($100\text{ Power}$) takes $500\text{ seconds}$ ($\sim 8.3\text{ minutes}$).
-- **Survival Design Context**: Out in the wilderness, passive regeneration is heavily slowed down, emphasizing the tactical value of consuming gathered Meat items or returning to the safe haven of the Werewolf's Lair to rest and recover.
+### 1.4 Health & Power Regeneration Economy
+- **Wilderness Passive Regeneration Rates** (configured in `config/combat.json`):
+  - **Health**: $0.10\text{ units/sec}$ ($1.0\text{ HP}$ per $10\text{ seconds}$). Full recovery from 0 to 100 takes $1000\text{ seconds}$ ($\sim 16.6\text{ minutes}$).
+  - **Power**: $0.20\text{ units/sec}$ ($2.0\text{ Power}$ per $10\text{ seconds}$). Full pool recharge takes $500\text{ seconds}$ ($\sim 8.3\text{ minutes}$).
+- **Cave / Lair Regeneration Rules**:
+  - **Passive Regeneration Suspended**: Inside the Werewolf's Lair (`IsInLair == true`), passive over-time health and power recovery are **completely disabled**.
+  - **Restoration Channels in the Cave**:
+    1. **Blood Core Altar**: Manual interaction ('Press E') consuming $250\text{ blood}$ from the central altar to restore $+12\text{ HP}$ and $+13\text{ Power}$ ($25\text{ total points}$).
+    2. **Eating Meat**: Right-click `"Meat"` in the pouch modal restores $+20\text{ HP}$ and $+10\text{ Power}$ per piece.
+    3. **Drinking Blood Flasks**: Right-click `"BloodFlask"` in the pouch modal restores up to $+25\text{ HP}$ and $+25\text{ Power}$ (scaled by fill level), returning an `"EmptyFlask"`.
+    4. **Execute Bite (Skill 3)**: Restores $+20\text{ HP}$ when killing a target $\le 25\%$ HP.
 - Attacks consume power on cast; basic melee attacks require zero power.
 
 ---
 
-## 2. Drop Rates & Loot Tables (Patch 2.0)
+## 2. Drop Rates & Loot Tables (Version 2.0+)
 
 ### 2.1 Villager Loot System
 Villagers drop resources upon defeat based on random principles. They can drop **Meat**, **Gold Coins**, or **Both**, categorized into **Small Loot** and **More / Large Loot** quantity tiers.
@@ -75,9 +78,14 @@ P(\text{More Loot}) &= 0.35 \quad (35\%)
 
 | Source Entity / Node | Resource | Chance | Quantity Range | Expected Value (EV) | Interaction / Trigger |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Deer** | Meat | $100\%$ | $1 - 2$ | $1.5$ | Defeat in combat |
+| **Deer** | Meat | $100\%$ | $1 - 2$ | $1.5$ | Defeat in combat (+ spawns Blood Spot) |
+| **Villager** | Gold / Meat | $100\%$ | See 2.1 | $3.80\text{ gold} / 0.92\text{ meat}$ | Defeat in combat (+ spawns Blood Spot) |
 | **Pine Tree** | Wood Logs | $100\%$ | $1 - 3$ | $1.625$ | Chop (4 strikes @ $25\text{ HP/hit}$) |
-| **Quarry Boulder** | Stones | $100\%$ | $1 - 3$ | $2.0$ | Mine (3 strikes) |
+| **Quarry Boulder** | Stones | $100\%$ | $1 - 3$ | $2.0$ | Mine (4 strikes @ $25\text{ HP/hit}$) |
+| **Quartz Crystal** | Quartz | $100\%$ | $1 - 3$ (by variant) | $1.85$ | Mine/Chop (4 strikes @ $25\text{ HP/hit}$) |
+| **Tall Grass** | Grass | $100\%$ | $1 - 2$ | $1.5$ | Chop (2 strikes @ $25\text{ HP/hit}$) |
+| **Treasure Chest** | Resources & Flask | $100\%$ | $1 - 2$ items + $20\%$ Flask | Variable | Open interaction |
+| **Blood Spot** | Blood (Flask Fill) | $100\%$ | $+20\% - 30\%$ | $+25\%$ | Gather with Empty/Partial Flask (40s life) |
 
 #### 2.2.1 Tree Size & Harvesting Yield (Random Principle)
 Trees across the world generate with randomized sizes according to a 3-tier distribution model matching the game's core random principles:
@@ -146,8 +154,17 @@ P(\text{Large / Ancient Pine}) &= 0.25 \quad (25\%)
   - Village contains $12$ roaming Villagers.
   - Expected total clear yield: $\approx 45.6\text{ Gold Coins}$ and $\approx 11.0\text{ Meat Pieces}$.
 - **Pouch Storage Space**:
-  - Pouch UI supports uniform $44\times 44\text{px}$ item stack slots.
-  - Stacks aggregate seamlessly in `GameState.PouchItems` without upper bounds.
-- **Safe Haven Lair Recovery**:
-  - Inside the Werewolf Lair hideout, safe haven resting restores $10\text{ HP/sec}$ and $10\text{ Power/sec}$.
-  - Complete recovery from $0$ to $100\%$ occurs in $10\text{ seconds}$ within the lair.
+  - Pouch UI supports uniform $44\times 44\text{px}$ item slots with freeform placement.
+  - Stackable items (`GoldCoins`, `Logs`, `Stones`, `Meat`, `Quartz`, `Grass`, `EmptyFlask`) aggregate seamlessly without upper bounds.
+  - Filled blood flasks (`BloodFlask_<id>`) are tracked individually with independent fill percentages ($20\%\text{–}100\%$).
+- **Blood Core Altar Economy (Cave Hideout)**:
+  - **Base Blood Pool**: Starts with $1000\text{ Blood}$ by default (persisted via `SaveManager`).
+  - **Manual Restore Cost**: $250\text{ Blood}$ per activation ('Press E').
+  - **Yield per Activation**: $+12\text{ Health}$ and $+13\text{ Power}$ ($25\text{ total points}$).
+  - **Capacity**: A full pool of $1000\text{ Blood}$ provides $4$ complete restoration cycles ($+48\text{ HP}$, $+52\text{ Power}$).
+  - **Refill Exchange Rate**: Pressing <kbd>R</kbd> near the core pours blood from a flask into the core ($100\%\text{ flask} \implies +250\text{ Blood}$, $1\%\text{ fill} = 2.5\text{ Blood}$ points), leaving an reusable `"EmptyFlask"`.
+- **Consumable Recovery Mathematics**:
+  - **Meat**: Right-click to eat $\implies +20\text{ HP}$, $+10\text{ Power}$.
+  - **Blood Flask**: Right-click to drink $\implies$ up to $+25\text{ HP}$, $+25\text{ Power}$ (for $100\%$ flask), yields $1$ empty flask.
+- **External Configuration System**:
+  - Combat and harvesting parameters are externalized in `config/combat.json`, `config/resources.json`, and `config/chests.json` for live balance tuning without recompilation.

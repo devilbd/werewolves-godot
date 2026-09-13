@@ -21,21 +21,26 @@
        "mapY": 0,
        "playerX": 0.0,
        "playerY": 0.0,
+       "bloodCoreReserves": 1000.0,
        "pouchItems": {
          "Logs": { "count": 5, "posX": 20.0, "posY": 20.0 },
          "Stones": { "count": 2, "posX": 80.0, "posY": 20.0 },
-         "GoldCoins": { "count": 6, "posX": 140.0, "posY": 20.0 }
+         "GoldCoins": { "count": 6, "posX": 140.0, "posY": 20.0 },
+         "BloodFlask_1": { "count": 1, "posX": 200.0, "posY": 20.0, "bloodAmount": 75.0 }
        }
      }
      ```
-   - Test edge cases: missing file, corrupted JSON, missing keys, out-of-bounds coordinates (clamped to world radius `5000f`).
+   - Test edge cases: missing file, corrupted JSON, missing keys, out-of-bounds coordinates (clamped to world radius `5000f`), and Blood Core reserve limits ($0$–$1000$).
 
 3. **Critical Edge Case Checklist**:
    - **Boundary Clamping & Collision**: Player moving at maximum sprint speed toward world margins ($\pm 5000$) must be stopped by perimeter collision walls without clipping through.
-   - **Targeting Null Safety**: If a target (Deer, Villager, Tree, Rock) dies or is harvested while selected in `TargetPanel`, verify the panel hides and does not throw null reference exceptions.
+   - **Targeting Null Safety**: If a target (Deer, Villager, Tree, Rock, Quartz, Grass) dies or is harvested while selected in `TargetPanel`, verify the panel hides and does not throw null reference exceptions.
    - **Zero Power / Skill Cooldowns**: Verify skills cannot be activated if power is insufficient or skill is currently on cooldown.
    - **Cursor Reset**: Verify mouse cursor returns to `normal_o.png` even if the hovered target is killed or collected immediately.
-   - **UI Dragging Boundaries**: Dragging the pouch modal or inventory items must remain clamped within viewport and item area boundaries.
+   - **UI Dragging Boundaries**: Dragging the pouch modal, hero details window, or inventory items must remain clamped within viewport boundaries.
+   - **Scene Transitions & Lair Portals**: Verify transition between surface world and subterranean cave hideout safely repositions player at `(-650, -360)` without triggering immediate re-entry loops.
+   - **Passive Regeneration Suppression in Cave**: Ensure $0.0\text{ HP/s}$ and $0.0\text{ Power/s}$ passive recovery when `IsInLair == true`.
+   - **Blood Core Altar Math**: Confirm 'Press E' consumes exactly $250$ blood to give $+12$ HP and $+13$ Power, and 'Press R' correctly drains held flasks and returns empty flasks.
 
 4. **Automated & Headless Smoke Tests**:
    - Execute Godot in headless mode for smoke tests:
