@@ -266,7 +266,7 @@ public partial class GameState : Node
     {
         if (!PouchItems.TryGetValue(itemName, out var item))
         {
-            item = new PouchItemData { Count = 0, PosX = 20, PosY = 20 + PouchItems.Count * 60 };
+            item = new PouchItemData { Count = 0, PosX = 0f, PosY = 0f };
             PouchItems[itemName] = item;
         }
 

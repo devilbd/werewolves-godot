@@ -217,10 +217,13 @@ public partial class WorldManager : Node2D
 		// 6. Build Wilderness Trees & Rocks
 		BuildWildernessVegetation();
 
-		// 7. Build World Boundary Barriers
+		// 7. Build Quartz Mineral Deposits
+		BuildQuartzDeposits();
+
+		// 8. Build World Boundary Barriers
 		BuildWorldBoundaries();
 
-		// 8. Build Atmospheric Fog Zones
+		// 9. Build Atmospheric Fog Zones
 		BuildFogZones();
 	}
 
@@ -487,6 +490,39 @@ public partial class WorldManager : Node2D
 
 			var rock = new RockObject { GlobalPosition = pos };
 			_entitiesContainer.AddChild(rock);
+		}
+	}
+
+	private void BuildQuartzDeposits()
+	{
+		// 1. Scattered quartz formations across the open world
+		int scatteredQuartzCount = 35;
+		for (int i = 0; i < scatteredQuartzCount; i++)
+		{
+			Vector2 pos = new Vector2(
+				(float)GD.RandRange(-WorldRadius + 300f, WorldRadius - 300f),
+				(float)GD.RandRange(-WorldRadius + 300f, WorldRadius - 300f)
+			);
+
+			if (IsInsideLake(pos, 50f)) continue;
+			if (pos.DistanceTo(VillagePosition) < 1450f) continue;
+			if (pos.DistanceTo(LairEntrancePosition) < 300f) continue;
+			if (pos.DistanceTo(QuarryPosition) < 350f) continue;
+			if (pos.DistanceTo(AwakeningGrovePosition) < 160f) continue;
+
+			var quartz = new QuartzObject { GlobalPosition = pos };
+			_entitiesContainer.AddChild(quartz);
+		}
+
+		// 2. Cluster of mineral quartz in Quarry Hills
+		int quarryQuartzCount = 6;
+		for (int i = 0; i < quarryQuartzCount; i++)
+		{
+			float angle = (float)GD.RandRange(0, Mathf.Pi * 2f);
+			float dist = (float)GD.RandRange(80f, 350f);
+			Vector2 pos = QuarryPosition + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * dist;
+			var quartz = new QuartzObject { GlobalPosition = pos };
+			_entitiesContainer.AddChild(quartz);
 		}
 	}
 

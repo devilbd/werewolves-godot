@@ -14,7 +14,9 @@ public partial class DroppedLoot : Area2D, IFogBorderable
         ? new Color(1.0f, 0.88f, 0.25f, 0.95f) // Treasure gold
         : (ItemType is "Meat"
             ? new Color(1.0f, 0.55f, 0.55f, 0.95f) // Crimson meat
-            : new Color(0.65f, 0.95f, 0.65f, 0.95f)); // Forest loot
+            : (ItemType is "Quartz"
+                ? new Color(0.85f, 0.70f, 1.0f, 0.95f) // Crystalline amethyst
+                : new Color(0.65f, 0.95f, 0.65f, 0.95f))); // Forest loot
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;
@@ -39,6 +41,7 @@ public partial class DroppedLoot : Area2D, IFogBorderable
             "Stones" => GD.Load<Texture2D>("res://assets/rock_stones_loot_o.png"),
             "Meat" => GD.Load<Texture2D>("res://assets/meat_o.png"),
             "GoldCoins" or "Gold Coins" or "Gold" => GD.Load<Texture2D>("res://assets/gold_coins.png"),
+            "Quartz" => GD.Load<Texture2D>("res://assets/resources/quartz/quartz_2.png"),
             _ => GD.Load<Texture2D>("res://assets/logs_o.png")
         };
         _sprite.Texture = tex;
@@ -48,6 +51,10 @@ public partial class DroppedLoot : Area2D, IFogBorderable
         {
             _sprite.Scale = new Vector2(1f / 3f, 1f / 3f);
         }
+        else if (ItemType is "Quartz")
+        {
+            _sprite.Scale = new Vector2(0.38f, 0.38f);
+        }
         else
         {
             _sprite.Scale = new Vector2(0.6f, 0.6f);
@@ -55,7 +62,7 @@ public partial class DroppedLoot : Area2D, IFogBorderable
         AddChild(_sprite);
 
         _collision = new CollisionShape2D();
-        float radius = (ItemType is "GoldCoins" or "Gold Coins" or "Gold") ? 28f : 30f;
+        float radius = (ItemType is "GoldCoins" or "Gold Coins" or "Gold") ? 28f : (ItemType is "Quartz" ? 24f : 30f);
         var circle = new CircleShape2D { Radius = radius };
         _collision.Shape = circle;
         AddChild(_collision);
@@ -102,7 +109,9 @@ public partial class DroppedLoot : Area2D, IFogBorderable
 
         Color textColor = (ItemType is "GoldCoins" or "Gold Coins" or "Gold")
             ? new Color(1f, 0.85f, 0.2f)
-            : new Color(0.2f, 1f, 0.4f);
+            : (ItemType is "Quartz"
+                ? new Color(0.85f, 0.70f, 1.0f)
+                : new Color(0.2f, 1f, 0.4f));
 
         GameState.Instance.TriggerDamageNumber($"+{displayName}", GlobalPosition, textColor);
 

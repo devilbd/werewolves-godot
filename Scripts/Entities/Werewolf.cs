@@ -284,6 +284,23 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
                 }
             }
         }
+        else if (target is QuartzObject quartz)
+        {
+            if (dist <= MeleeRange * 1.5f && !_isAttacking)
+            {
+                _autoAttackTimer += dt;
+                if (_autoAttackTimer >= AutoAttackInterval)
+                {
+                    _autoAttackTimer = 0f;
+                    TriggerAttackAnimation(0);
+                    quartz.Interact();
+                    if (quartz.Health <= 0f || quartz.IsDead)
+                    {
+                        SetAutoInteract(false);
+                    }
+                }
+            }
+        }
     }
 
     private void ExecuteMeleeHit(ICombatant combatant, ISelectableTarget selectableTarget)
@@ -479,6 +496,22 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
                 }
             }
             else if (GlobalPosition.DistanceTo(rock.GlobalPosition) > MeleeRange * 1.5f)
+            {
+                GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
+            }
+        }
+        else if (GameState.Instance.SelectedTarget is QuartzObject quartz)
+        {
+            if (GlobalPosition.DistanceTo(quartz.GlobalPosition) <= MeleeRange * 1.5f && !_isAttacking)
+            {
+                TriggerAttackAnimation(0);
+                quartz.Interact();
+                if (quartz.Health <= 0f || quartz.IsDead)
+                {
+                    SetAutoInteract(false);
+                }
+            }
+            else if (GlobalPosition.DistanceTo(quartz.GlobalPosition) > MeleeRange * 1.5f)
             {
                 GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
             }

@@ -423,6 +423,7 @@ public partial class TargetPanel : PanelContainer
             {
                 "Tree" or "Pine Tree" => "Chop",
                 "Rock" or "Quarry Boulder" => "Quarry",
+                "Quartz" or "Quartz Crystal" => "Chop",
                 _ => "Attack"
             };
 
@@ -430,6 +431,7 @@ public partial class TargetPanel : PanelContainer
             {
                 "Tree" or "Pine Tree" => _chopIcon,
                 "Rock" or "Quarry Boulder" => _quarryIcon,
+                "Quartz" or "Quartz Crystal" => _chopIcon,
                 _ => _attackIcon
             };
             if (_actionButton.TextureNormal != actionTex)

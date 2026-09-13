@@ -182,9 +182,22 @@ public partial class PouchWindow : Control
             PouchItemData item = kvp.Value;
             if (item.Count <= 0) continue;
 
-            Vector2 itemPos = (item.PosX == 0f && item.PosY == 0f)
-                ? GetDefaultSlotPosition(itemIndex)
+            float maxX = Mathf.Max(0f, _itemsArea.Size.X - 44f);
+            float maxY = Mathf.Max(0f, _itemsArea.Size.Y - 44f);
+
+            bool isUnset = item.PosX == 0f && item.PosY == 0f;
+            bool isOutOfBounds = item.PosX < 0f || item.PosX > maxX || item.PosY < 0f || item.PosY > maxY;
+
+            Vector2 defaultPos = GetDefaultSlotPosition(itemIndex);
+            Vector2 itemPos = (isUnset || isOutOfBounds)
+                ? defaultPos
                 : new Vector2(item.PosX, item.PosY);
+
+            if (isUnset || isOutOfBounds)
+            {
+                item.PosX = itemPos.X;
+                item.PosY = itemPos.Y;
+            }
 
             string iconPath = itemName switch
             {
@@ -192,6 +205,7 @@ public partial class PouchWindow : Control
                 "Stones" => "res://assets/rock_stones_loot_collected_o.png",
                 "Meat" => "res://assets/meat_collected_o.png",
                 "GoldCoins" or "Gold Coins" or "Gold" => "res://assets/gold_coins.png",
+                "Quartz" => "res://assets/resources/quartz/quartz_2.png",
                 _ => "res://assets/logs_collected_o.png"
             };
 
@@ -253,6 +267,6 @@ public partial class PouchWindow : Control
         3 => new Vector2(10, 75),
         4 => new Vector2(65, 75),
         5 => new Vector2(120, 75),
-        _ => new Vector2(10, 15)
+        _ => new Vector2(10 + (index % 3) * 55, 15 + ((index / 3) % 2) * 60)
     };
 }
