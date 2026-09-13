@@ -20,6 +20,8 @@ public partial class PouchWindow : Control
     private Control? _draggedItemControl = null;
     private string? _draggedItemName = null;
     private Vector2 _itemDragOffset = Vector2.Zero;
+    private Vector2 _itemDragStartPos = Vector2.Zero;
+    private bool _hasDraggedItem = false;
 
     public override void _Ready()
     {
@@ -86,6 +88,8 @@ public partial class PouchWindow : Control
         Visible = false;
         GameState.Instance.OnPouchToggled += OnGameStatePouchToggled;
         GameState.Instance.OnPouchChanged += OnGameStatePouchChanged;
+        GameState.Instance.OnChestInventoryToggled += OnChestInventoryToggled;
+        GameState.Instance.OnBloodJuicerToggled += OnBloodJuicerToggled;
 
         RefreshItems();
     }
@@ -103,12 +107,26 @@ public partial class PouchWindow : Control
         RefreshItems();
     }
 
+    private void OnChestInventoryToggled(bool isOpen, string? chestId)
+    {
+        if (!GodotObject.IsInstanceValid(this)) return;
+        if (Visible) RefreshItems();
+    }
+
+    private void OnBloodJuicerToggled(bool isOpen)
+    {
+        if (!GodotObject.IsInstanceValid(this)) return;
+        if (Visible) RefreshItems();
+    }
+
     public override void _ExitTree()
     {
         if (GameState.Instance != null)
         {
             GameState.Instance.OnPouchToggled -= OnGameStatePouchToggled;
             GameState.Instance.OnPouchChanged -= OnGameStatePouchChanged;
+            GameState.Instance.OnChestInventoryToggled -= OnChestInventoryToggled;
+            GameState.Instance.OnBloodJuicerToggled -= OnBloodJuicerToggled;
         }
     }
 
@@ -144,6 +162,12 @@ public partial class PouchWindow : Control
         {
             Vector2 localMouse = _itemsArea.GetLocalMousePosition();
             Vector2 newPos = localMouse - _itemDragOffset;
+
+            if ((newPos - _itemDragStartPos).Length() > 5f)
+            {
+                _hasDraggedItem = true;
+            }
+
             float maxX = Mathf.Max(0f, _itemsArea.Size.X - _draggedItemControl.Size.X);
             float maxY = Mathf.Max(0f, _itemsArea.Size.Y - _draggedItemControl.Size.Y);
             newPos = new Vector2(
@@ -157,9 +181,49 @@ public partial class PouchWindow : Control
         {
             if (_draggedItemControl != null && _draggedItemName != null)
             {
-                GameState.Instance.UpdatePouchItemPosition(_draggedItemName, _draggedItemControl.Position);
+                Vector2 globalMouse = GetGlobalMousePosition();
+
+                if (GameState.Instance.IsChestInventoryOpen && GameState.Instance.ActiveChestId != null)
+                {
+                    var chestWin = GetParent().GetNodeOrNull<ChestInventoryWindow>("ChestInventoryWindow");
+                    bool droppedOnChest = chestWin != null && chestWin.Visible && chestWin.GetGlobalRect().HasPoint(globalMouse);
+
+                    if (droppedOnChest || !_hasDraggedItem)
+                    {
+                        // Quick click or dropped onto chest: transfer 1 item to chest
+                        GameState.Instance.TransferItemPouchToChest(GameState.Instance.ActiveChestId, _draggedItemName, 1);
+                    }
+                    else
+                    {
+                        // Dragged within pouch: update pouch position
+                        GameState.Instance.UpdatePouchItemPosition(_draggedItemName, _draggedItemControl.Position);
+                    }
+                }
+                else if (GameState.Instance.IsBloodJuicerOpen && _draggedItemName == "Meat")
+                {
+                    var juicerWin = GetParent().GetNodeOrNull<BloodJuicerWindow>("BloodJuicerWindow");
+                    bool droppedOnJuicer = juicerWin != null && juicerWin.Visible && juicerWin.GetGlobalRect().HasPoint(globalMouse);
+
+                    if (droppedOnJuicer || !_hasDraggedItem)
+                    {
+                        // Quick click or dropped onto juicer: deposit 1 meat in juicer
+                        GameState.Instance.PlaceMeatInJuicer(1);
+                    }
+                    else
+                    {
+                        GameState.Instance.UpdatePouchItemPosition(_draggedItemName, _draggedItemControl.Position);
+                    }
+                }
+                else
+                {
+                    if (_hasDraggedItem)
+                    {
+                        GameState.Instance.UpdatePouchItemPosition(_draggedItemName, _draggedItemControl.Position);
+                    }
+                }
             }
             _isDraggingItem = false;
+            _hasDraggedItem = false;
             _draggedItemControl = null;
             _draggedItemName = null;
         }
@@ -172,6 +236,7 @@ public partial class PouchWindow : Control
 
         foreach (Node child in _itemsArea.GetChildren())
         {
+            _itemsArea.RemoveChild(child);
             child.QueueFree();
         }
 
@@ -200,30 +265,45 @@ public partial class PouchWindow : Control
             }
 
             bool isBloodFlask = itemName.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase);
+            bool isPowerFlask = itemName.StartsWith("PowerFlask", StringComparison.OrdinalIgnoreCase);
 
             string iconPath = isBloodFlask
                 ? GetFlaskTexturePath(item.BloodPercent)
-                : itemName switch
-                {
-                    "Logs" => "res://assets/logs_collected_o.png",
-                    "Stones" => "res://assets/rock_stones_loot_collected_o.png",
-                    "Meat" => "res://assets/meat_collected_o.png",
-                    "GoldCoins" or "Gold Coins" or "Gold" => "res://assets/gold_coins.png",
-                    "Quartz" => "res://assets/resources/quartz/quartz_2.png",
-                    "EmptyFlask" or "Empty Flask" or "Flask" => "res://assets/flasks/blood_flask_0.png",
-                    "Grass" => "res://assets/grass/grass_drop.png",
-                    _ => "res://assets/logs_collected_o.png"
-                };
+                : isPowerFlask
+                    ? GetPowerFlaskTexturePath(item.PowerPercent)
+                    : itemName switch
+                    {
+                        "Logs" => "res://assets/logs_collected_o.png",
+                        "Stones" => "res://assets/rock_stones_loot_collected_o.png",
+                        "Meat" => "res://assets/meat_collected_o.png",
+                        "GoldCoins" or "Gold Coins" or "Gold" => "res://assets/gold_coins.png",
+                        "Quartz" => "res://assets/resources/quartz/quartz_2.png",
+                        "EmptyFlask" or "Empty Flask" or "Flask" => "res://assets/flasks/blood_flask_0.png",
+                        "Grass" => "res://assets/grass/grass_drop.png",
+                        _ => "res://assets/logs_collected_o.png"
+                    };
 
             string tooltip;
             if (isBloodFlask)
             {
                 int hp = (int)Math.Round(25f * (item.BloodPercent / 100f));
-                tooltip = $"Blood Flask ({item.BloodPercent}%)\n(Right-click to Drink: +{hp} HP, +{hp} Power)";
+                int pwr = (int)Math.Round(2f * (item.BloodPercent / 100f));
+                tooltip = pwr > 0
+                    ? $"Blood Flask ({item.BloodPercent}%)\n(Right-click to Drink: +{hp} HP, +{pwr} Power)"
+                    : $"Blood Flask ({item.BloodPercent}%)\n(Right-click to Drink: +{hp} HP)";
+            }
+            else if (isPowerFlask)
+            {
+                int pwr = (int)Math.Round(25f * (item.PowerPercent / 100f));
+                tooltip = $"Power Flask ({item.PowerPercent}%)\n(Right-click to Drink: +{pwr} Power)";
             }
             else if (itemName is "Meat")
             {
                 tooltip = $"Meat ({item.Count})\n(Right-click to Eat: +20 HP, +10 Power)";
+                if (GameState.Instance.IsBloodJuicerOpen)
+                {
+                    tooltip += "\n(Click or Right-Click: Place 1 into Blood Juicer | Shift+Click: Choose amount)";
+                }
             }
             else if (itemName is "EmptyFlask" or "Empty Flask" or "Flask")
             {
@@ -240,17 +320,17 @@ public partial class PouchWindow : Control
 
             if (GameState.Instance.IsChestInventoryOpen)
             {
-                if (isBloodFlask)
+                if (isBloodFlask || isPowerFlask)
                 {
-                    tooltip += "\n(Shift+Click or Right-Click: Deposit into Chest)";
+                    tooltip += "\n(Click or Right-Click: Deposit into Chest | Shift+Click: Choose amount)";
                 }
                 else if (item.Count > 1)
                 {
-                    tooltip += "\n(Right-Click: Deposit 1 | Shift+Click: Choose amount to deposit)";
+                    tooltip += "\n(Click or Right-Click: Deposit 1 | Shift+Click: Choose amount to deposit)";
                 }
                 else
                 {
-                    tooltip += "\n(Right-Click/Shift+Click: Deposit into Chest)";
+                    tooltip += "\n(Click or Right-Click: Deposit into Chest)";
                 }
             }
 
@@ -287,6 +367,15 @@ public partial class PouchWindow : Control
                 countLabel.AddThemeFontSizeOverride("font_size", 11);
                 countLabel.AddThemeColorOverride("font_color", item.BloodPercent >= 100 ? new Color(1f, 0.45f, 0.45f) : new Color(1f, 0.85f, 0.4f));
             }
+            else if (isPowerFlask)
+            {
+                countLabel.Text = $"{item.PowerPercent}%";
+                countLabel.Position = new Vector2(4, 26);
+                countLabel.Size = new Vector2(38, 16);
+                countLabel.HorizontalAlignment = HorizontalAlignment.Right;
+                countLabel.AddThemeFontSizeOverride("font_size", 11);
+                countLabel.AddThemeColorOverride("font_color", item.PowerPercent >= 100 ? new Color(0.35f, 0.85f, 1f) : new Color(0.6f, 0.9f, 1f));
+            }
             else
             {
                 countLabel.Text = item.Count.ToString();
@@ -313,14 +402,13 @@ public partial class PouchWindow : Control
                     // If chest inventory is currently open, allow direct depositing
                     if (GameState.Instance.IsChestInventoryOpen && GameState.Instance.ActiveChestId != null)
                     {
-                        bool isShift = Input.IsKeyPressed(Key.Shift);
-                        bool isConsumable = captureItemName is "Meat" || captureItemName.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase);
+                        bool isShift = mb.ShiftPressed || Input.IsKeyPressed(Key.Shift);
 
                         if (isShift && captureCount > 1)
                         {
                             GetViewport().SetInputAsHandled();
                             string activeChest = GameState.Instance.ActiveChestId;
-                            string displayName = isBloodFlask ? $"Blood Flask ({item.BloodPercent}%)" : captureItemName;
+                            string displayName = isBloodFlask ? $"Blood Flask ({item.BloodPercent}%)" : (isPowerFlask ? $"Power Flask ({item.PowerPercent}%)" : captureItemName);
                             ItemSplitModal.Instance?.Open(captureItemName, displayName, captureIcon, captureCount, "Deposit", (amount) =>
                             {
                                 GameState.Instance.TransferItemPouchToChest(activeChest, captureItemName, amount);
@@ -328,10 +416,31 @@ public partial class PouchWindow : Control
                             return;
                         }
 
-                        if ((isShift && captureCount <= 1) || (mb.ButtonIndex == MouseButton.Right && !isConsumable))
+                        if ((isShift && captureCount <= 1) || mb.ButtonIndex == MouseButton.Right)
                         {
                             GetViewport().SetInputAsHandled();
                             GameState.Instance.TransferItemPouchToChest(GameState.Instance.ActiveChestId, captureItemName, 1);
+                            return;
+                        }
+                    }
+                    else if (GameState.Instance.IsBloodJuicerOpen && captureItemName is "Meat")
+                    {
+                        bool isShift = mb.ShiftPressed || Input.IsKeyPressed(Key.Shift);
+
+                        if (isShift && captureCount > 1)
+                        {
+                            GetViewport().SetInputAsHandled();
+                            ItemSplitModal.Instance?.Open(captureItemName, "Meat", captureIcon, captureCount, "Place", (amount) =>
+                            {
+                                GameState.Instance.PlaceMeatInJuicer(amount);
+                            });
+                            return;
+                        }
+
+                        if ((isShift && captureCount <= 1) || mb.ButtonIndex == MouseButton.Right)
+                        {
+                            GetViewport().SetInputAsHandled();
+                            GameState.Instance.PlaceMeatInJuicer(1);
                             return;
                         }
                     }
@@ -339,8 +448,10 @@ public partial class PouchWindow : Control
                     if (mb.ButtonIndex == MouseButton.Left)
                     {
                         _isDraggingItem = true;
+                        _hasDraggedItem = false;
                         _draggedItemControl = itemContainer;
                         _draggedItemName = captureItemName;
+                        _itemDragStartPos = itemContainer.Position;
                         _itemDragOffset = itemContainer.GetLocalMousePosition();
                         GetViewport().SetInputAsHandled();
                     }
@@ -354,6 +465,10 @@ public partial class PouchWindow : Control
                         else if (captureItemName.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase))
                         {
                             GameState.Instance.DrinkBloodFlask(captureItemName);
+                        }
+                        else if (captureItemName.StartsWith("PowerFlask", StringComparison.OrdinalIgnoreCase))
+                        {
+                            GameState.Instance.DrinkPowerFlask(captureItemName);
                         }
                     }
                 }
@@ -382,5 +497,13 @@ public partial class PouchWindow : Control
         if (percent <= 62) return "res://assets/flasks/blood_flask_50.png";
         if (percent <= 87) return "res://assets/flasks/blood_flask_75.png";
         return "res://assets/flasks/blood_flask_100.png";
+    }
+
+    public static string GetPowerFlaskTexturePath(int percent)
+    {
+        if (percent >= 85) return "res://assets/flasks/power_flask_100.png";
+        if (percent >= 40) return "res://assets/flasks/power_flask_50.png";
+        if (percent >= 15) return "res://assets/flasks/power_flask_25.png";
+        return "res://assets/flasks/power_flask_0.png";
     }
 }

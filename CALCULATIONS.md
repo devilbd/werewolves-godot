@@ -37,8 +37,9 @@ The Werewolf player has 4 active skills mapped to hotkeys <kbd>1</kbd>–<kbd>4<
   - **Restoration Channels in the Cave**:
     1. **Blood Core Altar**: Manual interaction ('Press E') consuming $250\text{ blood}$ from the central altar to restore $+12\text{ HP}$ and $+13\text{ Power}$ ($25\text{ total points}$).
     2. **Eating Meat**: Right-click `"Meat"` in the pouch modal restores $+20\text{ HP}$ and $+10\text{ Power}$ per piece.
-    3. **Drinking Blood Flasks**: Right-click `"BloodFlask"` in the pouch modal restores up to $+25\text{ HP}$ and $+25\text{ Power}$ (scaled by fill level), returning an `"EmptyFlask"`.
-    4. **Execute Bite (Skill 3)**: Restores $+20\text{ HP}$ when killing a target $\le 25\%$ HP.
+    3. **Drinking Blood Flasks**: Right-click `"BloodFlask"` in the pouch modal restores up to $+25\text{ HP}$ and $+2\text{ Power}$ (heavily reduced power gain, scaled by fill level), returning an `"EmptyFlask"`.
+    4. **Drinking Power Flasks**: Right-click `"PowerFlask"` in the pouch modal restores up to $+25\text{ Power}$ (scaled by fill level), returning an `"EmptyFlask"`.
+    5. **Execute Bite (Skill 3)**: Restores $+20\text{ HP}$ when killing a target $\le 25\%$ HP.
 - Attacks consume power on cast; basic melee attacks require zero power.
 
 ---
@@ -156,15 +157,26 @@ P(\text{Large / Ancient Pine}) &= 0.25 \quad (25\%)
 - **Pouch Storage Space**:
   - Pouch UI supports uniform $44\times 44\text{px}$ item slots with freeform placement.
   - Stackable items (`GoldCoins`, `Logs`, `Stones`, `Meat`, `Quartz`, `Grass`, `EmptyFlask`) aggregate seamlessly without upper bounds.
-  - Filled blood flasks (`BloodFlask_<id>`) are tracked individually with independent fill percentages ($20\%\text{–}100\%$).
+  - Filled blood flasks (`BloodFlask_<id>`) and power flasks (`PowerFlask_<id>`) are tracked individually with independent fill percentages ($25\%\text{–}100\%$).
 - **Blood Core Altar Economy (Cave Hideout)**:
   - **Base Blood Pool**: Starts with $1000\text{ Blood}$ by default (persisted via `SaveManager`).
   - **Manual Restore Cost**: $250\text{ Blood}$ per activation ('Press E').
   - **Yield per Activation**: $+12\text{ Health}$ and $+13\text{ Power}$ ($25\text{ total points}$).
   - **Capacity**: A full pool of $1000\text{ Blood}$ provides $4$ complete restoration cycles ($+48\text{ HP}$, $+52\text{ Power}$).
   - **Refill Exchange Rate**: Pressing <kbd>R</kbd> near the core pours blood from a flask into the core ($100\%\text{ flask} \implies +250\text{ Blood}$, $1\%\text{ fill} = 2.5\text{ Blood}$ points), leaving an reusable `"EmptyFlask"`.
+- **Blood Juicer Distillation Economy**:
+  - **Input**: Raw `"Meat"` placed into the Juicer chamber (or drawn directly from pouch).
+  - **Extraction Ratio**: $1\text{ Meat} \implies +50\%\text{ Blood}$ fill.
+  - **Output**: Fills held `"EmptyFlask"` to $50\%$ Blood Flask, or tops off a partial Blood Flask to $100\%$. Emptied meats are consumed.
+- **Workshop Station Crafting Recipes**:
+  - **Crafting Table**:
+    - **Empty Flask**: $2\text{ Quartz} \implies 1\text{ EmptyFlask}$.
+    - **Power Flask**: $1\text{ EmptyFlask} + 2\text{ Grass} + 1\text{ Quartz} \implies 1\text{ PowerFlask (100\% Power)}$.
+  - **Alchemical Laboratory**:
+    - **Power Flask**: $1\text{ EmptyFlask} + 2\text{ Grass} + 1\text{ Quartz} \implies 1\text{ PowerFlask (100\% Power)}$.
 - **Consumable Recovery Mathematics**:
   - **Meat**: Right-click to eat $\implies +20\text{ HP}$, $+10\text{ Power}$.
-  - **Blood Flask**: Right-click to drink $\implies$ up to $+25\text{ HP}$, $+25\text{ Power}$ (for $100\%$ flask), yields $1$ empty flask.
+  - **Blood Flask**: Right-click to drink $\implies$ up to $+25\text{ HP}$, $+2\text{ Power}$ (heavily reduced power gain, scaled by fill level), yields $1$ reusable `"EmptyFlask"`.
+  - **Power Flask**: Right-click to drink $\implies$ up to $+25\text{ Power}$ (scaled by fill level), yields $1$ reusable `"EmptyFlask"`.
 - **External Configuration System**:
   - Combat and harvesting parameters are externalized in `config/combat.json`, `config/resources.json`, and `config/chests.json` for live balance tuning without recompilation.

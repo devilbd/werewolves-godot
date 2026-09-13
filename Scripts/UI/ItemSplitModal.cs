@@ -255,6 +255,11 @@ public partial class ItemSplitModal : Control
         actionBox.AddChild(_confirmBtn);
     }
 
+    public void Open(string itemName, string displayName, Texture2D? icon, int maxCount, string actionText, Callable onConfirm)
+    {
+        Open(itemName, displayName, icon, maxCount, actionText, (amount) => onConfirm.Call(amount));
+    }
+
     public void Open(string itemName, string displayName, Texture2D? icon, int maxCount, string actionText, Action<int> onConfirm)
     {
         if (maxCount <= 0) return;
@@ -299,6 +304,8 @@ public partial class ItemSplitModal : Control
             _slider.Value = _currentAmount;
         }
     }
+
+    public void Confirm() => OnConfirm();
 
     private void OnConfirm()
     {

@@ -20,6 +20,7 @@ public partial class HUDManager : CanvasLayer
     private ChestInventoryWindow _chestInventoryWindow = null!;
     private ItemSplitModal _itemSplitModal = null!;
     private MapWindow _mapWindow = null!;
+    private BloodJuicerWindow _bloodJuicerWindow = null!;
 
     private Vector2 ViewportSize => GetViewport()?.GetVisibleRect().Size ?? new Vector2(1920, 1080);
 
@@ -221,7 +222,20 @@ public partial class HUDManager : CanvasLayer
             AddChild(_mapWindow);
         }
 
+        // 13. Blood Juicer Window (Modal for refining meat into blood flasks)
+        _bloodJuicerWindow = GetNodeOrNull<BloodJuicerWindow>("BloodJuicerWindow");
+        if (_bloodJuicerWindow == null)
+        {
+            _bloodJuicerWindow = new BloodJuicerWindow
+            {
+                Name = "BloodJuicerWindow",
+                Position = new Vector2(ViewportSize.X / 2 - 280, ViewportSize.Y / 2 - 210)
+            };
+            AddChild(_bloodJuicerWindow);
+        }
+
         GameState.Instance.OnChestInventoryToggled += OnChestInventoryToggled;
+        GameState.Instance.OnBloodJuicerToggled += OnBloodJuicerToggled;
 
         // Responsive repositioning on window resize
         var vp = GetViewport();
@@ -251,6 +265,30 @@ public partial class HUDManager : CanvasLayer
                 _chestInventoryWindow.Position = new Vector2(
                     Mathf.Min(size.X - _chestInventoryWindow.Size.X - 10f, size.X / 2 + 10),
                     Mathf.Clamp(size.Y / 2 - 225, 10f, size.Y - _chestInventoryWindow.Size.Y)
+                );
+            }
+        }
+    }
+
+    private void OnBloodJuicerToggled(bool isOpen)
+    {
+        if (!GodotObject.IsInstanceValid(this)) return;
+
+        if (isOpen)
+        {
+            var size = ViewportSize;
+            if (_pouchWindow != null && GodotObject.IsInstanceValid(_pouchWindow))
+            {
+                _pouchWindow.Position = new Vector2(
+                    Mathf.Max(10f, size.X / 2 - 470),
+                    Mathf.Clamp(size.Y / 2 - 225, 10f, size.Y - _pouchWindow.Size.Y)
+                );
+            }
+            if (_bloodJuicerWindow != null && GodotObject.IsInstanceValid(_bloodJuicerWindow))
+            {
+                _bloodJuicerWindow.Position = new Vector2(
+                    Mathf.Min(size.X - _bloodJuicerWindow.Size.X - 10f, size.X / 2 + 10),
+                    Mathf.Clamp(size.Y / 2 - 210, 10f, size.Y - _bloodJuicerWindow.Size.Y)
                 );
             }
         }
@@ -413,6 +451,11 @@ public partial class HUDManager : CanvasLayer
                 GameState.Instance.CloseChestInventory();
                 GetViewport().SetInputAsHandled();
             }
+            else if (GameState.Instance.IsBloodJuicerOpen)
+            {
+                GameState.Instance.ToggleBloodJuicer(false);
+                GetViewport().SetInputAsHandled();
+            }
             else if (GameState.Instance.IsCraftingOpen)
             {
                 GameState.Instance.ToggleCrafting(false);
@@ -439,6 +482,7 @@ public partial class HUDManager : CanvasLayer
             GameState.Instance.OnHealthChanged -= OnGameStateHealthChanged;
             GameState.Instance.OnPowerChanged -= OnGameStatePowerChanged;
             GameState.Instance.OnChestInventoryToggled -= OnChestInventoryToggled;
+            GameState.Instance.OnBloodJuicerToggled -= OnBloodJuicerToggled;
         }
 
         var vp = GetViewport();

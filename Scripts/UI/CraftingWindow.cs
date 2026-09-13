@@ -8,29 +8,38 @@ namespace Werewolves.UI;
 public partial class CraftingWindow : Control
 {
     private Panel _mainPanel = null!;
+    private Label _titleLabel = null!;
+    private Label _subtitleLabel = null!;
     private VBoxContainer _recipesContainer = null!;
     private Button _closeButton = null!;
 
     private bool _isDragging = false;
     private Vector2 _dragOffset = Vector2.Zero;
 
+    private readonly Dictionary<string, PanelContainer> _recipeCards = new();
     private readonly Dictionary<string, Button> _actionButtons = new();
     private readonly Dictionary<string, Label> _costsLabels = new();
     private readonly Dictionary<string, Label> _statusLabels = new();
+    private readonly Dictionary<string, Button> _tabButtons = new();
+
+    private string _currentStation = "All";
 
     public override void _Ready()
     {
-        CustomMinimumSize = new Vector2(580, 560);
-        Size = new Vector2(580, 560);
+        CustomMinimumSize = new Vector2(580, 600);
+        Size = new Vector2(580, 600);
 
         BuildWindow();
 
         Visible = false;
         GameState.Instance.OnCraftingToggled += OnCraftingToggled;
+        GameState.Instance.OnCraftingStationChanged += OnCraftingStationChanged;
         GameState.Instance.OnPouchChanged += RefreshRecipes;
         GameState.Instance.OnBloodCoreReservesChanged += OnBloodCoreReservesChanged;
         GameState.Instance.OnStaticObjectCrafted += OnStaticObjectCrafted;
+        GameState.Instance.OnStaticObjectDismantled += OnStaticObjectDismantled;
 
+        SelectStation(GameState.Instance.CurrentCraftingStation ?? "All");
         RefreshRecipes();
     }
 
@@ -39,9 +48,11 @@ public partial class CraftingWindow : Control
         if (GameState.Instance != null)
         {
             GameState.Instance.OnCraftingToggled -= OnCraftingToggled;
+            GameState.Instance.OnCraftingStationChanged -= OnCraftingStationChanged;
             GameState.Instance.OnPouchChanged -= RefreshRecipes;
             GameState.Instance.OnBloodCoreReservesChanged -= OnBloodCoreReservesChanged;
             GameState.Instance.OnStaticObjectCrafted -= OnStaticObjectCrafted;
+            GameState.Instance.OnStaticObjectDismantled -= OnStaticObjectDismantled;
         }
     }
 
@@ -50,8 +61,8 @@ public partial class CraftingWindow : Control
         _mainPanel = new Panel
         {
             Name = "MainPanel",
-            CustomMinimumSize = new Vector2(580, 560),
-            Size = new Vector2(580, 560),
+            CustomMinimumSize = new Vector2(580, 600),
+            Size = new Vector2(580, 600),
             MouseFilter = MouseFilterEnum.Stop
         };
 
@@ -87,18 +98,18 @@ public partial class CraftingWindow : Control
         };
         _mainPanel.AddChild(header);
 
-        var titleLabel = new Label
+        _titleLabel = new Label
         {
             Name = "TitleLabel",
             Text = "Cave Crafting & Installations",
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             VerticalAlignment = VerticalAlignment.Center
         };
-        titleLabel.AddThemeFontSizeOverride("font_size", 18);
-        titleLabel.AddThemeColorOverride("font_color", new Color(1.0f, 0.90f, 0.50f));
-        titleLabel.AddThemeConstantOverride("outline_size", 3);
-        titleLabel.AddThemeColorOverride("font_outline_color", Colors.Black);
-        header.AddChild(titleLabel);
+        _titleLabel.AddThemeFontSizeOverride("font_size", 18);
+        _titleLabel.AddThemeColorOverride("font_color", new Color(1.0f, 0.90f, 0.50f));
+        _titleLabel.AddThemeConstantOverride("outline_size", 3);
+        _titleLabel.AddThemeColorOverride("font_outline_color", Colors.Black);
+        header.AddChild(_titleLabel);
 
         _closeButton = new Button
         {
@@ -112,22 +123,37 @@ public partial class CraftingWindow : Control
         header.AddChild(_closeButton);
 
         // Subtitle / instructions
-        var subtitle = new Label
+        _subtitleLabel = new Label
         {
             Name = "Subtitle",
-            Text = "Construct functional hideout structures and storage containers for your sanctuary.",
+            Text = "Construct functional hideout structures or fashion alchemical vessels and elixirs.",
             Position = new Vector2(18, 48),
             Size = new Vector2(544, 22)
         };
-        subtitle.AddThemeFontSizeOverride("font_size", 12);
-        subtitle.AddThemeColorOverride("font_color", new Color(0.75f, 0.75f, 0.80f));
-        _mainPanel.AddChild(subtitle);
+        _subtitleLabel.AddThemeFontSizeOverride("font_size", 12);
+        _subtitleLabel.AddThemeColorOverride("font_color", new Color(0.75f, 0.75f, 0.80f));
+        _mainPanel.AddChild(_subtitleLabel);
+
+        // Station Tabs
+        var tabContainer = new HBoxContainer
+        {
+            Name = "TabContainer",
+            Position = new Vector2(16, 76),
+            Size = new Vector2(548, 32)
+        };
+        tabContainer.AddThemeConstantOverride("separation", 8);
+        _mainPanel.AddChild(tabContainer);
+
+        CreateTabButton(tabContainer, "All", "All Recipes");
+        CreateTabButton(tabContainer, "CraftingTable", "Crafting Table");
+        CreateTabButton(tabContainer, "Laboratory", "Laboratory");
+        CreateTabButton(tabContainer, "Installations", "Cavern Installations");
 
         // Scrollable cards container
         var scroll = new ScrollContainer
         {
             Name = "ScrollContainer",
-            Position = new Vector2(16, 76),
+            Position = new Vector2(16, 116),
             Size = new Vector2(548, 468)
         };
         _mainPanel.AddChild(scroll);
@@ -140,11 +166,62 @@ public partial class CraftingWindow : Control
         _recipesContainer.AddThemeConstantOverride("separation", 10);
         scroll.AddChild(_recipesContainer);
 
-        // Build 4 recipe cards
+        // Build recipe cards in logical order: Items first, then Installations
+        BuildRecipeCard("EmptyFlask");
+        BuildRecipeCard("PowerFlask");
         BuildRecipeCard("Chest");
         BuildRecipeCard("CraftingTable");
         BuildRecipeCard("BloodJuicer");
         BuildRecipeCard("Laboratory");
+    }
+
+    private void CreateTabButton(HBoxContainer parent, string stationKey, string title)
+    {
+        var btn = new Button
+        {
+            Name = $"Tab_{stationKey}",
+            Text = title,
+            CustomMinimumSize = new Vector2(120, 30),
+            SizeFlagsHorizontal = SizeFlags.ExpandFill
+        };
+        btn.Pressed += () => SelectStation(stationKey);
+        _tabButtons[stationKey] = btn;
+        parent.AddChild(btn);
+    }
+
+    public void SelectStation(string stationKey)
+    {
+        _currentStation = stationKey;
+
+        // Update tab button styles
+        foreach (var kvp in _tabButtons)
+        {
+            bool isActive = kvp.Key == _currentStation;
+            ApplyTabButtonStyle(kvp.Value, isActive);
+        }
+
+        // Update header & subtitle
+        switch (_currentStation)
+        {
+            case "CraftingTable":
+                _titleLabel.Text = "Crafting Table Workbench";
+                _subtitleLabel.Text = "Fashion sturdy glass flasks from minerals and synthesize cave equipment.";
+                break;
+            case "Laboratory":
+                _titleLabel.Text = "Alchemical Laboratory";
+                _subtitleLabel.Text = "Distill power elixirs, vital draughts, and perform alchemical synthesis.";
+                break;
+            case "Installations":
+                _titleLabel.Text = "Cavern Installations";
+                _subtitleLabel.Text = "Construct permanent hideout structures and storage containers for your sanctuary.";
+                break;
+            default:
+                _titleLabel.Text = "Cave Crafting & Installations";
+                _subtitleLabel.Text = "Construct hideout structures or fashion alchemical vessels and elixirs.";
+                break;
+        }
+
+        RefreshRecipes();
     }
 
     private void BuildRecipeCard(string recipeId)
@@ -282,7 +359,7 @@ public partial class CraftingWindow : Control
         {
             Name = $"ActionBtn_{recipeId}",
             CustomMinimumSize = new Vector2(116, 34),
-            Text = recipe.IsStatic ? "Build" : "Craft & Place"
+            Text = recipe.IsItem ? "Craft" : (recipe.IsStatic ? "Build" : "Craft & Place")
         };
         ApplyActionButtonStyle(actionBtn);
 
@@ -292,6 +369,7 @@ public partial class CraftingWindow : Control
 
         hbox.AddChild(rightVBox);
 
+        _recipeCards[recipeId] = card;
         _recipesContainer.AddChild(card);
     }
 
@@ -299,17 +377,30 @@ public partial class CraftingWindow : Control
     {
         if (!GameState.Instance.IsInLair)
         {
-            GameState.Instance.TriggerDamageNumber("You must be inside the Lair to build cave objects!", GameState.Instance.PlayerPosition + new Vector2(0, -60), new Color(1f, 0.4f, 0.4f));
+            GameState.Instance.TriggerDamageNumber("You must be inside the Lair to craft or build!", GameState.Instance.PlayerPosition + new Vector2(0, -60), new Color(1f, 0.4f, 0.4f));
             return;
         }
 
         if (!GameState.Recipes.TryGetValue(recipeId, out var recipe)) return;
 
-        if (recipe.IsStatic)
+        if (recipe.IsItem)
+        {
+            if (!GameState.Instance.CanCraft(recipeId))
+            {
+                GameState.Instance.TriggerDamageNumber("Not enough materials!", GameState.Instance.PlayerPosition + new Vector2(0, -60), new Color(1f, 0.4f, 0.4f));
+                return;
+            }
+
+            GameState.Instance.CraftItem(recipeId);
+            RefreshRecipes();
+        }
+        else if (recipe.IsStatic)
         {
             if (GameState.Instance.CraftedStaticObjects.Contains(recipeId))
             {
-                GameState.Instance.TriggerDamageNumber("Already constructed!", GameState.Instance.PlayerPosition + new Vector2(0, -60), new Color(1f, 0.8f, 0.3f));
+                // Dismantle built installation
+                GameState.Instance.DismantleStaticObject(recipeId);
+                RefreshRecipes();
                 return;
             }
 
@@ -345,6 +436,19 @@ public partial class CraftingWindow : Control
             string id = kvp.Key;
             var recipe = kvp.Value;
 
+            // Tab filtering
+            if (_recipeCards.TryGetValue(id, out var card))
+            {
+                bool isVisible = _currentStation switch
+                {
+                    "CraftingTable" => (recipe.Station is "CraftingTable" or "Both") || id == "CraftingTable",
+                    "Laboratory" => (recipe.Station is "Laboratory" or "Both") || id == "Laboratory",
+                    "Installations" => recipe.Category == "Installations",
+                    _ => true
+                };
+                card.Visible = isVisible;
+            }
+
             bool isBuilt = recipe.IsStatic && GameState.Instance.CraftedStaticObjects.Contains(id);
             bool canCraft = GameState.Instance.CanCraft(id);
 
@@ -374,12 +478,23 @@ public partial class CraftingWindow : Control
             // Status & Button
             if (_actionButtons.TryGetValue(id, out var btn) && _statusLabels.TryGetValue(id, out var statusLbl))
             {
-                if (isBuilt)
+                if (recipe.IsItem)
+                {
+                    statusLbl.Text = canCraft ? "Ready to Craft" : "Missing Materials";
+                    statusLbl.AddThemeColorOverride("font_color", canCraft ? new Color(0.85f, 0.95f, 0.60f) : new Color(0.80f, 0.45f, 0.45f));
+                    btn.Text = "Craft";
+                    btn.TooltipText = "";
+                    btn.Disabled = !canCraft;
+                    ApplyActionButtonStyle(btn, new Color(0.16f, 0.18f, 0.24f));
+                }
+                else if (isBuilt)
                 {
                     statusLbl.Text = "✓ Constructed";
                     statusLbl.AddThemeColorOverride("font_color", new Color(0.40f, 0.95f, 0.55f));
-                    btn.Text = "Constructed";
-                    btn.Disabled = true;
+                    btn.Text = "Dismantle";
+                    btn.TooltipText = "Dismantle this installation and recover 100% of its resources";
+                    btn.Disabled = false;
+                    ApplyActionButtonStyle(btn, new Color(0.45f, 0.15f, 0.15f));
                 }
                 else
                 {
@@ -387,7 +502,9 @@ public partial class CraftingWindow : Control
                     statusLbl.AddThemeColorOverride("font_color", canCraft ? new Color(0.85f, 0.95f, 0.60f) : new Color(0.80f, 0.45f, 0.45f));
 
                     btn.Text = recipe.IsStatic ? "Build" : "Craft & Place";
+                    btn.TooltipText = "";
                     btn.Disabled = !canCraft;
+                    ApplyActionButtonStyle(btn, new Color(0.16f, 0.18f, 0.24f));
                 }
             }
         }
@@ -403,12 +520,23 @@ public partial class CraftingWindow : Control
         }
     }
 
+    private void OnCraftingStationChanged(string stationKey)
+    {
+        if (!GodotObject.IsInstanceValid(this)) return;
+        SelectStation(stationKey);
+    }
+
     private void OnBloodCoreReservesChanged(float current, float max)
     {
         RefreshRecipes();
     }
 
     private void OnStaticObjectCrafted(string objectId)
+    {
+        RefreshRecipes();
+    }
+
+    private void OnStaticObjectDismantled(string objectId)
     {
         RefreshRecipes();
     }
@@ -442,11 +570,34 @@ public partial class CraftingWindow : Control
         }
     }
 
-    private void ApplyActionButtonStyle(Button btn)
+    private void ApplyTabButtonStyle(Button btn, bool isActive)
     {
+        var style = new StyleBoxFlat
+        {
+            BgColor = isActive ? new Color(0.24f, 0.20f, 0.16f, 0.95f) : new Color(0.12f, 0.11f, 0.14f, 0.85f),
+            BorderColor = isActive ? new Color(0.95f, 0.80f, 0.40f, 1.0f) : new Color(0.35f, 0.30f, 0.25f, 0.6f),
+            BorderWidthLeft = 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 4,
+            CornerRadiusTopRight = 4,
+            CornerRadiusBottomLeft = 4,
+            CornerRadiusBottomRight = 4
+        };
+        btn.AddThemeStyleboxOverride("normal", style);
+        btn.AddThemeStyleboxOverride("hover", style);
+        btn.AddThemeStyleboxOverride("pressed", style);
+        btn.AddThemeColorOverride("font_color", isActive ? new Color(1.0f, 0.92f, 0.60f) : new Color(0.70f, 0.70f, 0.75f));
+        btn.AddThemeFontSizeOverride("font_size", 11);
+    }
+
+    private void ApplyActionButtonStyle(Button btn, Color? customBg = null)
+    {
+        var bg = customBg ?? new Color(0.16f, 0.18f, 0.24f, 1.0f);
         var normal = new StyleBoxFlat
         {
-            BgColor = new Color(0.16f, 0.18f, 0.24f, 1.0f),
+            BgColor = bg,
             BorderColor = new Color(0.65f, 0.52f, 0.32f, 0.9f),
             BorderWidthLeft = 1,
             BorderWidthTop = 1,
@@ -459,7 +610,7 @@ public partial class CraftingWindow : Control
         };
         var hover = new StyleBoxFlat
         {
-            BgColor = new Color(0.24f, 0.26f, 0.34f, 1.0f),
+            BgColor = bg.Lightened(0.15f),
             BorderColor = new Color(1.0f, 0.85f, 0.40f, 1.0f),
             BorderWidthLeft = 1,
             BorderWidthTop = 1,

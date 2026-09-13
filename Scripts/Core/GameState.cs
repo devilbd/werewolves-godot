@@ -94,6 +94,67 @@ public partial class GameState : Node
         return PouchItems.TryGetValue(itemName, out var item) ? item.Count : 0;
     }
 
+    public int GetPouchItemBloodPercent(string itemKey)
+    {
+        return PouchItems.TryGetValue(itemKey, out var item) ? item.BloodPercent : 0;
+    }
+
+    public int GetPouchItemPowerPercent(string itemKey)
+    {
+        return PouchItems.TryGetValue(itemKey, out var item) ? item.PowerPercent : 0;
+    }
+
+    public int GetChestItemCount(string chestId, string itemKey)
+    {
+        if (CaveChests.TryGetValue(chestId, out var chest) &&
+            chest.Items.TryGetValue(itemKey, out var item))
+        {
+            return item.Count;
+        }
+        return 0;
+    }
+
+    public int GetChestItemBloodPercent(string chestId, string itemKey)
+    {
+        if (CaveChests.TryGetValue(chestId, out var chest) &&
+            chest.Items.TryGetValue(itemKey, out var item))
+        {
+            return item.BloodPercent;
+        }
+        return 0;
+    }
+
+    public int GetChestItemPowerPercent(string chestId, string itemKey)
+    {
+        if (CaveChests.TryGetValue(chestId, out var chest) &&
+            chest.Items.TryGetValue(itemKey, out var item))
+        {
+            return item.PowerPercent;
+        }
+        return 0;
+    }
+
+    public void AddCustomFlask(string flaskKey, int bloodPercent, int powerPercent)
+    {
+        PouchItems[flaskKey] = new PouchItemData
+        {
+            Count = 1,
+            BloodPercent = bloodPercent,
+            PowerPercent = powerPercent,
+            PosX = 0f,
+            PosY = 0f
+        };
+        SafeInvoke(OnPouchChanged);
+    }
+
+    public void RemoveCustomFlask(string flaskKey)
+    {
+        if (PouchItems.Remove(flaskKey))
+        {
+            SafeInvoke(OnPouchChanged);
+        }
+    }
+
     // Selected Target
     private Node2D? _selectedTarget;
     public Node2D? SelectedTarget
@@ -128,6 +189,9 @@ public partial class GameState : Node
     public string? ActiveChestId { get; private set; } = null;
     public bool IsMapOpen { get; private set; } = false;
     public bool IsLootLabelsVisible { get; private set; } = false;
+    public bool IsBloodJuicerOpen { get; private set; } = false;
+    public int BloodJuicerMeats { get; set; } = 0;
+    public string CurrentCraftingStation { get; private set; } = "All";
 
     // Chest Placement State
     public bool IsPlacingChest { get; private set; } = false;
@@ -135,6 +199,7 @@ public partial class GameState : Node
 
     // Cave Workshop & Chests Collections
     public HashSet<string> CraftedStaticObjects { get; } = new();
+    public HashSet<string> DestroyedCaveObjects { get; } = new();
     public Dictionary<string, CaveChestData> CaveChests { get; } = new();
 
     // Events
@@ -147,10 +212,15 @@ public partial class GameState : Node
     public event Action<bool>? OnPouchToggled;
     public event Action<bool>? OnHeroDetailsToggled;
     public event Action<bool>? OnCraftingToggled;
+    public event Action<string>? OnCraftingStationChanged;
+    public event Action<bool>? OnBloodJuicerToggled;
+    public event Action? OnBloodJuicerStateChanged;
     public event Action<bool, string?>? OnChestInventoryToggled;
     public event Action<string>? OnChestInventoryChanged;
     public event Action<string, Vector2>? OnChestPlaced;
+    public event Action<string>? OnChestDismantled;
     public event Action<string>? OnStaticObjectCrafted;
+    public event Action<string>? OnStaticObjectDismantled;
     public event Action<bool, string?>? OnChestPlacementModeChanged;
     public event Action<bool>? OnMapToggled;
     public event Action<bool>? OnLootLabelsToggled;
@@ -477,8 +547,36 @@ public partial class GameState : Node
     public void ToggleCrafting(bool? force = null)
     {
         IsCraftingOpen = force ?? !IsCraftingOpen;
+        if (IsCraftingOpen)
+        {
+            if (IsBloodJuicerOpen) ToggleBloodJuicer(false);
+            if (IsChestInventoryOpen) CloseChestInventory();
+        }
         SafeInvoke(OnCraftingToggled, IsCraftingOpen);
     }
+
+    public void OpenCraftingStation(string station)
+    {
+        CurrentCraftingStation = station;
+        if (IsBloodJuicerOpen) ToggleBloodJuicer(false);
+        if (IsChestInventoryOpen) CloseChestInventory();
+        SafeInvoke(OnCraftingStationChanged, station);
+        ToggleCrafting(true);
+    }
+
+    public void ToggleBloodJuicer() => ToggleBloodJuicer(!IsBloodJuicerOpen);
+    public void ToggleBloodJuicer(bool force)
+    {
+        IsBloodJuicerOpen = force;
+        if (IsBloodJuicerOpen)
+        {
+            if (IsCraftingOpen) ToggleCrafting(false);
+            if (IsChestInventoryOpen) CloseChestInventory();
+            if (!IsPouchOpen) TogglePouch(true);
+        }
+        SafeInvoke(OnBloodJuicerToggled, IsBloodJuicerOpen);
+    }
+    public void ToggleBloodJuicer(bool? force) => ToggleBloodJuicer(force ?? !IsBloodJuicerOpen);
 
     public void OpenChestInventory(string chestId)
     {
@@ -543,16 +641,20 @@ public partial class GameState : Node
             IconPath = "res://assets/chests/chest_closed.png",
             Ingredients = new Dictionary<string, int> { ["Logs"] = 10, ["Stones"] = 5 },
             IsStatic = false,
+            Category = "Installations",
+            Station = "Installations",
             LocationDescription = "Freeform Placement in Cavern"
         },
         ["CraftingTable"] = new CraftingRecipe
         {
             Id = "CraftingTable",
             Name = "Crafting Table",
-            Description = "Subterranean workbench used to fashion advanced tools and equipment.",
+            Description = "Subterranean workbench used to fashion flasks, tools, and equipment.",
             IconPath = "res://assets/cave-objects/crafting-table.png",
             Ingredients = new Dictionary<string, int> { ["Logs"] = 25, ["Stones"] = 15 },
             IsStatic = true,
+            Category = "Installations",
+            Station = "Installations",
             StaticPosition = new Vector2(-700f, -520f),
             LocationDescription = "Fixed Position: Top Left"
         },
@@ -560,11 +662,13 @@ public partial class GameState : Node
         {
             Id = "BloodJuicer",
             Name = "Blood Juicer",
-            Description = "Refines raw blood and organic remnants into concentrated life fluids.",
+            Description = "Refines raw meat and organic remnants into concentrated life fluids for flasks.",
             IconPath = "res://assets/cave-objects/blood-juicer.png",
             Ingredients = new Dictionary<string, int> { ["Stones"] = 30, ["Quartz"] = 20 },
             BloodCost = 100f,
             IsStatic = true,
+            Category = "Installations",
+            Station = "Installations",
             StaticPosition = new Vector2(0f, -520f),
             LocationDescription = "Fixed Position: Top Center"
         },
@@ -576,8 +680,41 @@ public partial class GameState : Node
             IconPath = "res://assets/cave-objects/laboratory.png",
             Ingredients = new Dictionary<string, int> { ["Stones"] = 25, ["Quartz"] = 25, ["Grass"] = 15 },
             IsStatic = true,
+            Category = "Installations",
+            Station = "Installations",
             StaticPosition = new Vector2(700f, -520f),
             LocationDescription = "Fixed Position: Top Right"
+        },
+        ["EmptyFlask"] = new CraftingRecipe
+        {
+            Id = "EmptyFlask",
+            Name = "Empty Flask",
+            Description = "A sturdy glass vessel fashioned from quartz crystals. Holds blood or power elixirs.",
+            IconPath = "res://assets/flasks/blood_flask_0.png",
+            Ingredients = new Dictionary<string, int> { ["Quartz"] = 2 },
+            IsStatic = false,
+            IsItem = true,
+            ResultItem = "EmptyFlask",
+            ResultCount = 1,
+            Station = "Both",
+            Category = "Station",
+            LocationDescription = "Crafted at Crafting Table or Laboratory"
+        },
+        ["PowerFlask"] = new CraftingRecipe
+        {
+            Id = "PowerFlask",
+            Name = "Power Flask",
+            Description = "An energizing elixir distilled from grass, quartz, and an empty flask. Restores werewolf power.",
+            IconPath = "res://assets/flasks/power_flask_100.png",
+            Ingredients = new Dictionary<string, int> { ["EmptyFlask"] = 1, ["Grass"] = 2, ["Quartz"] = 1 },
+            IsStatic = false,
+            IsItem = true,
+            ResultItem = "PowerFlask",
+            ResultCount = 1,
+            ResultPowerPercent = 100,
+            Station = "Both",
+            Category = "Station",
+            LocationDescription = "Distilled at Laboratory or Crafting Table"
         }
     };
 
@@ -615,6 +752,148 @@ public partial class GameState : Node
         return true;
     }
 
+    public bool CraftItem(string recipeId)
+    {
+        if (!Recipes.TryGetValue(recipeId, out var recipe) || !recipe.IsItem) return false;
+        if (!CanCraft(recipeId)) return false;
+
+        foreach (var kvp in recipe.Ingredients)
+        {
+            RemovePouchItem(kvp.Key, kvp.Value);
+        }
+
+        if (recipe.ResultItem == "EmptyFlask")
+        {
+            AddPouchItem("EmptyFlask", recipe.ResultCount);
+        }
+        else if (recipe.ResultItem == "PowerFlask")
+        {
+            string newKey = $"PowerFlask_{Guid.NewGuid():N}"[..18];
+            PouchItems[newKey] = new PouchItemData
+            {
+                Count = 1,
+                PowerPercent = recipe.ResultPowerPercent > 0 ? recipe.ResultPowerPercent : 100,
+                PosX = 0f,
+                PosY = 0f
+            };
+        }
+
+        SafeInvoke(OnPouchChanged);
+        SaveManager.SaveGame();
+        TriggerDamageNumber($"+{recipe.ResultCount} {recipe.Name} Crafted!", PlayerPosition + new Vector2(0, -60), new Color(0.4f, 1f, 0.5f));
+        return true;
+    }
+
+    public bool PlaceMeatInJuicer(int amount = 1)
+    {
+        if (!PouchItems.TryGetValue("Meat", out var meatItem) || meatItem.Count <= 0)
+        {
+            TriggerDamageNumber("No meat in pouch to place!", PlayerPosition + new Vector2(0, -60), new Color(1f, 0.4f, 0.4f));
+            return false;
+        }
+
+        int transfer = Math.Min(amount, meatItem.Count);
+        RemovePouchItem("Meat", transfer);
+        BloodJuicerMeats += transfer;
+
+        SafeInvoke(OnBloodJuicerStateChanged);
+        SaveManager.SaveGame();
+        TriggerDamageNumber($"Placed {transfer} Meat in Juicer", PlayerPosition + new Vector2(0, -60), new Color(0.9f, 0.4f, 0.5f));
+        return true;
+    }
+
+    public bool RetrieveMeatFromJuicer(int amount = 1)
+    {
+        if (BloodJuicerMeats <= 0) return false;
+
+        int transfer = Math.Min(amount, BloodJuicerMeats);
+        BloodJuicerMeats -= transfer;
+        AddPouchItem("Meat", transfer);
+
+        SafeInvoke(OnBloodJuicerStateChanged);
+        SaveManager.SaveGame();
+        TriggerDamageNumber($"Retrieved {transfer} Meat", PlayerPosition + new Vector2(0, -60), new Color(0.9f, 0.8f, 0.4f));
+        return true;
+    }
+
+    public bool JuiceMeat(bool preferPlaced = true)
+    {
+        bool hasPlacedMeat = BloodJuicerMeats > 0;
+        bool hasPouchMeat = PouchItems.TryGetValue("Meat", out var pMeat) && pMeat.Count > 0;
+
+        if (!hasPlacedMeat && !hasPouchMeat)
+        {
+            TriggerDamageNumber("No meat available to juice!", PlayerPosition + new Vector2(0, -60), new Color(1f, 0.4f, 0.4f));
+            return false;
+        }
+
+        string? candidateKey = null;
+        PouchItemData? candidateFlask = null;
+        foreach (var kvp in PouchItems)
+        {
+            if (kvp.Key.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase) && kvp.Value.BloodPercent < 100)
+            {
+                if (candidateFlask == null || kvp.Value.BloodPercent > candidateFlask.BloodPercent)
+                {
+                    candidateKey = kvp.Key;
+                    candidateFlask = kvp.Value;
+                }
+            }
+        }
+
+        bool hasEmptyFlask = PouchItems.TryGetValue("EmptyFlask", out var emptyFlask) && emptyFlask.Count > 0;
+
+        if (candidateFlask == null && !hasEmptyFlask)
+        {
+            TriggerDamageNumber("Need an Empty Flask or partial Blood Flask!", PlayerPosition + new Vector2(0, -60), new Color(1f, 0.4f, 0.4f));
+            return false;
+        }
+
+        if (preferPlaced && hasPlacedMeat)
+        {
+            BloodJuicerMeats--;
+        }
+        else if (hasPouchMeat)
+        {
+            RemovePouchItem("Meat", 1);
+        }
+        else if (hasPlacedMeat)
+        {
+            BloodJuicerMeats--;
+        }
+
+        const int bloodGain = 50;
+
+        if (candidateFlask != null && candidateKey != null)
+        {
+            candidateFlask.BloodPercent = Math.Min(100, candidateFlask.BloodPercent + bloodGain);
+            TriggerDamageNumber($"+{bloodGain}% Blood Extracted ({candidateFlask.BloodPercent}%)", PlayerPosition + new Vector2(0, -75), new Color(0.95f, 0.2f, 0.3f));
+        }
+        else if (hasEmptyFlask && emptyFlask != null)
+        {
+            emptyFlask.Count--;
+            if (emptyFlask.Count <= 0)
+            {
+                PouchItems.Remove("EmptyFlask");
+            }
+
+            string newKey = $"BloodFlask_{Guid.NewGuid():N}"[..18];
+            PouchItems[newKey] = new PouchItemData
+            {
+                Count = 1,
+                BloodPercent = bloodGain,
+                PosX = 0f,
+                PosY = 0f
+            };
+            TriggerDamageNumber($"+{bloodGain}% Blood Extracted into Flask!", PlayerPosition + new Vector2(0, -75), new Color(0.95f, 0.2f, 0.3f));
+        }
+
+        SafeInvoke(OnPouchChanged);
+        SafeInvoke(OnBloodJuicerStateChanged);
+        SaveManager.SaveGame();
+        return true;
+    }
+
     public bool CraftStaticObject(string recipeId)
     {
         if (!Recipes.TryGetValue(recipeId, out var recipe) || !recipe.IsStatic) return false;
@@ -636,8 +915,62 @@ public partial class GameState : Node
         return true;
     }
 
+    public bool DismantleStaticObject(string recipeId)
+    {
+        if (!CraftedStaticObjects.Contains(recipeId)) return false;
+        if (!Recipes.TryGetValue(recipeId, out var recipe)) return false;
+
+        // 1. Refund 100% of recipe ingredients to pouch
+        foreach (var kvp in recipe.Ingredients)
+        {
+            AddPouchItem(kvp.Key, kvp.Value);
+        }
+
+        // 2. Refund BloodCost if any to Blood Core
+        if (recipe.BloodCost > 0f)
+        {
+            BloodCoreReserves = MathF.Min(1000f, BloodCoreReserves + recipe.BloodCost);
+            SafeInvoke(OnBloodCoreReservesChanged, BloodCoreReserves, BloodCoreMaxReserves);
+        }
+
+        // 3. If Blood Juicer, return any deposited meats back to pouch
+        if (recipeId == "BloodJuicer" && BloodJuicerMeats > 0)
+        {
+            AddPouchItem("Meat", BloodJuicerMeats);
+            BloodJuicerMeats = 0;
+            SafeInvoke(OnBloodJuicerStateChanged);
+        }
+
+        // 4. Close Blood Juicer modal if open
+        if (recipeId == "BloodJuicer" && IsBloodJuicerOpen)
+        {
+            ToggleBloodJuicer(false);
+        }
+
+        // 5. Update state and tracking
+        CraftedStaticObjects.Remove(recipeId);
+        if (!DestroyedCaveObjects.Contains(recipeId))
+        {
+            DestroyedCaveObjects.Add(recipeId);
+        }
+
+        SafeInvoke(OnStaticObjectDismantled, recipeId);
+        SaveManager.SaveGame();
+        TriggerDamageNumber($"{recipe.Name} Dismantled (+Resources Restored)", PlayerPosition + new Vector2(0, -60), new Color(1f, 0.85f, 0.4f));
+        return true;
+    }
+
+    public bool IsStaticObjectCrafted(string recipeId) => CraftedStaticObjects.Contains(recipeId);
+    public bool HasChest(string chestId) => CaveChests.ContainsKey(chestId);
+    public string[] GetChestIds() => System.Linq.Enumerable.ToArray(CaveChests.Keys);
+
     public void StartChestPlacement(string? existingChestId = null)
     {
+        if (string.IsNullOrEmpty(existingChestId))
+        {
+            existingChestId = null;
+        }
+
         if (existingChestId == null && !CanCraft("Chest"))
         {
             TriggerDamageNumber("Not enough materials!", PlayerPosition + new Vector2(0, -60), new Color(1f, 0.4f, 0.4f));
@@ -665,7 +998,7 @@ public partial class GameState : Node
     {
         if (!IsPlacingChest) return false;
 
-        if (ActivePlacementChestId == null)
+        if (string.IsNullOrEmpty(ActivePlacementChestId))
         {
             if (!CanCraft("Chest")) return false;
             var chestRecipe = Recipes["Chest"];
@@ -712,6 +1045,49 @@ public partial class GameState : Node
         return false;
     }
 
+    public bool DismantleChest(string chestId)
+    {
+        if (!CaveChests.TryGetValue(chestId, out var chest)) return false;
+
+        Vector2 chestPos = new Vector2(chest.PosX, chest.PosY);
+
+        // 1. Safely transfer all stored items inside the chest back into the pouch
+        if (chest.Items != null && chest.Items.Count > 0)
+        {
+            var keys = new List<string>(chest.Items.Keys);
+            foreach (var key in keys)
+            {
+                if (chest.Items.TryGetValue(key, out var item))
+                {
+                    TransferItemChestToPouch(chestId, key, item.Count);
+                }
+            }
+            chest.Items.Clear();
+        }
+
+        // 2. Refund chest crafting ingredients: 10 Logs, 5 Stones
+        AddPouchItem("Logs", 10);
+        AddPouchItem("Stones", 5);
+
+        // 3. Track destroyed chest and remove from collection
+        if (!DestroyedCaveObjects.Contains("Chest"))
+        {
+            DestroyedCaveObjects.Add("Chest");
+        }
+        CaveChests.Remove(chestId);
+
+        // 4. Close chest inventory modal if open
+        if (IsChestInventoryOpen && ActiveChestId == chestId)
+        {
+            CloseChestInventory();
+        }
+
+        SafeInvoke(OnChestDismantled, chestId);
+        SaveManager.SaveGame();
+        TriggerDamageNumber("Chest Dismantled (+10 Logs, +5 Stones)", chestPos + new Vector2(0, -40), new Color(1f, 0.85f, 0.4f));
+        return true;
+    }
+
     public void UpdateChestItemPosition(string chestId, string itemName, Vector2 pos)
     {
         if (CaveChests.TryGetValue(chestId, out var chest))
@@ -730,7 +1106,8 @@ public partial class GameState : Node
         if (!CaveChests.TryGetValue(chestId, out var chest)) return;
         if (!PouchItems.TryGetValue(itemKey, out var pouchItem) || pouchItem.Count <= 0) return;
 
-        bool isFlask = itemKey.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase);
+        bool isFlask = itemKey.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase) ||
+                       itemKey.StartsWith("PowerFlask", StringComparison.OrdinalIgnoreCase);
 
         if (isFlask)
         {
@@ -738,6 +1115,7 @@ public partial class GameState : Node
             {
                 Count = 1,
                 BloodPercent = pouchItem.BloodPercent,
+                PowerPercent = pouchItem.PowerPercent,
                 PosX = 0f,
                 PosY = 0f
             };
@@ -756,6 +1134,7 @@ public partial class GameState : Node
                 {
                     Count = toTransfer,
                     BloodPercent = 0,
+                    PowerPercent = 0,
                     PosX = 0f,
                     PosY = 0f
                 };
@@ -778,7 +1157,8 @@ public partial class GameState : Node
         if (!CaveChests.TryGetValue(chestId, out var chest)) return;
         if (!chest.Items.TryGetValue(itemKey, out var chestItem) || chestItem.Count <= 0) return;
 
-        bool isFlask = itemKey.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase);
+        bool isFlask = itemKey.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase) ||
+                       itemKey.StartsWith("PowerFlask", StringComparison.OrdinalIgnoreCase);
 
         if (isFlask)
         {
@@ -786,6 +1166,7 @@ public partial class GameState : Node
             {
                 Count = 1,
                 BloodPercent = chestItem.BloodPercent,
+                PowerPercent = chestItem.PowerPercent,
                 PosX = 0f,
                 PosY = 0f
             };
@@ -794,7 +1175,12 @@ public partial class GameState : Node
         else
         {
             int toTransfer = Math.Min(count, chestItem.Count);
-            AddPouchItem(itemKey, toTransfer);
+            if (!PouchItems.TryGetValue(itemKey, out var pouchItem))
+            {
+                pouchItem = new PouchItemData { Count = 0, PosX = 0f, PosY = 0f };
+                PouchItems[itemKey] = pouchItem;
+            }
+            pouchItem.Count += toTransfer;
 
             chestItem.Count -= toTransfer;
             if (chestItem.Count <= 0)
@@ -914,6 +1300,7 @@ public partial class GameState : Node
             {
                 Count = 1,
                 BloodPercent = 0,
+                PowerPercent = 0,
                 PosX = flask.PosX,
                 PosY = flask.PosY
             };
@@ -921,12 +1308,61 @@ public partial class GameState : Node
 
         float ratio = bloodPercent / 100f;
         float healHp = Mathf.Round(25f * ratio);
-        float healPower = Mathf.Round(25f * ratio);
+        float healPower = Mathf.Round(2f * ratio);
 
         ModifyHealth(healHp);
+        if (healPower > 0)
+        {
+            ModifyPower(healPower);
+            TriggerDamageNumber($"+{healHp:0} HP  +{healPower:0} Power", PlayerPosition + new Vector2(0, -75), new Color(0.95f, 0.35f, 0.45f));
+        }
+        else
+        {
+            TriggerDamageNumber($"+{healHp:0} HP", PlayerPosition + new Vector2(0, -75), new Color(0.95f, 0.35f, 0.45f));
+        }
+
+        SafeInvoke(OnPouchChanged);
+        SaveManager.SaveGame();
+        return true;
+    }
+
+    public bool DrinkPowerFlask(string flaskKey)
+    {
+        if (!PouchItems.TryGetValue(flaskKey, out var flask) || flask.Count <= 0)
+        {
+            return false;
+        }
+
+        int powerPercent = flask.PowerPercent;
+        if (powerPercent <= 0)
+        {
+            return false;
+        }
+
+        PouchItems.Remove(flaskKey);
+
+        if (PouchItems.TryGetValue("EmptyFlask", out var empty))
+        {
+            empty.Count++;
+        }
+        else
+        {
+            PouchItems["EmptyFlask"] = new PouchItemData
+            {
+                Count = 1,
+                BloodPercent = 0,
+                PowerPercent = 0,
+                PosX = flask.PosX,
+                PosY = flask.PosY
+            };
+        }
+
+        float ratio = powerPercent / 100f;
+        float healPower = Mathf.Round(25f * ratio);
+
         ModifyPower(healPower);
 
-        TriggerDamageNumber($"+{healHp:0} HP  +{healPower:0} Power", PlayerPosition + new Vector2(0, -75), new Color(0.95f, 0.35f, 0.45f));
+        TriggerDamageNumber($"+{healPower:0} Power", PlayerPosition + new Vector2(0, -75), new Color(0.25f, 0.75f, 1.0f));
         SafeInvoke(OnPouchChanged);
         SaveManager.SaveGame();
         return true;

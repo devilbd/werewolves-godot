@@ -142,7 +142,9 @@ public partial class LairManager : Node2D
         BuildPlacedChests();
 
         GameState.Instance.OnStaticObjectCrafted += OnStaticObjectCrafted;
+        GameState.Instance.OnStaticObjectDismantled += OnStaticObjectDismantled;
         GameState.Instance.OnChestPlaced += OnChestPlaced;
+        GameState.Instance.OnChestDismantled += OnChestDismantled;
         GameState.Instance.OnChestPlacementModeChanged += OnChestPlacementModeChanged;
 
         // 7. Cave Entrance Visual Landmarks & Atmospheric Fog (no stones, woods, or materials in cave)
@@ -285,6 +287,17 @@ public partial class LairManager : Node2D
         SpawnStaticObject(objType);
     }
 
+    private void OnStaticObjectDismantled(string objType)
+    {
+        string nodeName = $"Static_{objType}";
+        var obj = _entitiesContainer.GetNodeOrNull<Node2D>(nodeName);
+        if (obj != null)
+        {
+            obj.QueueFree();
+            CursorManager.ResetNormal();
+        }
+    }
+
     private void BuildPlacedChests()
     {
         foreach (var kvp in GameState.Instance.CaveChests)
@@ -315,6 +328,17 @@ public partial class LairManager : Node2D
     private void OnChestPlaced(string chestId, Vector2 position)
     {
         SpawnChest(chestId, position);
+    }
+
+    private void OnChestDismantled(string chestId)
+    {
+        string nodeName = $"CaveChest_{chestId}";
+        var chest = _entitiesContainer.GetNodeOrNull<Node2D>(nodeName);
+        if (chest != null)
+        {
+            chest.QueueFree();
+            CursorManager.ResetNormal();
+        }
     }
 
     private void OnChestPlacementModeChanged(bool isPlacing, string? chestId)
@@ -824,7 +848,9 @@ public partial class LairManager : Node2D
         if (GameState.Instance != null)
         {
             GameState.Instance.OnStaticObjectCrafted -= OnStaticObjectCrafted;
+            GameState.Instance.OnStaticObjectDismantled -= OnStaticObjectDismantled;
             GameState.Instance.OnChestPlaced -= OnChestPlaced;
+            GameState.Instance.OnChestDismantled -= OnChestDismantled;
             GameState.Instance.OnChestPlacementModeChanged -= OnChestPlacementModeChanged;
         }
 

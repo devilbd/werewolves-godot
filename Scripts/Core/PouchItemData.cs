@@ -15,4 +15,7 @@ public class PouchItemData
 
     [JsonPropertyName("bloodPercent")]
     public int BloodPercent { get; set; } = 0;
+
+    [JsonPropertyName("powerPercent")]
+    public int PowerPercent { get; set; } = 0;
 }

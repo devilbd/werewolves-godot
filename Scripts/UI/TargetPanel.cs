@@ -431,7 +431,8 @@ public partial class TargetPanel : PanelContainer
                 "Grass" => "Chop",
                 "Treasure Chest" or "Chest" or "Storage Chest" => "Open",
                 "Crafting Table" => "Craft",
-                "Blood Juicer" or "Alchemical Laboratory" or "Cavern Installation" => "Inspect",
+                "Blood Juicer" => "Juice",
+                "Alchemical Laboratory" => "Synthesize",
                 _ => "Attack"
             };
 
@@ -442,7 +443,7 @@ public partial class TargetPanel : PanelContainer
                 "Quartz" or "Quartz Crystal" => _chopIcon,
                 "Grass" => _chopIcon,
                 "Treasure Chest" or "Chest" or "Storage Chest" => _openIcon,
-                "Crafting Table" => _craftIcon,
+                "Crafting Table" or "Alchemical Laboratory" or "Blood Juicer" => _craftIcon,
                 _ => _attackIcon
             };
             if (_actionButton.TextureNormal != actionTex)

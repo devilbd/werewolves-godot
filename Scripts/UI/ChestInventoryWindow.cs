@@ -11,6 +11,7 @@ public partial class ChestInventoryWindow : Control
     private Control _itemsArea = null!;
     private Button _closeButton = null!;
     private Button _moveButton = null!;
+    private Button _dismantleButton = null!;
     private Label _titleLabel = null!;
 
     // Window dragging
@@ -83,13 +84,26 @@ public partial class ChestInventoryWindow : Control
         {
             Name = "MoveButton",
             Text = "Move Chest",
-            Position = new Vector2(370, 18),
-            Size = new Vector2(100, 28),
+            Position = new Vector2(325, 18),
+            Size = new Vector2(95, 28),
             TooltipText = "Pick up and reposition this chest elsewhere in the Lair"
         };
         ApplySmallButtonStyle(_moveButton, new Color(0.18f, 0.22f, 0.30f));
         _moveButton.Pressed += OnMovePressed;
         AddChild(_moveButton);
+
+        // Dismantle Chest Button
+        _dismantleButton = new Button
+        {
+            Name = "DismantleButton",
+            Text = "Dismantle",
+            Position = new Vector2(426, 18),
+            Size = new Vector2(95, 28),
+            TooltipText = "Dismantle chest and recover 10 Logs and 5 Stones (stored items returned to pouch)"
+        };
+        ApplySmallButtonStyle(_dismantleButton, new Color(0.42f, 0.15f, 0.15f));
+        _dismantleButton.Pressed += OnDismantlePressed;
+        AddChild(_dismantleButton);
 
         // Close Button
         _closeButton = new Button
@@ -151,12 +165,20 @@ public partial class ChestInventoryWindow : Control
         GameState.Instance.StartChestPlacement(chestId);
     }
 
+    private void OnDismantlePressed()
+    {
+        if (string.IsNullOrEmpty(_activeChestId)) return;
+        string chestId = _activeChestId;
+        GameState.Instance.DismantleChest(chestId);
+    }
+
     public void RefreshItems()
     {
         if (!GodotObject.IsInstanceValid(this) || _itemsArea == null || _activeChestId == null) return;
 
         foreach (Node child in _itemsArea.GetChildren())
         {
+            _itemsArea.RemoveChild(child);
             child.QueueFree();
         }
 
@@ -196,24 +218,30 @@ public partial class ChestInventoryWindow : Control
     private Control CreateItemControl(string itemName, PouchItemData item, Vector2 itemPos)
     {
         bool isBloodFlask = itemName.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase);
+        bool isPowerFlask = itemName.StartsWith("PowerFlask", StringComparison.OrdinalIgnoreCase);
 
         string iconPath = isBloodFlask
             ? GetFlaskTexturePath(item.BloodPercent)
-            : itemName switch
-            {
-                "Logs" => "res://assets/logs_collected_o.png",
-                "Stones" => "res://assets/rock_stones_loot_collected_o.png",
-                "Meat" => "res://assets/meat_collected_o.png",
-                "GoldCoins" or "Gold Coins" or "Gold" => "res://assets/gold_coins.png",
-                "Quartz" => "res://assets/resources/quartz/quartz_2.png",
-                "EmptyFlask" or "Empty Flask" or "Flask" => "res://assets/flasks/blood_flask_0.png",
-                "Grass" => "res://assets/grass/grass_drop.png",
-                _ => "res://assets/logs_collected_o.png"
-            };
+            : isPowerFlask
+                ? GetPowerFlaskTexturePath(item.PowerPercent)
+                : itemName switch
+                {
+                    "Logs" => "res://assets/logs_collected_o.png",
+                    "Stones" => "res://assets/rock_stones_loot_collected_o.png",
+                    "Meat" => "res://assets/meat_collected_o.png",
+                    "GoldCoins" or "Gold Coins" or "Gold" => "res://assets/gold_coins.png",
+                    "Quartz" => "res://assets/resources/quartz/quartz_2.png",
+                    "EmptyFlask" or "Empty Flask" or "Flask" => "res://assets/flasks/blood_flask_0.png",
+                    "Grass" => "res://assets/grass/grass_drop.png",
+                    _ => "res://assets/logs_collected_o.png"
+                };
 
-        string displayName = isBloodFlask ? $"Blood Flask ({item.BloodPercent}%)" : itemName;
-        string tooltip = isBloodFlask
-            ? $"Blood Flask ({item.BloodPercent}%)\n(Click/Right-Click: Grab to Pouch | Drag to organize)"
+        string displayName = isBloodFlask
+            ? $"Blood Flask ({item.BloodPercent}%)"
+            : (isPowerFlask ? $"Power Flask ({item.PowerPercent}%)" : itemName);
+
+        string tooltip = (isBloodFlask || isPowerFlask)
+            ? $"{displayName}\n(Click/Right-Click: Grab to Pouch | Drag to organize)"
             : item.Count > 1
                 ? $"{itemName} ({item.Count})\n(Click: Grab 1 | Shift+Click: Choose amount | Drag to organize)"
                 : $"{itemName}\n(Click/Right-Click: Grab to Pouch | Drag to organize)";
@@ -251,6 +279,15 @@ public partial class ChestInventoryWindow : Control
             countLabel.AddThemeFontSizeOverride("font_size", 11);
             countLabel.AddThemeColorOverride("font_color", item.BloodPercent >= 100 ? new Color(1f, 0.45f, 0.45f) : new Color(1f, 0.85f, 0.4f));
         }
+        else if (isPowerFlask)
+        {
+            countLabel.Text = $"{item.PowerPercent}%";
+            countLabel.Position = new Vector2(4, 26);
+            countLabel.Size = new Vector2(38, 16);
+            countLabel.HorizontalAlignment = HorizontalAlignment.Right;
+            countLabel.AddThemeFontSizeOverride("font_size", 11);
+            countLabel.AddThemeColorOverride("font_color", item.PowerPercent >= 100 ? new Color(0.35f, 0.85f, 1f) : new Color(0.6f, 0.9f, 1f));
+        }
         else
         {
             countLabel.Text = item.Count.ToString();
@@ -273,7 +310,7 @@ public partial class ChestInventoryWindow : Control
         {
             if (ev is InputEventMouseButton mb && mb.Pressed && _activeChestId != null)
             {
-                bool isShift = Input.IsKeyPressed(Key.Shift);
+                bool isShift = mb.ShiftPressed || Input.IsKeyPressed(Key.Shift);
 
                 // If Shift held and count > 1: Open Split Quantity Modal
                 if (isShift && captureCount > 1)
@@ -284,6 +321,13 @@ public partial class ChestInventoryWindow : Control
                     {
                         GameState.Instance.TransferItemChestToPouch(chestId, captureItemName, amount);
                     });
+                    return;
+                }
+
+                if (isShift && captureCount <= 1)
+                {
+                    GetViewport().SetInputAsHandled();
+                    GameState.Instance.TransferItemChestToPouch(_activeChestId, captureItemName, 1);
                     return;
                 }
 
@@ -326,6 +370,14 @@ public partial class ChestInventoryWindow : Control
         if (bloodPercent <= 50) return "res://assets/flasks/blood_flask_50.png";
         if (bloodPercent <= 75) return "res://assets/flasks/blood_flask_75.png";
         return "res://assets/flasks/blood_flask_100.png";
+    }
+
+    private static string GetPowerFlaskTexturePath(int powerPercent)
+    {
+        if (powerPercent >= 85) return "res://assets/flasks/power_flask_100.png";
+        if (powerPercent >= 40) return "res://assets/flasks/power_flask_50.png";
+        if (powerPercent >= 15) return "res://assets/flasks/power_flask_25.png";
+        return "res://assets/flasks/power_flask_0.png";
     }
 
     private void OnBgGuiInput(InputEvent @event)
@@ -382,15 +434,19 @@ public partial class ChestInventoryWindow : Control
         {
             if (_draggedItemControl != null && _draggedItemName != null && _activeChestId != null)
             {
-                if (_hasDraggedItem)
+                Vector2 globalMouse = GetGlobalMousePosition();
+                var pouchWin = GetParent().GetNodeOrNull<PouchWindow>("PouchWindow");
+                bool droppedOnPouch = pouchWin != null && pouchWin.Visible && pouchWin.GetGlobalRect().HasPoint(globalMouse);
+
+                if (droppedOnPouch || !_hasDraggedItem)
                 {
-                    // Dragged and released: save new position in chest
-                    GameState.Instance.UpdateChestItemPosition(_activeChestId, _draggedItemName, _draggedItemControl.Position);
+                    // Dropped onto pouch or quick click without dragging: transfer 1 item to pouch
+                    GameState.Instance.TransferItemChestToPouch(_activeChestId, _draggedItemName, 1);
                 }
                 else
                 {
-                    // Quick click without dragging: transfer 1 item to pouch (or single item)
-                    GameState.Instance.TransferItemChestToPouch(_activeChestId, _draggedItemName, 1);
+                    // Dragged and released: save new position in chest
+                    GameState.Instance.UpdateChestItemPosition(_activeChestId, _draggedItemName, _draggedItemControl.Position);
                 }
             }
 

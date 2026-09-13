@@ -1,6 +1,6 @@
-# Werewolves — Version History & Release Changelog (v2.0 – v2.5)
+# Werewolves — Version History & Release Changelog (v2.0 – v3.0)
 
-This document tracks the evolution of game systems, balance updates, content additions, and architectural enhancements introduced across Versions 2.0 through 2.5.
+This document tracks the evolution of game systems, balance updates, content additions, and architectural enhancements introduced across Versions 2.0 through 3.0.
 
 ---
 
@@ -234,4 +234,107 @@ This document tracks the evolution of game systems, balance updates, content add
   - Automatically switches when inside the hideout (`GameState.Instance.IsInLair == true`).
   - Displays cavern borders, Central Blood Core altar (with live blood reserves %), fixed workshop installations (Crafting Table, Blood Juicer, Laboratory), placed storage chests, and exit portal.
 
+---
 
+## ⚗️ Version 2.9 — Workshop Stations, Power Flasks, Blood Flask Rebalance & Blood Juicer
+
+### 1. Station-Specific Crafting & Tabbed Window (`CraftingWindow.cs`)
+- **Station Filter Tabs**: Added dedicated tabs to `CraftingWindow`:
+  - `[ All Recipes ]`: Complete list of craftable items and cavern structures.
+  - `[ Crafting Table ]`: Workstation view showing Empty Flasks and Power Flask recipes.
+  - `[ Laboratory ]`: Alchemical view showing Power Flasks and Empty Flask recipes.
+  - `[ Cavern Installations ]`: Structural view showing Storage Chest, Crafting Table, Blood Juicer, and Laboratory.
+- **Station Interaction Routing**: Interacting directly with the physical `CraftingTable` or `Laboratory` in the cavern automatically focuses the window on the corresponding station tab.
+- **Empty Flask Crafting**:
+  - Recipe: $2\text{ Quartz} \implies 1\text{ EmptyFlask}$.
+  - Fashioned directly into the pouch and stacks seamlessly.
+- **Power Flask Crafting**:
+  - Recipe: $1\text{ EmptyFlask} + 2\text{ Grass} + 1\text{ Quartz} \implies 1\text{ PowerFlask (100\%)}$.
+  - Synthesized into the player's pouch with full $100\%$ potency.
+
+### 2. Blood Flask Drinking Rebalance
+- **Health Focus & Dampened Power**:
+  - Drinking a Blood Flask now fully prioritizes health restoration: $+25\text{ HP} \times \text{fill}\%$.
+  - Power gain is heavily reduced to $+2\text{ Power} \times \text{fill}\%$ (a $92\%$ reduction from previous $+25\text{ Power}$).
+  - Returns an `EmptyFlask` to the pouch upon consumption.
+  - Tooltip dynamically reflects live restore amounts (`"+25 HP, +2 Power"` for 100% flask).
+
+### 3. Power Flask Mechanics (`assets/flasks/power_flask_*.png`)
+- **Visual Flask Tiers**: Utilizes sprites `power_flask_0.png`, `power_flask_25.png`, `power_flask_50.png`, and `power_flask_100.png`.
+- **Power Restoration**: Right-clicking a `PowerFlask` in the pouch restores up to $+25\text{ Power}$ (scaled by fill percentage), returning an `EmptyFlask`.
+- **UI Badges & Tooltips**:
+  - Azure/Cyan percentage badge displayed on item slot.
+  - Contextual tooltip: `"Power Flask ({percent}%)\n(Right-click to Drink: +{pwr} Power)"`.
+  - Full bi-directional chest inventory compatibility.
+
+### 4. Blood Juicer & Vitae Press (`BloodJuicerWindow.cs`)
+- **Interactive Juicer Modal**: Interacting with the central cavern `BloodJuicer` opens a dedicated $560 \times 420\text{px}$ extraction panel alongside the pouch.
+- **Meat Chamber**:
+  - Displays placed meat in the juicer press and meat remaining in the pouch.
+  - `[ +1 Meat ]` and `[ +All ]` buttons transfer meat from pouch to juicer chamber.
+  - `[ Take ]` button retrieves placed meat back into the pouch.
+  - Right-clicking `Meat` in the pouch while the Juicer is open immediately deposits meat into the juicer chamber.
+- **Vitae Extraction**:
+  - Conversion Rate: $1\text{ Meat} \implies +50\%\text{ Blood Fill}$.
+  - Fills existing partial `BloodFlask` (< 100%) or converts an `EmptyFlask` into a $50\%$ `BloodFlask`.
+  - Floating status feedback: `"+50% Blood Extracted into Flask!"`.
+  - State persistence: Placed meat in the juicer is saved and loaded across game sessions in `SaveManager.cs`.
+
+---
+
+## 🏛️ Version 3.0 — Save Migration Engine, Cave Object Resource Restoration & Dismantling System
+
+### 1. Automated Save Migration Engine (`SaveManager.cs`)
+- **Save Versioning Scheme**: Introduced `SaveVersion = 3` tracking schema revisions directly in `user://werewolves_save.json`.
+- **Pre-Migration Automated Backups**: Before applying any forward migration, `SaveManager` creates an uncompressed, timestamped backup file:
+  - Format: `user://werewolves_save.backup_v{version}_{yyyyMMdd_HHmmss}.json`.
+- **Sequential Forward Migrations**:
+  - `v0 -> v1`: Ensures basic collection safety (non-null lists/dictionaries) and Blood Core reserve defaults ($1000\text{ blood}$).
+  - `v1 -> v2`: Initializes PowerPercent values for Blood and Power Flasks.
+  - `v2 -> v3`: Restores 100% of raw materials for destroyed or wiped cavern installations across earlier game iterations.
+- **Test Environment Isolation**: Added `SaveManager.IsTestEnvironment` and `CustomSavePath` to allow automated headless tests without polluting user save data.
+
+### 2. Cave Object Resource Restoration
+- **Iteration Protection**: When structural schema migrations or game updates destroy placed cavern installations (`CraftingTable`, `BloodJuicer`, `Laboratory`, or `Chest`), all invested resources are calculated and restored directly into the user's pouch and Blood Core altar:
+  - **Crafting Table**: Restores $+25\text{ Logs}$, $+15\text{ Stones}$.
+  - **Blood Juicer**: Restores $+30\text{ Stones}$, $+20\text{ Quartz}$, and refuels $+100\text{ Blood}$ into the Blood Core altar.
+  - **Alchemical Laboratory**: Restores $+25\text{ Stones}$, $+25\text{ Quartz}$, $+15\text{ Grass}$.
+  - **Storage Chest**: Restores $+10\text{ Logs}$, $+5\text{ Stones}$.
+- **Tracking & Deduplication**: Added `DestroyedCaveObjects` registry to prevent duplicate payouts across subsequent game loads.
+
+### 3. In-Game Storage Chest Dismantling (`ChestInventoryWindow.cs`)
+- **Dismantle Button**: Added a red-accented `[ Dismantle ]` button to the chest inventory modal.
+- **Inventory Evacuation**: Before removing the chest, all stored items inside the chest are safely returned to the player's pouch.
+- **Full Material Refund**: Refunds $10\text{ Logs}$ and $5\text{ Stones}$ to the pouch.
+- **World Node Despawning**: Fires `GameState.Instance.OnChestDismantled`, prompting `LairManager` to free the chest node, reset cursor state, and close the chest modal.
+
+### 4. In-Game Workshop Station Dismantling (`CraftingWindow.cs`)
+- **Dynamic Contextual Action**: For built workshop stations (`CraftingTable`, `BloodJuicer`, `Laboratory`), the crafting button dynamically transforms into a crimson `[ Dismantle ]` button.
+- **100% Material & Blood Refund**:
+  - Refunds all recipe ingredients to the pouch.
+  - Returns any blood cost back to the Blood Core altar.
+  - If dismantling the Blood Juicer, any raw meat remaining in the juicer chamber is returned to the player's pouch.
+- **Cavern Despawning**: Fires `GameState.Instance.OnStaticObjectDismantled`, removing the station from the cavern floor in `LairManager`.
+
+---
+
+## 🔄 Version 3.1 — Seamless Multi-Window Item Transfers, Live UI Synchronization & Split Modals
+
+### 1. Unified Bi-Directional Item Transfers & Instant UI Refresh
+- **Immediate Child Node Removal**: Resolved stale and accumulated visual controls by immediately unparenting old child controls via `_itemsArea.RemoveChild(child)` prior to `child.QueueFree()` in both `PouchWindow.cs` and `ChestInventoryWindow.cs`.
+- **Right-Click & Quick Left-Click Transfers**:
+  - In `PouchWindow`: Right-clicking any item (including consumable `Meat` and `Flasks`) while the Storage Chest is open deposits 1 item into the chest instead of accidentally consuming it.
+  - Quick left-click release without dragging transfers 1 item into the active chest or juicer.
+- **Cross-Window Drag-and-Drop**:
+  - Dragging an item from `PouchWindow` and releasing over `ChestInventoryWindow` deposits 1 item into the chest.
+  - Dragging an item from `ChestInventoryWindow` and releasing over `PouchWindow` grabs 1 item into the pouch.
+  - Dragging within the same window continues to update the item's custom coordinates in the respective inventory canvas.
+- **Shift + Click Quantity Splitting (`ItemSplitModal.cs`)**:
+  - Holding <kbd>Shift</kbd> while clicking on an item in either Pouch or Chest opens `ItemSplitModal` with quick presets (`[1]`, `[Half]`, `[All]`) and an interactive slider to deposit or grab exact quantities.
+
+### 2. Blood Juicer & Pouch Workflow
+- **Contextual Meat Placement**: Right-clicking or quick-clicking Meat in the pouch while the Blood Juicer is open places 1 meat into the chamber. Shift-clicking opens `ItemSplitModal` to deposit larger quantities.
+- **Auto-Tiling Windows**: Interacting with the Blood Juicer or a Storage Chest automatically opens the Pouch and positions both modals side-by-side ($450\text{px}$ and $600\text{px}$/$560\text{px}$ with a clean $30\text{px}$ gap) so neither window obscures the other.
+
+### 3. Flask Data Preservation
+- Ensured both `BloodPercent` and `PowerPercent` are 100% retained across transfers between Pouch and Chest for both `BloodFlask` and `PowerFlask` variants.

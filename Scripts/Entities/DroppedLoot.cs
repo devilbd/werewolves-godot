@@ -47,6 +47,7 @@ public partial class DroppedLoot : Area2D, IFogBorderable
             "GoldCoins" or "Gold Coins" or "Gold" => GD.Load<Texture2D>("res://assets/gold_coins.png"),
             "Quartz" => GD.Load<Texture2D>("res://assets/resources/quartz/quartz_2.png"),
             "EmptyFlask" or "Empty Flask" or "Flask" => GD.Load<Texture2D>("res://assets/flasks/blood_flask_0.png"),
+            "PowerFlask" or "Power Flask" => GD.Load<Texture2D>("res://assets/flasks/power_flask_100.png"),
             "Grass" => GD.Load<Texture2D>("res://assets/grass/grass_drop.png"),
             _ => GD.Load<Texture2D>("res://assets/logs_o.png")
         };
@@ -61,7 +62,7 @@ public partial class DroppedLoot : Area2D, IFogBorderable
         {
             _sprite.Scale = new Vector2(0.38f, 0.38f);
         }
-        else if (ItemType is "EmptyFlask" or "Empty Flask" or "Flask")
+        else if (ItemType is "EmptyFlask" or "Empty Flask" or "Flask" or "PowerFlask" or "Power Flask")
         {
             _sprite.Scale = new Vector2(0.12f, 0.12f);
         }
@@ -76,7 +77,7 @@ public partial class DroppedLoot : Area2D, IFogBorderable
         AddChild(_sprite);
 
         _collision = new CollisionShape2D();
-        float radius = (ItemType is "GoldCoins" or "Gold Coins" or "Gold") ? 28f : ((ItemType is "Quartz" or "EmptyFlask" or "Empty Flask" or "Flask" or "Grass") ? 22f : 30f);
+        float radius = (ItemType is "GoldCoins" or "Gold Coins" or "Gold") ? 28f : ((ItemType is "Quartz" or "EmptyFlask" or "Empty Flask" or "Flask" or "PowerFlask" or "Power Flask" or "Grass") ? 22f : 30f);
         var circle = new CircleShape2D { Radius = radius };
         _collision.Shape = circle;
         AddChild(_collision);
@@ -102,7 +103,7 @@ public partial class DroppedLoot : Area2D, IFogBorderable
                 ? new Color(1.0f, 0.55f, 0.55f)
                 : (ItemType is "Quartz"
                     ? new Color(0.85f, 0.70f, 1.0f)
-                    : ((ItemType is "EmptyFlask" or "Empty Flask" or "Flask")
+                    : ((ItemType is "EmptyFlask" or "Empty Flask" or "Flask" or "PowerFlask" or "Power Flask")
                         ? new Color(0.55f, 0.85f, 1.0f)
                         : new Color(0.65f, 0.95f, 0.65f))));
 

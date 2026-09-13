@@ -142,8 +142,9 @@ All scripts are designed to work under two scenarios:
     - Recovery inside the cave is strictly active:
       1. **Blood Core Altar ('Press E')**: Consumes $250\text{ blood}$ from the core to restore $+12\text{ HP}$ and $+13\text{ Power}$ ($25\text{ points total}$).
       2. **Eating Meat**: Right-click `"Meat"` in the pouch modal to consume $1$ meat and gain $+20\text{ HP}$ and $+10\text{ Power}$.
-      3. **Drinking Blood Flasks**: Right-click `"BloodFlask"` in the pouch modal to gain up to $+25\text{ HP}$ and $+25\text{ Power}$ (proportional to flask fill), returning an `"EmptyFlask"`.
-      4. **Execute Bite**: Usable on living combatants $\le 25\%$ HP to heal $+20\text{ HP}$.
+      3. **Drinking Blood Flasks**: Right-click `"BloodFlask"` in the pouch modal to gain up to $+25\text{ HP}$ and $+2\text{ Power}$ (proportional to flask fill), returning an `"EmptyFlask"`.
+      4. **Drinking Power Flasks**: Right-click `"PowerFlask"` in the pouch modal to gain up to $+25\text{ Power}$ (proportional to flask fill), returning an `"EmptyFlask"`.
+      5. **Execute Bite**: Usable on living combatants $\le 25\%$ HP to heal $+20\text{ HP}$.
   - **Skill Power Costs**:
     - Scratch Hit: 15 Power
     - Charge Attack: 25 Power
@@ -210,17 +211,22 @@ All scripts are designed to work under two scenarios:
   - Direct click on any nameplate triggers pickup or flask collection immediately, bypassing 2D collision occlusions.
 - **Drop Scatter Offset**: Defeated living prey (Deer, Villagers) scatter meat and gold drops by $\pm 24\text{px}$ away from the death blood pool, ensuring physical collision shapes do not overlap.
 
-### 3.6 State Persistence (`SaveManager.cs`)
-- Serializes `SaveData` to `user://werewolves_save.json` using `System.Text.Json`.
-- Automatically invoked on:
+### 3.7 State Persistence, Version Migration & Backups (`SaveManager.cs`)
+- **Version Tracking**: Serializes `SaveData` with `SaveVersion = 3` to `user://werewolves_save.json` using `System.Text.Json`.
+- **Pre-Migration Backups**: Creates timestamped backups (`user://werewolves_save.backup_v{version}_{timestamp}.json`) prior to running migrations.
+- **Forward Migrations & Resource Restoration**:
+  - `v0 -> v1`: Initializes collections and default Blood Core reserves ($1000$).
+  - `v1 -> v2`: Initializes PowerPercent values for Blood and Power Flasks.
+  - `v2 -> v3`: Detects destroyed/wiped cave objects across versions and restores 100% of raw materials (+25 Logs, +70 Stones, +45 Quartz, +15 Grass, +100 Blood) directly into the player's pouch and Blood Core altar.
+- **Save Triggers**:
   - Position changes / movement (`GameState.SetPlayerPosition` / `LoadedPlayerPosition`)
-  - Item collection (`GameState.AddPouchItem`)
-  - Item repositioning in pouch (`GameState.UpdatePouchItemPosition`)
+  - Item collection, repositioning, and chest transfers
   - Blood Core reserve updates (`bloodCoreReserves`, default 1000)
-  - Cave structure construction (`craftedCaveObjects`)
-  - Storage chest placement and inventory modifications (`caveChests`)
+  - Cave structure construction and dismantling (`craftedCaveObjects`, `destroyedCaveObjects`)
+  - Storage chest placement, relocation, inventory modification, and dismantling (`caveChests`)
+  - Blood Juicer chamber meat count updates (`bloodJuicerMeats`)
 
-### 3.7 Subterranean Hideout, Blood Core & Cavern Workshop (`scenes/Lair.tscn`)
+### 3.8 Subterranean Hideout, Blood Core, Cavern Workshop & Dismantling (`scenes/Lair.tscn`)
 - **Single-Screen Cavern**: A compact subterranean sanctuary surrounded by pitch-black space (`#030305`), a procedurally twinkling 240-star field, and drifting cavern fog zones.
 - **Procedural Floor Schema**: $5 \times 9$ stone tile matrix (`lair_1..5.jpeg`, scale 0.1709) with perimeter edge borders (`lair_border_o.png`) and solid collision barriers.
 - **Blood Core Altar (`BloodCoreObject`)**:
@@ -230,14 +236,17 @@ All scripts are designed to work under two scenarios:
     - `[E] Restore Health & Power (-250 Blood)` $\implies$ consumes 250 blood, restores +12 HP & +13 Power.
     - `[R] Fill Core with Blood Flask` $\implies$ pours blood from held flasks (+250 blood for 100% flask) and returns an `"EmptyFlask"`.
 - **Fixed Cavern Workshop Installations (`CaveStaticObject`)**:
-  - **Crafting Table**: Top Left at `(-700, -520)`, sprite `crafting-table.png`. Left-clicking opens the Crafting Window.
-  - **Blood Juicer**: Top Center at `(0, -520)`, sprite `blood-juicer.png`. Refines raw vitae and organic essence.
-  - **Alchemical Laboratory**: Top Right at `(700, -520)`, sprite `laboratory.png`. Alembic research and potion synthesis.
+  - **Crafting Table**: Top Left at `(-700, -520)`, sprite `crafting-table.png`. Interacting opens the Crafting Window focused on the Crafting Table tab (crafting Empty Flasks and Power Flasks).
+  - **Blood Juicer**: Top Center at `(0, -520)`, sprite `blood-juicer.png`. Interacting opens `BloodJuicerWindow` to refine placed/pouch meat into blood flasks ($1\text{ Meat} \implies +50\%\text{ fill}$).
+  - **Alchemical Laboratory**: Top Right at `(700, -520)`, sprite `laboratory.png`. Interacting opens the Crafting Window focused on the Laboratory tab (synthesizing Power Flasks and Empty Flasks).
 - **Cavern Storage Chests (`CaveChestObject` & `ChestInventoryWindow`)**:
   - Interactive ghost placement mode with real-time clearance and collision verification.
   - Relocatable at any time via the "Move Chest" button.
   - Dynamic world sprites: `chest_closed.png` while closed, `chest_opened.png` while opened.
   - Bi-directional transfers between pouch and chest, supporting <kbd>Shift</kbd> + Left Click for instant full-stack transfers.
+- **In-Game Dismantling & Resource Recovery**:
+  - **Chests**: Red `[ Dismantle ]` button in `ChestInventoryWindow` evacuates all stored items to the pouch, refunds $10\text{ Logs}$ and $5\text{ Stones}$, and despawns the world chest.
+  - **Workshop Stations**: Red `[ Dismantle ]` button in `CraftingWindow` when a station is built. Refunds 100% of recipe ingredients to pouch, returns BloodCost to the Blood Core, returns any placed juicer meats, and despawns the structure node from the cavern.
 
 ---
 

@@ -154,15 +154,15 @@ public partial class CaveStaticObject : StaticBody2D, ISelectableTarget, IFogBor
 
         if (ObjectType == "CraftingTable")
         {
-            GameState.Instance.ToggleCrafting(true);
+            GameState.Instance.OpenCraftingStation("CraftingTable");
         }
         else if (ObjectType == "BloodJuicer")
         {
-            GameState.Instance.TriggerDamageNumber("Blood Juicer: Ready to refine essence", FloatingTextPosition, new Color(0.95f, 0.4f, 0.45f));
+            GameState.Instance.ToggleBloodJuicer(true);
         }
         else if (ObjectType == "Laboratory")
         {
-            GameState.Instance.TriggerDamageNumber("Laboratory: Concoction alembic heated", FloatingTextPosition, new Color(0.4f, 0.9f, 0.7f));
+            GameState.Instance.OpenCraftingStation("Laboratory");
         }
     }
 

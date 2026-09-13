@@ -251,8 +251,10 @@ Automatic safe-haven regeneration inside the cave is disabled. While inside the 
 3. **Eating Meat**:
    - Right-click `"Meat"` in the pouch modal to eat. Restores **+20 HP** and **+10 Power**, consuming 1 piece of meat.
 4. **Drinking Blood Flasks**:
-   - Right-click a `"BloodFlask"` in the pouch modal to drink. Restores HP and Power proportional to fill (up to $+25\text{ HP}$, $+25\text{ Power}$), converting the flask to an empty flask.
-5. **Execute Bite (Skill 3)**:
+   - Right-click a `"BloodFlask"` in the pouch modal to drink. Restores Health up to **+25 HP** and Power up to **+2 Power** (heavily reduced power gain, scaled by fill percentage), converting the flask to a reusable `"EmptyFlask"`.
+5. **Drinking Power Flasks**:
+   - Right-click a `"PowerFlask"` in the pouch modal to drink. Restores Power up to **+25 Power** (scaled by fill percentage), converting the flask to a reusable `"EmptyFlask"`.
+6. **Execute Bite (Skill 3)**:
    - When executed against a low-health target ($\le 25\%$ HP), restores $+20\text{ HP}$.
 
 ---
@@ -303,6 +305,45 @@ The lair features an integrated crafting and installation system enabling the we
    - Click transfers 1 item to the pouch; <kbd>Shift</kbd> + Click opens the `ItemSplitModal` to select exact quantities.
    - Automatically displays the PouchWindow alongside the chest modal for seamless item management.
 
+### 9.3 Workshop Station Recipes & Tabs
+The Cave Crafting Menu ([`CraftingWindow.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/CraftingWindow.cs)) provides station filter tabs for streamlined recipe management:
+- **`[All Recipes]`**: Complete list of craftable installations and consumable items.
+- **`[Crafting Table]`**: Displays items craftable at the Crafting Table:
+  - **Empty Flask**: Costs $2\text{ Quartz} \implies 1\text{ EmptyFlask}$.
+  - **Power Flask**: Costs $1\text{ EmptyFlask} + 2\text{ Grass} + 1\text{ Quartz} \implies 1\text{ PowerFlask (100\% Power)}$.
+- **`[Laboratory]`**: Displays alchemical recipes:
+  - **Power Flask**: Synthesizes $1\text{ EmptyFlask} + 2\text{ Grass} + 1\text{ Quartz} \implies 1\text{ PowerFlask (100\% Power)}$.
+- **`[Cavern Installations]`**: Filters to large workshop structures and storage chests.
+
+Interacting with the physical Crafting Table (`-700, -520`) or Alchemical Laboratory (`700, -520`) automatically opens the Crafting Window filtered to that respective station's recipe list.
+
+### 9.4 Blood Juicer Distillation Mechanics
+Interacting with the **Blood Juicer** (`0, -520`) opens the dedicated **Blood Juicer Window** ([`BloodJuicerWindow.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/BloodJuicerWindow.cs), $560 \times 420\text{px}$):
+1. **Meat Chamber**: Holds placed raw meat inside the juicer apparatus. Players can deposit meat from pouch (`+1` or `+All`), right-click meat in the pouch while juicer is open, or take meat back (`Take`). Placed meat count persists across saves in `SaveManager`.
+2. **Juicing Action & Exchange Rate**:
+   - Compresses $1\text{ Meat} \implies +50\%\text{ Blood}$ fill.
+   - Requires at least one `"EmptyFlask"` or a partially filled `"BloodFlask"` in the pouch.
+   - Automatically promotes an Empty Flask to a $50\%$ Blood Flask, or tops off an existing partial Blood Flask to $100\%$.
+   - Features **"Extract Blood (1 Meat)"** and **"Extract All Meats"** batch processing buttons.
+
+### 9.5 In-Game Object Dismantling & Resource Recovery
+Both storage chests and fixed workshop installations can be dismantled at will:
+1. **Storage Chest Dismantling**:
+   - Access: Inside the chest inventory modal (`ChestInventoryWindow`), click the red **`[ Dismantle ]`** button.
+   - Item Safety: Before the chest is removed, all stored items are automatically moved back into the player's pouch.
+   - Material Refund: Returns $100\%$ of construction materials ($10\text{ Logs}$, $5\text{ Stones}$) to the pouch.
+   - Cleanup: Removes the chest from `GameState.CaveChests`, despawns the world node, resets the mouse cursor, and triggers an auto-save.
+2. **Workshop Station Dismantling**:
+   - Access: In `CraftingWindow`, built structures (`CraftingTable`, `BloodJuicer`, `Laboratory`) dynamically display a crimson **`[ Dismantle ]`** button instead of "Craft".
+   - 100% Resource Refund: Returns all raw recipe ingredients ($100\%$) directly to the pouch.
+   - Blood Refund: Returns any BloodCost (e.g. $100\text{ blood}$ from the Blood Juicer) back to the central Blood Core altar.
+   - Meat Evacuation: If dismantling the Blood Juicer, any raw meat remaining in the juicer chamber is returned to the pouch.
+   - World Despawn: Fires `OnStaticObjectDismantled` to despawn the node in `LairManager`.
+3. **Automated Save Migration & Resource Restoration (`SaveManager.cs`)**:
+   - Save files are versioned (`SaveVersion = 3`).
+   - Prior to migrating older save states, an automated timestamped backup is generated (`user://werewolves_save.backup_v{version}_{timestamp}.json`).
+   - When game version updates destroy or wipe placed cavern installations, the migration engine automatically detects missing structures and restores $100\%$ of their raw ingredients into the player's pouch and Blood Core altar.
+
 ---
 
 ## 10. UI & HUD Integration
@@ -319,6 +360,7 @@ The lair scene includes a dedicated [`HUDManager`](file:///run/media/devilbd/d/D
    - [`PouchWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/PouchWindow.tscn) for inventory inspection, dragging, right-click consumption, and chest depositing.
    - [`HeroDetailsWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/HeroDetailsWindow.tscn) for viewing live combat attributes.
    - [`CraftingWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/CraftingWindow.cs) for viewing recipes and constructing cave installations (<kbd>B</kbd>).
+   - [`BloodJuicerWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/BloodJuicerWindow.cs) for depositing meat and distilling blood into empty or partial flasks.
    - [`ChestInventoryWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/ChestInventoryWindow.cs) for chest storage and item retrieval.
    - [`ItemSplitModal`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/ItemSplitModal.cs) for Shift-click stack quantity selection.
    - [`MapWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/MapWindow.cs) for viewing the subterranean layout, Blood Core reserve %, workshop stations, and placed storage chests (<kbd>M</kbd>).
@@ -336,13 +378,15 @@ The lair scene includes a dedicated [`HUDManager`](file:///run/media/devilbd/d/D
 | [`Scripts/Entities/CaveChestObject.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Entities/CaveChestObject.cs) | Cavern storage chest entity: closed/opened sprite toggling, proximity interaction, and selection reticle. |
 | [`scenes/Entities/CaveChestObject.tscn`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/Entities/CaveChestObject.tscn) | Packed scene for cavern storage chests. |
 | [`Scripts/Entities/CaveStaticObject.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Entities/CaveStaticObject.cs) | Static workshop structures entity (Crafting Table, Blood Juicer, Laboratory) with collision and interaction hooks. |
-| [`Scripts/UI/CraftingWindow.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/CraftingWindow.cs) | Draggable crafting menu modal showing recipes, material checks, and placement triggers (<kbd>B</kbd>). |
+| [`Scripts/UI/CraftingWindow.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/CraftingWindow.cs) | Draggable crafting menu modal showing recipes, station tabs, material checks, and placement triggers (<kbd>B</kbd>). |
+| [`Scripts/UI/BloodJuicerWindow.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/BloodJuicerWindow.cs) | Draggable blood juicer modal with meat chamber, single/batch extraction, and live flask preview. |
 | [`Scripts/UI/ChestInventoryWindow.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/ChestInventoryWindow.cs) | Draggable freeform storage chest modal using `chest_inventory.png` background. |
 | [`Scripts/UI/ItemSplitModal.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/ItemSplitModal.cs) | Modal dialog for choosing stack split quantities with slider, steppers, and presets on Shift+click. |
 | [`Scripts/UI/MapWindow.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/MapWindow.cs) | Draggable world and cavern map modal supporting 1800m radar perception, pan/zoom, and hideout layout inspection (<kbd>M</kbd>). |
 | [`assets/icons/map_icon.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/icons/map_icon.png) | Antique brass compass rose icon texture for ActionBar Slot 4. |
+| [`assets/flasks/power_flask_0..100.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/flasks/) | 4-tier azure power flask sprites ($0\%, 25\%, 50\%, 100\%$). |
 | [`Scripts/Core/CaveChestData.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Core/CaveChestData.cs) | Serialized data model for placed chest positions and stored items. |
-| [`Scripts/Core/CraftingRecipe.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Core/CraftingRecipe.cs) | Domain model defining ingredients, blood costs, and placement metadata for craftable objects. |
+| [`Scripts/Core/CraftingRecipe.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Core/CraftingRecipe.cs) | Domain model defining ingredients, station filters, and placement/item metadata for craftable objects. |
 | [`Scripts/Entities/LairEntranceObject.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Entities/LairEntranceObject.cs) | Outside world landmark: proximity detection, prompt animation, and scene transition. |
 | [`Scripts/World/WorldManager.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/World/WorldManager.cs) | Outside landmark spawner, wilderness exclusion zones, and coordinate conversions. |
 | [`assets/cave-objects/blood-core.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/cave-objects/blood-core.png) | High-resolution sprite for the central Blood Core altar. |
