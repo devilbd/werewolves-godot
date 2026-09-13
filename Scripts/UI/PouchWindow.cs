@@ -199,23 +199,34 @@ public partial class PouchWindow : Control
                 item.PosY = itemPos.Y;
             }
 
-            string iconPath = itemName switch
-            {
-                "Logs" => "res://assets/logs_collected_o.png",
-                "Stones" => "res://assets/rock_stones_loot_collected_o.png",
-                "Meat" => "res://assets/meat_collected_o.png",
-                "GoldCoins" or "Gold Coins" or "Gold" => "res://assets/gold_coins.png",
-                "Quartz" => "res://assets/resources/quartz/quartz_2.png",
-                "EmptyFlask" or "Empty Flask" or "Flask" => "res://assets/flasks/blood_flask_0.png",
-                _ => "res://assets/logs_collected_o.png"
-            };
+            bool isBloodFlask = itemName.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase);
+
+            string iconPath = isBloodFlask
+                ? GetFlaskTexturePath(item.BloodPercent)
+                : itemName switch
+                {
+                    "Logs" => "res://assets/logs_collected_o.png",
+                    "Stones" => "res://assets/rock_stones_loot_collected_o.png",
+                    "Meat" => "res://assets/meat_collected_o.png",
+                    "GoldCoins" or "Gold Coins" or "Gold" => "res://assets/gold_coins.png",
+                    "Quartz" => "res://assets/resources/quartz/quartz_2.png",
+                    "EmptyFlask" or "Empty Flask" or "Flask" => "res://assets/flasks/blood_flask_0.png",
+                    _ => "res://assets/logs_collected_o.png"
+                };
 
             var itemContainer = new Control
             {
                 Position = itemPos,
                 CustomMinimumSize = new Vector2(44, 44),
                 Size = new Vector2(44, 44),
-                MouseFilter = MouseFilterEnum.Stop
+                MouseFilter = MouseFilterEnum.Stop,
+                TooltipText = isBloodFlask
+                    ? $"Blood Flask ({item.BloodPercent}%)"
+                    : (itemName is "EmptyFlask" or "Empty Flask" or "Flask"
+                        ? (item.Count > 1 ? $"Empty Flasks ({item.Count})" : "Empty Flask")
+                        : (itemName is "GoldCoins" or "Gold Coins" or "Gold"
+                            ? $"Gold Coins ({item.Count})"
+                            : $"{itemName} ({item.Count})"))
             };
 
             var iconTex = new TextureRect
@@ -230,13 +241,28 @@ public partial class PouchWindow : Control
 
             var countLabel = new Label
             {
-                Text = item.Count.ToString(),
-                Position = new Vector2(22, 24),
-                Size = new Vector2(20, 16),
-                HorizontalAlignment = HorizontalAlignment.Right
+                MouseFilter = MouseFilterEnum.Ignore
             };
-            countLabel.AddThemeFontSizeOverride("font_size", 12);
-            countLabel.AddThemeColorOverride("font_color", new Color(1f, 1f, 0.4f));
+
+            if (isBloodFlask)
+            {
+                countLabel.Text = $"{item.BloodPercent}%";
+                countLabel.Position = new Vector2(4, 26);
+                countLabel.Size = new Vector2(38, 16);
+                countLabel.HorizontalAlignment = HorizontalAlignment.Right;
+                countLabel.AddThemeFontSizeOverride("font_size", 11);
+                countLabel.AddThemeColorOverride("font_color", item.BloodPercent >= 100 ? new Color(1f, 0.45f, 0.45f) : new Color(1f, 0.85f, 0.4f));
+            }
+            else
+            {
+                countLabel.Text = item.Count.ToString();
+                countLabel.Position = new Vector2(22, 24);
+                countLabel.Size = new Vector2(20, 16);
+                countLabel.HorizontalAlignment = HorizontalAlignment.Right;
+                countLabel.AddThemeFontSizeOverride("font_size", 12);
+                countLabel.AddThemeColorOverride("font_color", new Color(1f, 1f, 0.4f));
+            }
+
             countLabel.AddThemeColorOverride("font_outline_color", Colors.Black);
             countLabel.AddThemeConstantOverride("outline_size", 2);
             itemContainer.AddChild(countLabel);
@@ -270,4 +296,13 @@ public partial class PouchWindow : Control
         5 => new Vector2(120, 75),
         _ => new Vector2(10 + (index % 3) * 55, 15 + ((index / 3) % 2) * 60)
     };
+
+    public static string GetFlaskTexturePath(int percent)
+    {
+        if (percent <= 0) return "res://assets/flasks/blood_flask_0.png";
+        if (percent <= 37) return "res://assets/flasks/blood_flask_25.png";
+        if (percent <= 62) return "res://assets/flasks/blood_flask_50.png";
+        if (percent <= 87) return "res://assets/flasks/blood_flask_75.png";
+        return "res://assets/flasks/blood_flask_100.png";
+    }
 }

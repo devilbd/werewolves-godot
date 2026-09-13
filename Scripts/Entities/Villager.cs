@@ -123,14 +123,10 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget, 
 
     private void OnMouseEntered()
     {
-        _isHovered = true;
-        if (!IsDead)
+        if (!IsDead && IsInsideTree())
         {
-            var cursor = GD.Load<Resource>("res://assets/cursors/interaction_o.png");
-            if (cursor != null)
-            {
-                Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, Vector2.Zero);
-            }
+            _isHovered = true;
+            CursorManager.SetInteraction();
         }
     }
 
@@ -144,11 +140,7 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget, 
         if (_isHovered)
         {
             _isHovered = false;
-            var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-            if (cursor != null)
-            {
-                Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, Vector2.Zero);
-            }
+            CursorManager.ForceResetNormal();
         }
     }
 
@@ -202,6 +194,10 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget, 
                     var meatLoot = DroppedLoot.Instantiate("Meat", GlobalPosition, lootResult.Meat);
                     GetParent()?.AddChild(meatLoot);
                 }
+
+                // Spawn blood spot drop for live target
+                var bloodSpot = BloodSpot.Instantiate(GlobalPosition);
+                GetParent()?.AddChild(bloodSpot);
 
                 if (GameState.Instance.SelectedTarget == this)
                 {
@@ -384,6 +380,8 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget, 
         {
             Health = 0f;
             _isAggro = false;
+            InputPickable = false;
+            ResetCursor();
         }
     }
 

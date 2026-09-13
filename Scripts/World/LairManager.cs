@@ -57,11 +57,7 @@ public partial class LairManager : Node2D
         BuildBackgroundAndStarfield();
 
         // 1. Reset mouse cursor to normal
-        var normalCursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-        if (normalCursor != null)
-        {
-            Input.SetCustomMouseCursor(normalCursor, Input.CursorShape.Arrow, Vector2.Zero);
-        }
+        CursorManager.ResetNormal();
 
         // 2. Preload the 5 textures from lair-floor (lair_1 through lair_5)
         _floorTextures.Clear();
@@ -563,11 +559,7 @@ public partial class LairManager : Node2D
         GameState.Instance.IsInLair = false;
 
         // Reset cursor to normal
-        var normalCursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-        if (normalCursor != null)
-        {
-            Input.SetCustomMouseCursor(normalCursor, Input.CursorShape.Arrow, Vector2.Zero);
-        }
+        CursorManager.ResetNormal();
 
         // Position player outside the cave entrance
         Vector2 returnPos = WorldManager.LairEntrancePosition + new Vector2(0f, 90f);

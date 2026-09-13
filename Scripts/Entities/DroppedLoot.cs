@@ -22,6 +22,8 @@ public partial class DroppedLoot : Area2D, IFogBorderable
 
     private Sprite2D _sprite = null!;
     private CollisionShape2D _collision = null!;
+    private bool _isCollected = false;
+    private bool _isHovered = false;
 
     public static DroppedLoot Instantiate(string itemType, Vector2 position, int amount = 1)
     {
@@ -81,24 +83,20 @@ public partial class DroppedLoot : Area2D, IFogBorderable
 
     private void OnMouseEntered()
     {
-        var cursor = GD.Load<Resource>("res://assets/cursors/grab_o.png");
-        if (cursor != null)
-        {
-            Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-        }
+        if (_isCollected || !IsInsideTree()) return;
+        _isHovered = true;
+        CursorManager.SetGrab();
     }
 
     private void OnMouseExited()
     {
-        var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-        if (cursor != null)
-        {
-            Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-        }
+        _isHovered = false;
+        CursorManager.ResetNormal();
     }
 
     public override void _InputEvent(Viewport viewport, InputEvent @event, int shapeIdx)
     {
+        if (_isCollected) return;
         if (@event is InputEventMouseButton mouseBtn && mouseBtn.Pressed && mouseBtn.ButtonIndex == MouseButton.Left)
         {
             Collect();
@@ -108,6 +106,19 @@ public partial class DroppedLoot : Area2D, IFogBorderable
 
     public void Collect()
     {
+        if (_isCollected) return;
+        _isCollected = true;
+        _isHovered = false;
+
+        // Disable input and collision immediately so hover cannot trigger again
+        InputPickable = false;
+        if (_collision != null)
+        {
+            _collision.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
+        }
+        CollisionLayer = 0;
+        CollisionMask = 0;
+
         GameState.Instance.AddPouchItem(ItemType, Amount);
 
         string displayName = (ItemType is "GoldCoins" or "Gold Coins" or "Gold")
@@ -126,13 +137,18 @@ public partial class DroppedLoot : Area2D, IFogBorderable
 
         GameState.Instance.TriggerDamageNumber($"+{displayName}", GlobalPosition, textColor);
 
-        // Reset cursor to normal
-        var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-        if (cursor != null)
-        {
-            Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-        }
+        // Reset cursor immediately and deferred
+        CursorManager.ForceResetNormal();
 
         QueueFree();
+    }
+
+    public override void _ExitTree()
+    {
+        if (_isHovered || _isCollected)
+        {
+            CursorManager.ForceResetNormal();
+            _isHovered = false;
+        }
     }
 }

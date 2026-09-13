@@ -68,23 +68,15 @@ public partial class RockObject : StaticBody2D, ISelectableTarget, IFogBorderabl
 
     private void OnMouseEntered()
     {
-        if (!IsDead)
+        if (!IsDead && IsInsideTree())
         {
-            var cursor = GD.Load<Resource>("res://assets/cursors/interaction_o.png");
-            if (cursor != null)
-            {
-                Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-            }
+            CursorManager.SetInteraction();
         }
     }
 
     private void OnMouseExited()
     {
-        var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-        if (cursor != null)
-        {
-            Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-        }
+        CursorManager.ResetNormal();
     }
 
     public override void _InputEvent(Viewport viewport, InputEvent @event, int shapeIdx)
@@ -158,6 +150,7 @@ public partial class RockObject : StaticBody2D, ISelectableTarget, IFogBorderabl
         if (Health <= 0f)
         {
             Health = 0f;
+            InputPickable = false;
             var loot = DroppedLoot.Instantiate("Stones", GlobalPosition);
             GetParent()?.AddChild(loot);
 
@@ -165,6 +158,8 @@ public partial class RockObject : StaticBody2D, ISelectableTarget, IFogBorderabl
             {
                 GameState.Instance.SelectedTarget = null;
             }
+
+            CursorManager.ForceResetNormal();
 
             var tween = CreateTween();
             tween.TweenProperty(_sprite, "modulate:a", 0.0f, 0.5f);

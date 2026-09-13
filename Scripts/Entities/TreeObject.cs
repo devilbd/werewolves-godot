@@ -111,23 +111,15 @@ public partial class TreeObject : StaticBody2D, ISelectableTarget, IFogBorderabl
 
     private void OnMouseEntered()
     {
-        if (IsSelectable && !IsDead)
+        if (IsSelectable && !IsDead && IsInsideTree())
         {
-            var cursor = GD.Load<Resource>("res://assets/cursors/interaction_o.png");
-            if (cursor != null)
-            {
-                Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-            }
+            CursorManager.SetInteraction();
         }
     }
 
     private void OnMouseExited()
     {
-        var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-        if (cursor != null)
-        {
-            Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-        }
+        CursorManager.ResetNormal();
     }
 
     public override void _InputEvent(Viewport viewport, InputEvent @event, int shapeIdx)
@@ -206,16 +198,14 @@ public partial class TreeObject : StaticBody2D, ISelectableTarget, IFogBorderabl
             var loot = DroppedLoot.Instantiate("Logs", GlobalPosition, logCount);
             GetParent()?.AddChild(loot);
 
+            InputPickable = false;
+
             if (GameState.Instance.SelectedTarget == this)
             {
                 GameState.Instance.SelectedTarget = null;
             }
 
-            var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-            if (cursor != null)
-            {
-                Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-            }
+            CursorManager.ForceResetNormal();
 
             // Quick fade and remove
             var tween = CreateTween();

@@ -12,4 +12,7 @@ public class PouchItemData
 
     [JsonPropertyName("posY")]
     public float PosY { get; set; } = 0f;
+
+    [JsonPropertyName("bloodPercent")]
+    public int BloodPercent { get; set; } = 0;
 }

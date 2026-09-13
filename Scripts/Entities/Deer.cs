@@ -96,23 +96,15 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget, IFog
 
     private void OnMouseEntered()
     {
-        if (!IsDead)
+        if (!IsDead && IsInsideTree())
         {
-            var cursor = GD.Load<Resource>("res://assets/cursors/interaction_o.png");
-            if (cursor != null)
-            {
-                Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-            }
+            CursorManager.SetInteraction();
         }
     }
 
     private void OnMouseExited()
     {
-        var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-        if (cursor != null)
-        {
-            Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-        }
+        CursorManager.ResetNormal();
     }
 
     public override void _InputEvent(Viewport viewport, InputEvent @event, int shapeIdx)
@@ -134,9 +126,12 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget, IFog
             _sprite.Modulate = new Color(1, 1, 1, Mathf.MoveToward(_sprite.Modulate.A, 0.0f, dt * 1.5f));
             if (_sprite.Modulate.A <= 0.01f)
             {
-                // Spawn meat loot
+                // Spawn meat loot and blood spot
                 var loot = DroppedLoot.Instantiate("Meat", GlobalPosition);
                 GetParent()?.AddChild(loot);
+
+                var bloodSpot = BloodSpot.Instantiate(GlobalPosition);
+                GetParent()?.AddChild(bloodSpot);
 
                 if (GameState.Instance.SelectedTarget == this)
                 {
@@ -280,6 +275,8 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget, IFog
         {
             Health = 0f;
             _isAggro = false;
+            InputPickable = false;
+            CursorManager.ForceResetNormal();
         }
     }
 

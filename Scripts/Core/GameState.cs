@@ -320,6 +320,87 @@ public partial class GameState : Node
         }
     }
 
+    public bool CanCollectBlood()
+    {
+        if (PouchItems.TryGetValue("EmptyFlask", out var emptyFlask) && emptyFlask.Count > 0)
+            return true;
+
+        foreach (var kvp in PouchItems)
+        {
+            if (kvp.Key.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase) && kvp.Value.BloodPercent < 100)
+                return true;
+        }
+
+        return false;
+    }
+
+    public bool TryCollectBlood(out int filledPercent, out int currentTotal, out bool isNewFlask)
+    {
+        filledPercent = 0;
+        currentTotal = 0;
+        isNewFlask = false;
+
+        // 1. Check if there is an existing non-full blood flask in the pouch (< 100%)
+        string? candidateKey = null;
+        PouchItemData? candidateFlask = null;
+
+        foreach (var kvp in PouchItems)
+        {
+            if (kvp.Key.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase) && kvp.Value.BloodPercent < 100)
+            {
+                if (candidateFlask == null || kvp.Value.BloodPercent > candidateFlask.BloodPercent)
+                {
+                    candidateKey = kvp.Key;
+                    candidateFlask = kvp.Value;
+                }
+            }
+        }
+
+        int fillAmount = GD.RandRange(20, 30);
+
+        if (candidateFlask != null && candidateKey != null)
+        {
+            candidateFlask.BloodPercent = Math.Min(100, candidateFlask.BloodPercent + fillAmount);
+            filledPercent = fillAmount;
+            currentTotal = candidateFlask.BloodPercent;
+            isNewFlask = false;
+
+            SafeInvoke(OnPouchChanged);
+            SaveManager.SaveGame();
+            return true;
+        }
+
+        // 2. Otherwise, check if player has empty flasks in stack
+        if (PouchItems.TryGetValue("EmptyFlask", out var emptyFlask) && emptyFlask.Count > 0)
+        {
+            emptyFlask.Count--;
+            if (emptyFlask.Count <= 0)
+            {
+                PouchItems.Remove("EmptyFlask");
+            }
+
+            string newKey = $"BloodFlask_{Guid.NewGuid():N}"[..18];
+            var newFlask = new PouchItemData
+            {
+                Count = 1,
+                BloodPercent = fillAmount,
+                PosX = 0f,
+                PosY = 0f
+            };
+            PouchItems[newKey] = newFlask;
+
+            filledPercent = fillAmount;
+            currentTotal = fillAmount;
+            isNewFlask = true;
+
+            SafeInvoke(OnPouchChanged);
+            SaveManager.SaveGame();
+            return true;
+        }
+
+        return false;
+    }
+
     public void TogglePouch()
     {
         IsPouchOpen = !IsPouchOpen;

@@ -112,23 +112,15 @@ public partial class QuartzObject : StaticBody2D, ISelectableTarget, IFogBordera
 
     private void OnMouseEntered()
     {
-        if (!IsDead)
+        if (!IsDead && IsInsideTree())
         {
-            var cursor = GD.Load<Resource>("res://assets/cursors/interaction_o.png");
-            if (cursor != null)
-            {
-                Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-            }
+            CursorManager.SetInteraction();
         }
     }
 
     private void OnMouseExited()
     {
-        var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-        if (cursor != null)
-        {
-            Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-        }
+        CursorManager.ResetNormal();
     }
 
     public override void _InputEvent(Viewport viewport, InputEvent @event, int shapeIdx)
@@ -214,16 +206,14 @@ public partial class QuartzObject : StaticBody2D, ISelectableTarget, IFogBordera
             var loot = DroppedLoot.Instantiate("Quartz", GlobalPosition, dropCount);
             GetParent()?.AddChild(loot);
 
+            InputPickable = false;
+
             if (GameState.Instance.SelectedTarget == this)
             {
                 GameState.Instance.SelectedTarget = null;
             }
 
-            var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-            if (cursor != null)
-            {
-                Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-            }
+            CursorManager.ForceResetNormal();
 
             var tween = CreateTween();
             tween.TweenProperty(_sprite, "modulate:a", 0.0f, 0.5f);

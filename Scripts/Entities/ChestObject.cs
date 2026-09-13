@@ -57,23 +57,15 @@ public partial class ChestObject : StaticBody2D, ISelectableTarget, IFogBorderab
 
     private void OnMouseEntered()
     {
-        if (!_isOpened)
+        if (!_isOpened && IsInsideTree())
         {
-            var cursor = GD.Load<Resource>("res://assets/cursors/interaction_o.png");
-            if (cursor != null)
-            {
-                Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-            }
+            CursorManager.SetInteraction();
         }
     }
 
     private void OnMouseExited()
     {
-        var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-        if (cursor != null)
-        {
-            Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-        }
+        CursorManager.ResetNormal();
     }
 
     public override void _InputEvent(Viewport viewport, InputEvent @event, int shapeIdx)
@@ -122,6 +114,7 @@ public partial class ChestObject : StaticBody2D, ISelectableTarget, IFogBorderab
         if (_isOpened) return;
 
         _isOpened = true;
+        InputPickable = false;
         Health = 0f;
 
         Vibrate(6f, 0.2f);
@@ -137,11 +130,7 @@ public partial class ChestObject : StaticBody2D, ISelectableTarget, IFogBorderab
             GameState.Instance.SelectedTarget = null;
         }
 
-        var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-        if (cursor != null)
-        {
-            Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-        }
+        CursorManager.ForceResetNormal();
 
         // Keep the opened chest visible for 6 seconds, then smoothly fade out
         GetTree().CreateTimer(6.0).Timeout += () =>

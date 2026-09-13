@@ -22,11 +22,7 @@ public partial class Main : Node2D
 		}
 
 		// 2. Set default game cursor
-		var cursor = GD.Load<Resource>("res://assets/cursors/normal_o.png");
-		if (cursor != null)
-		{
-			Input.SetCustomMouseCursor(cursor, Input.CursorShape.Arrow, new Vector2(0, 0));
-		}
+		CursorManager.ResetNormal();
 
 		// 3. Find or Create Player (Werewolf)
 		_player = GetNodeOrNull<Werewolf>("WorldManager/Entities/Werewolf")
