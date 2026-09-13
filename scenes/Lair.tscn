@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://scenes/UI/ActionBar.tscn" id="10_action_scene"]
 [ext_resource type="PackedScene" path="res://scenes/UI/PouchWindow.tscn" id="11_pouch_scene"]
 [ext_resource type="PackedScene" path="res://scenes/UI/HeroDetailsWindow.tscn" id="12_hero_scene"]
+[ext_resource type="PackedScene" path="res://scenes/Entities/BloodCoreObject.tscn" id="13_bloodcore_scene"]
 
 [node name="Lair" type="Node2D" node_paths=PackedStringArray("Player")]
 script = ExtResource("1_lair")
@@ -24,6 +25,9 @@ z_index = -5
 
 [node name="Entities" type="Node2D" parent="."]
 y_sort_enabled = true
+
+[node name="BloodCore" parent="Entities" instance=ExtResource("13_bloodcore_scene")]
+position = Vector2(0, 0)
 
 [node name="Werewolf" parent="Entities" instance=ExtResource("3_werewolf_scene")]
 position = Vector2(-1650, 0)

@@ -23,10 +23,6 @@ public partial class LairManager : Node2D
     public const float SourceTextureSize = 2048f;
     public const float TileScale = TileSize / SourceTextureSize; // 350 / 2048 ~ 0.1709
 
-    // Safe haven regeneration rates
-    private const float SafeHavenHealthRegen = 10f;
-    private const float SafeHavenPowerRegen = 10f;
-
     /// <summary>
     /// User specified schema for the lair floor:
     ///     2 3 4 5 4 3 2
@@ -127,6 +123,9 @@ public partial class LairManager : Node2D
         // Set camera limits to encompass the lair chamber and side corridor
         Player.SetCameraLimits(-1975, -950, 1275, 950);
 
+        // 6.1 Blood Core Altar at the center of the cave chamber
+        BuildBloodCore();
+
         // 7. Cave Entrance Visual Landmarks & Atmospheric Fog (no stones, woods, or materials in cave)
         BuildEntranceVisuals();
         BuildFog();
@@ -226,6 +225,22 @@ public partial class LairManager : Node2D
         }
     }
 
+    private void BuildBloodCore()
+    {
+        var existing = _entitiesContainer.GetNodeOrNull<BloodCoreObject>("BloodCore")
+            ?? _entitiesContainer.GetNodeOrNull<BloodCoreObject>("BloodCoreObject");
+        if (existing == null)
+        {
+            var coreScene = GD.Load<PackedScene>("res://scenes/Entities/BloodCoreObject.tscn");
+            BloodCoreObject core = coreScene != null
+                ? coreScene.Instantiate<BloodCoreObject>()
+                : BloodCoreObject.Instantiate(Vector2.Zero);
+            core.Name = "BloodCore";
+            core.GlobalPosition = Vector2.Zero;
+            _entitiesContainer.AddChild(core);
+        }
+    }
+
     /// <summary>
     /// Arranges 350x350 tiles across the lair matching the user schema:
     /// Main chamber: columns 2..8 (centered on column 5 at X = 0)
@@ -271,20 +286,6 @@ public partial class LairManager : Node2D
     public override void _Process(double delta)
     {
         float dt = (float)delta;
-
-        // Safe haven gradual healing and power restoration
-        if (Player != null && !Player.IsDead)
-        {
-            if (GameState.Instance.PlayerHealth < GameState.Instance.PlayerMaxHealth)
-            {
-                GameState.Instance.ModifyHealth(SafeHavenHealthRegen * dt);
-            }
-
-            if (GameState.Instance.PlayerPower < GameState.Instance.PlayerMaxPower)
-            {
-                GameState.Instance.ModifyPower(SafeHavenPowerRegen * dt);
-            }
-        }
 
         // Proximity detection for left entrance/exit at '1 1'
         float distSq = Player != null ? Player.GlobalPosition.DistanceSquaredTo(new Vector2(-1800f, 0f)) : float.MaxValue;

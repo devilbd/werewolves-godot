@@ -215,19 +215,36 @@ public partial class PouchWindow : Control
                     _ => "res://assets/logs_collected_o.png"
                 };
 
+            string tooltip;
+            if (isBloodFlask)
+            {
+                int hp = (int)Math.Round(25f * (item.BloodPercent / 100f));
+                tooltip = $"Blood Flask ({item.BloodPercent}%)\n(Right-click to Drink: +{hp} HP, +{hp} Power)";
+            }
+            else if (itemName is "Meat")
+            {
+                tooltip = $"Meat ({item.Count})\n(Right-click to Eat: +20 HP, +10 Power)";
+            }
+            else if (itemName is "EmptyFlask" or "Empty Flask" or "Flask")
+            {
+                tooltip = item.Count > 1 ? $"Empty Flasks ({item.Count})" : "Empty Flask";
+            }
+            else if (itemName is "GoldCoins" or "Gold Coins" or "Gold")
+            {
+                tooltip = $"Gold Coins ({item.Count})";
+            }
+            else
+            {
+                tooltip = $"{itemName} ({item.Count})";
+            }
+
             var itemContainer = new Control
             {
                 Position = itemPos,
                 CustomMinimumSize = new Vector2(44, 44),
                 Size = new Vector2(44, 44),
                 MouseFilter = MouseFilterEnum.Stop,
-                TooltipText = isBloodFlask
-                    ? $"Blood Flask ({item.BloodPercent}%)"
-                    : (itemName is "EmptyFlask" or "Empty Flask" or "Flask"
-                        ? (item.Count > 1 ? $"Empty Flasks ({item.Count})" : "Empty Flask")
-                        : (itemName is "GoldCoins" or "Gold Coins" or "Gold"
-                            ? $"Gold Coins ({item.Count})"
-                            : $"{itemName} ({item.Count})"))
+                TooltipText = tooltip
             };
 
             var iconTex = new TextureRect
@@ -268,17 +285,32 @@ public partial class PouchWindow : Control
             countLabel.AddThemeConstantOverride("outline_size", 2);
             itemContainer.AddChild(countLabel);
 
-            // Item dragging
+            // Item dragging & right-click consumption
             string captureItemName = itemName;
             itemContainer.GuiInput += (ev) =>
             {
-                if (ev is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left && mb.Pressed)
+                if (ev is InputEventMouseButton mb && mb.Pressed)
                 {
-                    _isDraggingItem = true;
-                    _draggedItemControl = itemContainer;
-                    _draggedItemName = captureItemName;
-                    _itemDragOffset = itemContainer.GetLocalMousePosition();
-                    GetViewport().SetInputAsHandled();
+                    if (mb.ButtonIndex == MouseButton.Left)
+                    {
+                        _isDraggingItem = true;
+                        _draggedItemControl = itemContainer;
+                        _draggedItemName = captureItemName;
+                        _itemDragOffset = itemContainer.GetLocalMousePosition();
+                        GetViewport().SetInputAsHandled();
+                    }
+                    else if (mb.ButtonIndex == MouseButton.Right)
+                    {
+                        GetViewport().SetInputAsHandled();
+                        if (captureItemName is "Meat")
+                        {
+                            GameState.Instance.EatMeat();
+                        }
+                        else if (captureItemName.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase))
+                        {
+                            GameState.Instance.DrinkBloodFlask(captureItemName);
+                        }
+                    }
                 }
             };
 

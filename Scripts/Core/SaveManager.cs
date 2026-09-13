@@ -17,6 +17,7 @@ public static class SaveManager
         [JsonPropertyName("playerX")] public float PlayerX { get; set; } = 0f;
         [JsonPropertyName("playerY")] public float PlayerY { get; set; } = 0f;
         [JsonPropertyName("pouchItems")] public Dictionary<string, PouchItemData> PouchItems { get; set; } = new();
+        [JsonPropertyName("bloodCoreReserves")] public float BloodCoreReserves { get; set; } = 1000f;
     }
 
     public static Vector2 LoadedPlayerPosition { get; set; } = Vector2.Zero;
@@ -31,7 +32,8 @@ public static class SaveManager
                 MapY = 0,
                 PlayerX = LoadedPlayerPosition.X,
                 PlayerY = LoadedPlayerPosition.Y,
-                PouchItems = GameState.Instance.PouchItems
+                PouchItems = GameState.Instance.PouchItems,
+                BloodCoreReserves = GameState.Instance.BloodCoreReserves
             };
 
             string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
@@ -65,6 +67,8 @@ public static class SaveManager
 
             LoadedPlayerPosition = new Vector2(data.PlayerX, data.PlayerY);
             GameState.Instance.PlayerPosition = LoadedPlayerPosition;
+
+            GameState.Instance.BloodCoreReserves = data.BloodCoreReserves;
 
             GameState.Instance.PouchItems.Clear();
             if (data.PouchItems != null)

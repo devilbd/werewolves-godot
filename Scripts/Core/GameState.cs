@@ -60,6 +60,11 @@ public partial class GameState : Node
     // World state
     public bool IsInLair { get; set; } = false;
 
+    // Blood Core state (in the center of the cave)
+    public float BloodCoreReserves { get; set; } = 1000f;
+    public float BloodCoreMaxReserves { get; set; } = 1000f;
+    public event Action<float, float>? OnBloodCoreReservesChanged;
+
     // Fog state
     public bool IsPlayerInFog { get; private set; } = false;
     public float PlayerFogFactor { get; private set; } = 0f;
@@ -193,25 +198,27 @@ public partial class GameState : Node
             }
         }
 
-        // Process passive health regeneration over time
-        if (PlayerHealth > 0f && PlayerHealth < PlayerMaxHealth)
+        // Process passive health and power regeneration over time (suppressed inside the cave)
+        if (!IsInLair)
         {
-            float oldHealth = PlayerHealth;
-            PlayerHealth = Mathf.Min(PlayerMaxHealth, PlayerHealth + HealthRegenRate * dt);
-            if (PlayerHealth != oldHealth)
+            if (PlayerHealth > 0f && PlayerHealth < PlayerMaxHealth)
             {
-                SafeInvoke(OnHealthChanged, PlayerHealth, PlayerMaxHealth);
+                float oldHealth = PlayerHealth;
+                PlayerHealth = Mathf.Min(PlayerMaxHealth, PlayerHealth + HealthRegenRate * dt);
+                if (PlayerHealth != oldHealth)
+                {
+                    SafeInvoke(OnHealthChanged, PlayerHealth, PlayerMaxHealth);
+                }
             }
-        }
 
-        // Process passive power regeneration over time
-        if (PlayerPower < PlayerMaxPower)
-        {
-            float oldPower = PlayerPower;
-            PlayerPower = Mathf.Min(PlayerMaxPower, PlayerPower + PowerRegenRate * dt);
-            if (PlayerPower != oldPower)
+            if (PlayerPower < PlayerMaxPower)
             {
-                SafeInvoke(OnPowerChanged, PlayerPower, PlayerMaxPower);
+                float oldPower = PlayerPower;
+                PlayerPower = Mathf.Min(PlayerMaxPower, PlayerPower + PowerRegenRate * dt);
+                if (PlayerPower != oldPower)
+                {
+                    SafeInvoke(OnPowerChanged, PlayerPower, PlayerMaxPower);
+                }
             }
         }
 
@@ -426,6 +433,104 @@ public partial class GameState : Node
     {
         SafeInvoke(OnSpawnDamageNumber, text, position, color);
     }
+
+    #region Blood Core Methods
+    public void SetBloodCoreReserves(float amount)
+    {
+        BloodCoreReserves = Mathf.Clamp(amount, 0f, BloodCoreMaxReserves);
+        SafeInvoke(OnBloodCoreReservesChanged, BloodCoreReserves, BloodCoreMaxReserves);
+        SaveManager.SaveGame();
+    }
+
+    public bool TryDrainBloodCore(float amount)
+    {
+        if (BloodCoreReserves < amount) return false;
+        BloodCoreReserves -= amount;
+        SafeInvoke(OnBloodCoreReservesChanged, BloodCoreReserves, BloodCoreMaxReserves);
+        SaveManager.SaveGame();
+        return true;
+    }
+
+    public float AddBloodCoreReserves(float amount)
+    {
+        float previous = BloodCoreReserves;
+        BloodCoreReserves = Mathf.Min(BloodCoreMaxReserves, BloodCoreReserves + amount);
+        float added = BloodCoreReserves - previous;
+        if (added > 0f)
+        {
+            SafeInvoke(OnBloodCoreReservesChanged, BloodCoreReserves, BloodCoreMaxReserves);
+            SaveManager.SaveGame();
+        }
+        return added;
+    }
+    #endregion
+
+    #region Item Consumption Methods
+    public bool EatMeat()
+    {
+        if (!PouchItems.TryGetValue("Meat", out var meat) || meat.Count <= 0)
+        {
+            return false;
+        }
+
+        meat.Count--;
+        if (meat.Count <= 0)
+        {
+            PouchItems.Remove("Meat");
+        }
+
+        ModifyHealth(20f);
+        ModifyPower(10f);
+
+        TriggerDamageNumber("+20 HP  +10 Power", PlayerPosition + new Vector2(0, -75), new Color(0.4f, 0.95f, 0.45f));
+        SafeInvoke(OnPouchChanged);
+        SaveManager.SaveGame();
+        return true;
+    }
+
+    public bool DrinkBloodFlask(string flaskKey)
+    {
+        if (!PouchItems.TryGetValue(flaskKey, out var flask) || flask.Count <= 0)
+        {
+            return false;
+        }
+
+        int bloodPercent = flask.BloodPercent;
+        if (bloodPercent <= 0)
+        {
+            return false;
+        }
+
+        PouchItems.Remove(flaskKey);
+
+        if (PouchItems.TryGetValue("EmptyFlask", out var empty))
+        {
+            empty.Count++;
+        }
+        else
+        {
+            PouchItems["EmptyFlask"] = new PouchItemData
+            {
+                Count = 1,
+                BloodPercent = 0,
+                PosX = flask.PosX,
+                PosY = flask.PosY
+            };
+        }
+
+        float ratio = bloodPercent / 100f;
+        float healHp = Mathf.Round(25f * ratio);
+        float healPower = Mathf.Round(25f * ratio);
+
+        ModifyHealth(healHp);
+        ModifyPower(healPower);
+
+        TriggerDamageNumber($"+{healHp:0} HP  +{healPower:0} Power", PlayerPosition + new Vector2(0, -75), new Color(0.95f, 0.35f, 0.45f));
+        SafeInvoke(OnPouchChanged);
+        SaveManager.SaveGame();
+        return true;
+    }
+    #endregion
 
     #region Safe Delegate Invocations
     private static void SafeInvoke(Action? action)

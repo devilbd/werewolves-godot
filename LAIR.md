@@ -9,10 +9,11 @@ This document provides a comprehensive technical reference for the **Werewolf's 
 The **Werewolf's Lair** serves as the protagonist's subterranean sanctuary and hideout amidst the hostile wilderness. It operates as an independent packed scene (`scenes/Lair.tscn`) separated from the open-world map.
 
 ### Key Objectives & Rules
-1. **Safe Haven Sanctuary**: Inside the lair, aggressive wildlife and human villagers cannot enter. It acts as a rest area where the player regenerates health and power at an accelerated rate.
-2. **Compact "One-Screen" Scale**: Rather than a sprawling dungeon, the lair is tailored to a single-screen hideout scale (~1920×1080 viewport) with camera boundaries clamped strictly around the chamber and entrance tunnel.
-3. **Pristine Interior**: The cavern interior contains zero wilderness debris (no choppable trees, mineral nodes, or loot drops) to ensure uncluttered movement and safety.
-4. **Cosmic Cavern Aesthetic**: Surrounded by an ink-black void (`#030305`) illuminated by a procedurally twinkling starfield and drifting ethereal cavern mists.
+1. **Safe Haven Sanctuary**: Inside the lair, aggressive wildlife and human villagers cannot enter. It acts as a secure refuge where the player can manage resources and interact with ancient subterranean structures.
+2. **Manual Restoration via Blood Core**: Unlike passive healing, survival recovery inside the cave is strictly manual. Health and power are recovered through the central **Blood Core Altar** ('Press E'), eating Meat, drinking Blood Flasks, or using the Execute Bite skill.
+3. **Compact "One-Screen" Scale**: Rather than a sprawling dungeon, the lair is tailored to a single-screen hideout scale (~1920×1080 viewport) with camera boundaries clamped strictly around the chamber and entrance tunnel.
+4. **Pristine Interior**: The cavern interior contains zero wilderness debris (no choppable trees, mineral nodes, or loot drops) to ensure uncluttered movement and safety.
+5. **Cosmic Cavern Aesthetic**: Surrounded by an ink-black void (`#030305`) illuminated by a procedurally twinkling starfield and drifting ethereal cavern mists.
 
 ---
 
@@ -39,6 +40,7 @@ The interior coordinates are centered around the heart of the main chamber at `(
 
 | Point / Area | Local World Position $(X, Y)$ | Bounds / Dimensions | Notes |
 | :--- | :--- | :--- | :--- |
+| **Blood Core Altar** | `(0, 0)` | Scale: $0.38$, Pedestal radius $45\text{ px}$ | Ancient blood reservoir altar. 1000 default reserves. Manual restoration ([E]) and flask refilling ([R]). |
 | **Player Spawn Point** | `(-1650, 0)` | Single Point | Placed at the left entrance tunnel facing right (`FlipH = false`). |
 | **Camera Clamping Rect** | `(-1975, -950)` to `(1275, 950)` | Width: $3250$, Height: $1900$ | Configured via `Player.SetCameraLimits(-1975, -950, 1275, 950)`. |
 | **Main Chamber Center** | `(0, 0)` | Spans $X \in [-1050, 1050]$, $Y \in [-700, 700]$ | $7 \times 5$ tile core room. |
@@ -228,22 +230,26 @@ sequenceDiagram
 
 ---
 
-## 8. Safe Haven Regeneration Mechanics
+## 8. Blood Core & Manual Cave Recovery Mechanics
 
-While inside the lair, passive survival penalties are suspended, and resting bonuses are engaged.
+Automatic safe-haven regeneration inside the cave is disabled. While inside the lair, passive health and power regeneration over time do not run. Instead, health and power can only be recovered through active gameplay interactions:
 
-### Mathematical Formulation
-
-$$\begin{aligned}
-\frac{d(\text{HP})}{dt} &= +10.0\text{ HP / sec} \quad (\text{up to } \text{PlayerMaxHealth} = 100) \\
-\frac{d(\text{Power})}{dt} &= +10.0\text{ Power / sec} \quad (\text{up to } \text{PlayerMaxPower} = 100)
-\end{aligned}$$
-
-### Recovery Timeline Comparison
-| Environment | Health Regeneration | Power Regeneration | Time to Full Recovery (0% to 100%) |
-| :--- | :--- | :--- | :--- |
-| **Wilderness** | $0.0\text{ HP/s}$ (Requires Meat item) | $4.0\text{ Power/s}$ | $\infty$ (HP) / $25\text{ s}$ (Power) |
-| **Werewolf's Lair** | $\mathbf{10.0\text{ HP/s}}$ | $\mathbf{10.0\text{ Power/s}}$ | $\mathbf{10.0\text{ seconds}}$ |
+1. **Blood Core Altar ('Press E')**:
+   - Location: Center of the cavern chamber at `(0, 0)`.
+   - Default Reserves: **1000 Blood** (persisted in `SaveManager`).
+   - Cost: **250 Blood** per activation.
+   - Benefit: Restores up to **12 Health** and **13 Power** (25 total points).
+   - Display: Percentage progress bar above the sprite showing `"{percent}% ({reserves} / {max})"`.
+2. **Filling the Blood Core ('Press R')**:
+   - Approach the Blood Core with blood flasks in your pouch.
+   - Press <kbd>R</kbd> to pour blood from a flask into the core ($100\%$ flask adds $+250\text{ blood}$, proportional to fill).
+   - The emptied flask is returned to the pouch as an stackable `"EmptyFlask"`.
+3. **Eating Meat**:
+   - Right-click `"Meat"` in the pouch modal to eat. Restores **+20 HP** and **+10 Power**, consuming 1 piece of meat.
+4. **Drinking Blood Flasks**:
+   - Right-click a `"BloodFlask"` in the pouch modal to drink. Restores HP and Power proportional to fill (up to $+25\text{ HP}$, $+25\text{ Power}$), converting the flask to an empty flask.
+5. **Execute Bite (Skill 3)**:
+   - When executed against a low-health target ($\le 25\%$ HP), restores $+20\text{ HP}$.
 
 ---
 
@@ -253,12 +259,12 @@ The lair scene includes a dedicated [`HUDManager`](file:///run/media/devilbd/d/D
 1. **Position / Region Banner**:
    - Condition: `GameState.Instance.IsInLair == true`
    - Formatted Text: `$"Werewolf's Lair | Hideout ({(int)pos.X}, {(int)pos.Y})"`
-2. **Health & Power Orbs**: Real-time liquid simulation reflecting rapid safe-haven regeneration.
+2. **Health & Power Orbs**: Real-time liquid simulation reflecting manual restoration and skill usage.
 3. **Skills & Action Menus**:
    - [`StatsPanel`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/StatsPanel.tscn) (Skill hotkeys 1–4).
    - [`ActionBar`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/ActionBar.tscn) (Hero Details <kbd>C</kbd> and Inventory Pouch <kbd>P</kbd>).
 4. **Draggable Modals**:
-   - [`PouchWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/PouchWindow.tscn) for inventory inspection.
+   - [`PouchWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/PouchWindow.tscn) for inventory inspection, dragging, and right-click consumption.
    - [`HeroDetailsWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/HeroDetailsWindow.tscn) for viewing combat attributes.
 
 ---
@@ -267,10 +273,13 @@ The lair scene includes a dedicated [`HUDManager`](file:///run/media/devilbd/d/D
 
 | File Path | Role |
 | :--- | :--- |
-| [`scenes/Lair.tscn`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/Lair.tscn) | Dedicated packed scene containing the Lair environment, player, and HUD. |
-| [`Scripts/World/LairManager.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/World/LairManager.cs) | Scene controller: manages floor schema generation, borders, collision, safe-haven regen, and exit logic. |
+| [`scenes/Lair.tscn`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/Lair.tscn) | Dedicated packed scene containing the Lair environment, player, Blood Core, and HUD. |
+| [`Scripts/World/LairManager.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/World/LairManager.cs) | Scene controller: manages floor schema generation, borders, collision, Blood Core attachment, and exit logic. |
+| [`Scripts/Entities/BloodCoreObject.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Entities/BloodCoreObject.cs) | Blood Core altar entity: reserves tracking, percentage progress bar, 'Press E' restoration, 'Press R' flask refilling. |
+| [`scenes/Entities/BloodCoreObject.tscn`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/Entities/BloodCoreObject.tscn) | Packed scene for the Blood Core altar. |
 | [`Scripts/Entities/LairEntranceObject.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Entities/LairEntranceObject.cs) | Outside world landmark: proximity detection, prompt animation, and scene transition. |
 | [`Scripts/World/WorldManager.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/World/WorldManager.cs) | Outside landmark spawner, wilderness exclusion zones, and coordinate conversions. |
+| [`assets/cave-objects/blood-core.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/cave-objects/blood-core.png) | High-resolution sprite for the central Blood Core altar. |
 | [`assets/lair/lair_entrance.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/lair/lair_entrance.png) | Entrance stone archway sprite used for outside landmark and inside exit portal. |
 | [`assets/lair/lair_border_o.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/lair/lair_border_o.png) | Rocky perimeter fringe texture for seamless terrain edging. |
 | [`assets/lair/lair-floor/lair_1..5.jpeg`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/lair/lair-floor/) | 5 stone tile textures arranged according to the $5 \times 9$ cavern floor matrix. |
