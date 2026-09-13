@@ -1,5 +1,6 @@
 {
   "player": {
+    "name": "Werewolf",
     "maxHealth": 100.0,
     "maxPower": 100.0,
     "healthRegenRate": 0.10,

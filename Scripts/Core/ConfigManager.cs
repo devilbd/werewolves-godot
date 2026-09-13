@@ -141,6 +141,7 @@ public class CombatConfig
 
 public class PlayerCombatConfig
 {
+    [JsonPropertyName("name")] public string Name { get; set; } = "Werewolf";
     [JsonPropertyName("maxHealth")] public float MaxHealth { get; set; } = 100f;
     [JsonPropertyName("maxPower")] public float MaxPower { get; set; } = 100f;
     [JsonPropertyName("healthRegenRate")] public float HealthRegenRate { get; set; } = 0.10f;

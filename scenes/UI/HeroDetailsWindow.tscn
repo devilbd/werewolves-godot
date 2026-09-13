@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/HeroDetailsWindow.cs" id="1_herowindow"]
+
+[node name="HeroDetailsWindow" type="Control"]
+visible = false
+custom_minimum_size = Vector2(1040, 650)
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -520.0
+offset_top = -325.0
+offset_right = 520.0
+offset_bottom = 325.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_herowindow")

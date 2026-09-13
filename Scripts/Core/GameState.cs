@@ -108,7 +108,9 @@ public partial class GameState : Node
         }
     }
 
+    public string PlayerName { get; set; } = "Werewolf";
     public bool IsPouchOpen { get; private set; } = false;
+    public bool IsHeroDetailsOpen { get; private set; } = false;
 
     // Events
     public event Action<float, float>? OnHealthChanged;
@@ -118,6 +120,7 @@ public partial class GameState : Node
     public event Action<Node2D?>? OnTargetChanged;
     public event Action<int, float, float>? OnCooldownUpdated;
     public event Action<bool>? OnPouchToggled;
+    public event Action<bool>? OnHeroDetailsToggled;
     public event Action<string, Vector2, Color>? OnSpawnDamageNumber;
     public event Action<bool>? OnPlayerInFogChanged;
 
@@ -143,6 +146,10 @@ public partial class GameState : Node
     public void InitStatsFromConfig()
     {
         var p = ConfigManager.Combat.Player;
+        if (!string.IsNullOrWhiteSpace(p.Name))
+        {
+            PlayerName = p.Name;
+        }
         PlayerMaxHealth = p.MaxHealth;
         PlayerHealth = p.MaxHealth;
         PlayerMaxPower = p.MaxPower;
@@ -317,6 +324,21 @@ public partial class GameState : Node
     {
         IsPouchOpen = !IsPouchOpen;
         SafeInvoke(OnPouchToggled, IsPouchOpen);
+    }
+
+    public void ToggleHeroDetails()
+    {
+        IsHeroDetailsOpen = !IsHeroDetailsOpen;
+        SafeInvoke(OnHeroDetailsToggled, IsHeroDetailsOpen);
+    }
+
+    public void CloseHeroDetails()
+    {
+        if (IsHeroDetailsOpen)
+        {
+            IsHeroDetailsOpen = false;
+            SafeInvoke(OnHeroDetailsToggled, false);
+        }
     }
 
     public void TriggerDamageNumber(string text, Vector2 position, Color color)

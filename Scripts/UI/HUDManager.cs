@@ -15,6 +15,7 @@ public partial class HUDManager : CanvasLayer
     private TargetPanel _targetPanel = null!;
     private ActionBar _actionBar = null!;
     private PouchWindow _pouchWindow = null!;
+    private HeroDetailsWindow _heroDetailsWindow = null!;
 
     public override void _Ready()
     {
@@ -138,7 +139,7 @@ public partial class HUDManager : CanvasLayer
             _actionBar = new ActionBar
             {
                 Name = "ActionBar",
-                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 + 150, GetViewport().GetVisibleRect().Size.Y - 80)
+                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 + 150, GetViewport().GetVisibleRect().Size.Y - 132)
             };
             AddChild(_actionBar);
         }
@@ -153,6 +154,18 @@ public partial class HUDManager : CanvasLayer
                 Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 - 170, GetViewport().GetVisibleRect().Size.Y / 2 - 180)
             };
             AddChild(_pouchWindow);
+        }
+
+        // 8. Hero Details Window (Centered initial modal)
+        _heroDetailsWindow = GetNodeOrNull<HeroDetailsWindow>("HeroDetailsWindow");
+        if (_heroDetailsWindow == null)
+        {
+            _heroDetailsWindow = new HeroDetailsWindow
+            {
+                Name = "HeroDetailsWindow",
+                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 - 520, GetViewport().GetVisibleRect().Size.Y / 2 - 325)
+            };
+            AddChild(_heroDetailsWindow);
         }
 
         // Responsive repositioning on window resize
@@ -235,7 +248,43 @@ public partial class HUDManager : CanvasLayer
         }
         if (_actionBar != null && GodotObject.IsInstanceValid(_actionBar))
         {
-            _actionBar.Position = new Vector2(size.X / 2 + 150, size.Y - 80);
+            _actionBar.Position = new Vector2(size.X / 2 + 150, size.Y - 132);
+        }
+        if (_heroDetailsWindow != null && GodotObject.IsInstanceValid(_heroDetailsWindow))
+        {
+            _heroDetailsWindow.Position = new Vector2(
+                Mathf.Clamp(_heroDetailsWindow.Position.X, 0, Mathf.Max(0, size.X - _heroDetailsWindow.Size.X)),
+                Mathf.Clamp(_heroDetailsWindow.Position.Y, 0, Mathf.Max(0, size.Y - _heroDetailsWindow.Size.Y))
+            );
+        }
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (@event.IsActionPressed("toggle_hero_details") ||
+            (@event is InputEventKey heroKey && heroKey.Pressed && !heroKey.Echo && heroKey.Keycode == Key.C))
+        {
+            GameState.Instance.ToggleHeroDetails();
+            GetViewport().SetInputAsHandled();
+        }
+        else if (@event.IsActionPressed("toggle_pouch") ||
+                 (@event is InputEventKey pouchKey && pouchKey.Pressed && !pouchKey.Echo && pouchKey.Keycode == Key.P))
+        {
+            GameState.Instance.TogglePouch();
+            GetViewport().SetInputAsHandled();
+        }
+        else if (@event is InputEventKey escKey && escKey.Pressed && !escKey.Echo && escKey.Keycode == Key.Escape)
+        {
+            if (GameState.Instance.IsHeroDetailsOpen)
+            {
+                GameState.Instance.ToggleHeroDetails();
+                GetViewport().SetInputAsHandled();
+            }
+            else if (GameState.Instance.IsPouchOpen)
+            {
+                GameState.Instance.TogglePouch();
+                GetViewport().SetInputAsHandled();
+            }
         }
     }
 
