@@ -327,6 +327,22 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
                 SetAutoInteract(false);
             }
         }
+        else if (target is CaveChestObject caveChest)
+        {
+            if (dist <= MeleeRange * 1.8f)
+            {
+                caveChest.Interact();
+                SetAutoInteract(false);
+            }
+        }
+        else if (target is CaveStaticObject staticObj)
+        {
+            if (dist <= MeleeRange * 1.8f)
+            {
+                staticObj.Interact();
+                SetAutoInteract(false);
+            }
+        }
     }
 
     private void ExecuteMeleeHit(ICombatant combatant, ISelectableTarget selectableTarget)
@@ -573,6 +589,30 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
             else if (GlobalPosition.DistanceTo(chest.GlobalPosition) > MeleeRange * 1.5f)
             {
                 GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
+            }
+        }
+        else if (GameState.Instance.SelectedTarget is CaveChestObject caveChest)
+        {
+            if (GlobalPosition.DistanceTo(caveChest.GlobalPosition) <= MeleeRange * 1.8f)
+            {
+                caveChest.Interact();
+                SetAutoInteract(false);
+            }
+            else
+            {
+                GameState.Instance.TriggerDamageNumber("Approaching chest...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
+            }
+        }
+        else if (GameState.Instance.SelectedTarget is CaveStaticObject staticObj)
+        {
+            if (GlobalPosition.DistanceTo(staticObj.GlobalPosition) <= MeleeRange * 1.8f)
+            {
+                staticObj.Interact();
+                SetAutoInteract(false);
+            }
+            else
+            {
+                GameState.Instance.TriggerDamageNumber("Approaching...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
             }
         }
         else if (GameState.Instance.SelectedTarget is ICombatant combatant && GameState.Instance.SelectedTarget is ISelectableTarget selCombatant)

@@ -238,6 +238,22 @@ public partial class PouchWindow : Control
                 tooltip = $"{itemName} ({item.Count})";
             }
 
+            if (GameState.Instance.IsChestInventoryOpen)
+            {
+                if (isBloodFlask)
+                {
+                    tooltip += "\n(Shift+Click or Right-Click: Deposit into Chest)";
+                }
+                else if (item.Count > 1)
+                {
+                    tooltip += "\n(Right-Click: Deposit 1 | Shift+Click: Choose amount to deposit)";
+                }
+                else
+                {
+                    tooltip += "\n(Right-Click/Shift+Click: Deposit into Chest)";
+                }
+            }
+
             var itemContainer = new Control
             {
                 Position = itemPos,
@@ -285,12 +301,41 @@ public partial class PouchWindow : Control
             countLabel.AddThemeConstantOverride("outline_size", 2);
             itemContainer.AddChild(countLabel);
 
-            // Item dragging & right-click consumption
+            // Item dragging, right-click consumption & chest deposit
             string captureItemName = itemName;
+            int captureCount = item.Count;
+            Texture2D? captureIcon = iconTex.Texture;
+
             itemContainer.GuiInput += (ev) =>
             {
                 if (ev is InputEventMouseButton mb && mb.Pressed)
                 {
+                    // If chest inventory is currently open, allow direct depositing
+                    if (GameState.Instance.IsChestInventoryOpen && GameState.Instance.ActiveChestId != null)
+                    {
+                        bool isShift = Input.IsKeyPressed(Key.Shift);
+                        bool isConsumable = captureItemName is "Meat" || captureItemName.StartsWith("BloodFlask", StringComparison.OrdinalIgnoreCase);
+
+                        if (isShift && captureCount > 1)
+                        {
+                            GetViewport().SetInputAsHandled();
+                            string activeChest = GameState.Instance.ActiveChestId;
+                            string displayName = isBloodFlask ? $"Blood Flask ({item.BloodPercent}%)" : captureItemName;
+                            ItemSplitModal.Instance?.Open(captureItemName, displayName, captureIcon, captureCount, "Deposit", (amount) =>
+                            {
+                                GameState.Instance.TransferItemPouchToChest(activeChest, captureItemName, amount);
+                            });
+                            return;
+                        }
+
+                        if ((isShift && captureCount <= 1) || (mb.ButtonIndex == MouseButton.Right && !isConsumable))
+                        {
+                            GetViewport().SetInputAsHandled();
+                            GameState.Instance.TransferItemPouchToChest(GameState.Instance.ActiveChestId, captureItemName, 1);
+                            return;
+                        }
+                    }
+
                     if (mb.ButtonIndex == MouseButton.Left)
                     {
                         _isDraggingItem = true;

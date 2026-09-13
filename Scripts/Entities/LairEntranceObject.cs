@@ -204,10 +204,11 @@ public partial class LairEntranceObject : StaticBody2D, IFogBorderable
             GameState.Instance.SelectedTarget = null;
         }
 
-        // Save outside return position right outside the cave entrance threshold
-        Vector2 returnPos = GlobalPosition + new Vector2(0f, 90f);
-        SaveManager.LoadedPlayerPosition = returnPos;
-        GameState.Instance.PlayerPosition = returnPos;
+        // Entering cave: update state and spawn at cave entrance
+        GameState.Instance.IsInLair = true;
+        Vector2 caveSpawn = new Vector2(-1650f, 0f);
+        SaveManager.LoadedPlayerPosition = caveSpawn;
+        GameState.Instance.PlayerPosition = caveSpawn;
         SaveManager.SaveGame();
 
         // Switch to the Lair scene

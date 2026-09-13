@@ -41,6 +41,10 @@ The interior coordinates are centered around the heart of the main chamber at `(
 | Point / Area | Local World Position $(X, Y)$ | Bounds / Dimensions | Notes |
 | :--- | :--- | :--- | :--- |
 | **Blood Core Altar** | `(0, 0)` | Scale: $0.38$, Pedestal radius $45\text{ px}$ | Ancient blood reservoir altar. 1000 default reserves. Manual restoration ([E]) and flask refilling ([R]). |
+| **Crafting Table** | `(-700, -520)` | Scale: $0.35$, Footprint: $130 \times 40\text{ px}$ | Fixed position: Top Left. Opens Cave Crafting Menu on interaction. |
+| **Blood Juicer** | `(0, -520)` | Scale: $0.35$, Footprint: $110 \times 40\text{ px}$ | Fixed position: Top Center. Life essence distillation apparatus. |
+| **Alchemical Laboratory** | `(700, -520)` | Scale: $0.35$, Footprint: $130 \times 40\text{ px}$ | Fixed position: Top Right. Alembic research and potion synthesis installation. |
+| **Storage Chests** | Dynamic: $X \in [-1000, 1000]$, $Y \in [-620, 620]$ | Scale: $0.30$, Footprint: $50 \times 26\text{ px}$ | Freeform placement with relocation capability. Closed/opened dual sprites and item storage modal. |
 | **Player Spawn Point** | `(-1650, 0)` | Single Point | Placed at the left entrance tunnel facing right (`FlipH = false`). |
 | **Camera Clamping Rect** | `(-1975, -950)` to `(1275, 950)` | Width: $3250$, Height: $1900$ | Configured via `Player.SetCameraLimits(-1975, -950, 1275, 950)`. |
 | **Main Chamber Center** | `(0, 0)` | Spans $X \in [-1050, 1050]$, $Y \in [-700, 700]$ | $7 \times 5$ tile core room. |
@@ -253,7 +257,55 @@ Automatic safe-haven regeneration inside the cave is disabled. While inside the 
 
 ---
 
-## 9. UI & HUD Integration
+## 9. Cavern Workshop, Crafting Menu & Storage Chests
+
+The lair features an integrated crafting and installation system enabling the werewolf to customize and expand their subterranean sanctuary:
+
+```
+                         [Blood Juicer]
+                         (Top Center: 0, -520)
+                               ▲
+   [Crafting Table]            │            [Laboratory]
+ (Top Left: -700, -520) ◄──────┼──────► (Top Right: 700, -520)
+                               │
+                       [Blood Core Altar]
+                            (0, 0)
+                               │
+               [Freeform Placed Storage Chests]
+                     (X: ±1000, Y: ±620)
+```
+
+### 9.1 Crafting Recipes & Workshop Installations
+
+| Installation | World Position | Recipe Costs | Purpose / Mechanics |
+| :--- | :--- | :--- | :--- |
+| **Storage Chest** | Freeform in Cavern | $10\text{ Logs} + 5\text{ Stones}$ | Placed via interactive ghost mode; stores pouch items with bi-directional transfer. Relocatable at any time. |
+| **Crafting Table** | Top Left: `(-700, -520)` | $25\text{ Logs} + 15\text{ Stones}$ | Unique installation. Left-clicking or interacting opens the Cave Crafting Menu. |
+| **Blood Juicer** | Top Center: `(0, -520)` | $30\text{ Stones} + 20\text{ Quartz} + 100\text{ Blood}$ | Unique installation. Refines raw vitae and organic essence (costs 100 blood from core). |
+| **Alchemical Laboratory** | Top Right: `(700, -520)` | $25\text{ Stones} + 25\text{ Quartz} + 15\text{ Grass}$ | Unique installation. Advanced distillation and potion synthesis apparatus. |
+
+### 9.2 Storage Chest Mechanics & Dynamic Relocation
+1. **Interactive Placement Mode**:
+   - Committing to craft a Storage Chest initiates placement mode.
+   - A ghost preview of `chest_closed.png` follows the mouse cursor with real-time chamber clearance checking ($X \in [-1000, 1000]$, $Y \in [-620, 620]$, clearance $\ge 120\text{px}$ from Blood Core, static structures, and other chests).
+   - Tinted green when placement is valid; red when obstructed.
+   - Left-click confirms and constructs the chest; Right-click or <kbd>Esc</kbd> cancels without consuming materials.
+2. **Relocation Mechanics**:
+   - Any placed chest can be moved at any time by opening its inventory and clicking **"Move Chest"**.
+   - Temporarily removes the chest into placement mode to reposition it without any resource cost.
+3. **Dual Visual States**:
+   - World sprite displays [`chest_closed.png`](assets/chests/chest_closed.png) while closed.
+   - Transitions to [`chest_opened.png`](assets/chests/chest_opened.png) while its inventory modal is active.
+4. **Storage Inventory Interface**:
+   - $600 \times 450\text{px}$ modal styled with [`chest_inventory.png`](assets/chests/chest_inventory.png).
+   - Freeform draggable canvas ($530 \times 365\text{px}$) matching the Pouch interface (no grid slots).
+   - Custom item coordinates persist per-chest in `CaveChestData.Items`.
+   - Click transfers 1 item to the pouch; <kbd>Shift</kbd> + Click opens the `ItemSplitModal` to select exact quantities.
+   - Automatically displays the PouchWindow alongside the chest modal for seamless item management.
+
+---
+
+## 10. UI & HUD Integration
 
 The lair scene includes a dedicated [`HUDManager`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/HUDManager.cs) instance supporting all gameplay overlays:
 1. **Position / Region Banner**:
@@ -262,24 +314,41 @@ The lair scene includes a dedicated [`HUDManager`](file:///run/media/devilbd/d/D
 2. **Health & Power Orbs**: Real-time liquid simulation reflecting manual restoration and skill usage.
 3. **Skills & Action Menus**:
    - [`StatsPanel`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/StatsPanel.tscn) (Skill hotkeys 1–4).
-   - [`ActionBar`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/ActionBar.tscn) (Hero Details <kbd>C</kbd> and Inventory Pouch <kbd>P</kbd>).
+   - [`ActionBar`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/ActionBar.tscn) (Hero Details <kbd>C</kbd>, Inventory Pouch <kbd>P</kbd>, and Cave Crafting <kbd>B</kbd>).
 4. **Draggable Modals**:
-   - [`PouchWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/PouchWindow.tscn) for inventory inspection, dragging, and right-click consumption.
-   - [`HeroDetailsWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/HeroDetailsWindow.tscn) for viewing combat attributes.
+   - [`PouchWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/PouchWindow.tscn) for inventory inspection, dragging, right-click consumption, and chest depositing.
+   - [`HeroDetailsWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/HeroDetailsWindow.tscn) for viewing live combat attributes.
+   - [`CraftingWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/CraftingWindow.cs) for viewing recipes and constructing cave installations (<kbd>B</kbd>).
+   - [`ChestInventoryWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/ChestInventoryWindow.cs) for chest storage and item retrieval.
+   - [`ItemSplitModal`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/ItemSplitModal.cs) for Shift-click stack quantity selection.
 
 ---
 
-## 10. Summary File Map
+## 11. Summary File Map
 
 | File Path | Role |
 | :--- | :--- |
-| [`scenes/Lair.tscn`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/Lair.tscn) | Dedicated packed scene containing the Lair environment, player, Blood Core, and HUD. |
-| [`Scripts/World/LairManager.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/World/LairManager.cs) | Scene controller: manages floor schema generation, borders, collision, Blood Core attachment, and exit logic. |
+| [`scenes/Lair.tscn`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/Lair.tscn) | Dedicated packed scene containing the Lair environment, player, Blood Core, workshop structures, and HUD. |
+| [`Scripts/World/LairManager.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/World/LairManager.cs) | Scene controller: manages floor schema generation, borders, collision, Blood Core attachment, chest placement mode, and exit logic. |
 | [`Scripts/Entities/BloodCoreObject.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Entities/BloodCoreObject.cs) | Blood Core altar entity: reserves tracking, percentage progress bar, 'Press E' restoration, 'Press R' flask refilling. |
 | [`scenes/Entities/BloodCoreObject.tscn`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/Entities/BloodCoreObject.tscn) | Packed scene for the Blood Core altar. |
+| [`Scripts/Entities/CaveChestObject.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Entities/CaveChestObject.cs) | Cavern storage chest entity: closed/opened sprite toggling, proximity interaction, and selection reticle. |
+| [`scenes/Entities/CaveChestObject.tscn`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/Entities/CaveChestObject.tscn) | Packed scene for cavern storage chests. |
+| [`Scripts/Entities/CaveStaticObject.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Entities/CaveStaticObject.cs) | Static workshop structures entity (Crafting Table, Blood Juicer, Laboratory) with collision and interaction hooks. |
+| [`Scripts/UI/CraftingWindow.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/CraftingWindow.cs) | Draggable crafting menu modal showing recipes, material checks, and placement triggers (<kbd>B</kbd>). |
+| [`Scripts/UI/ChestInventoryWindow.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/ChestInventoryWindow.cs) | Draggable freeform storage chest modal using `chest_inventory.png` background. |
+| [`Scripts/UI/ItemSplitModal.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/ItemSplitModal.cs) | Modal dialog for choosing stack split quantities with slider, steppers, and presets on Shift+click. |
+| [`Scripts/Core/CaveChestData.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Core/CaveChestData.cs) | Serialized data model for placed chest positions and stored items. |
+| [`Scripts/Core/CraftingRecipe.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Core/CraftingRecipe.cs) | Domain model defining ingredients, blood costs, and placement metadata for craftable objects. |
 | [`Scripts/Entities/LairEntranceObject.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Entities/LairEntranceObject.cs) | Outside world landmark: proximity detection, prompt animation, and scene transition. |
 | [`Scripts/World/WorldManager.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/World/WorldManager.cs) | Outside landmark spawner, wilderness exclusion zones, and coordinate conversions. |
 | [`assets/cave-objects/blood-core.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/cave-objects/blood-core.png) | High-resolution sprite for the central Blood Core altar. |
+| [`assets/cave-objects/crafting-table.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/cave-objects/crafting-table.png) | Texture for the Crafting Table static structure. |
+| [`assets/cave-objects/blood-juicer.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/cave-objects/blood-juicer.png) | Texture for the Blood Juicer static structure. |
+| [`assets/cave-objects/laboratory.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/cave-objects/laboratory.png) | Texture for the Alchemical Laboratory static structure. |
+| [`assets/chests/chest_closed.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/chests/chest_closed.png) | Closed world sprite for storage chests. |
+| [`assets/chests/chest_opened.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/chests/chest_opened.png) | Open world sprite displayed while a chest modal is active. |
+| [`assets/chests/chest_inventory.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/chests/chest_inventory.png) | $600 \times 450\text{px}$ background frame for the chest inventory window. |
 | [`assets/lair/lair_entrance.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/lair/lair_entrance.png) | Entrance stone archway sprite used for outside landmark and inside exit portal. |
 | [`assets/lair/lair_border_o.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/lair/lair_border_o.png) | Rocky perimeter fringe texture for seamless terrain edging. |
 | [`assets/lair/lair-floor/lair_1..5.jpeg`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/lair/lair-floor/) | 5 stone tile textures arranged according to the $5 \times 9$ cavern floor matrix. |

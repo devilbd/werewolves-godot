@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scripts/Entities/CaveChestObject.cs" id="1_chest"]
+[ext_resource type="Texture2D" path="res://assets/chests/chest_closed.png" id="2_chest_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(50, 26)
+
+[node name="CaveChestObject" type="StaticBody2D"]
+input_pickable = true
+script = ExtResource("1_chest")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.3, 0.3)
+offset = Vector2(0, -157)
+texture = ExtResource("2_chest_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -12)
+shape = SubResource("RectangleShape2D_1")

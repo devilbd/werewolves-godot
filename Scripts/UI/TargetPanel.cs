@@ -23,6 +23,7 @@ public partial class TargetPanel : PanelContainer
     private Texture2D _chopIcon = null!;
     private Texture2D _quarryIcon = null!;
     private Texture2D _openIcon = null!;
+    private Texture2D _craftIcon = null!;
 
     public override void _Ready()
     {
@@ -30,6 +31,7 @@ public partial class TargetPanel : PanelContainer
         _chopIcon = GD.Load<Texture2D>("res://assets/icons/log_chopping.png");
         _quarryIcon = GD.Load<Texture2D>("res://assets/icons/rock_stone_digging.png");
         _openIcon = GD.Load<Texture2D>("res://assets/chests/chest_closed.png");
+        _craftIcon = GD.Load<Texture2D>("res://assets/cave-objects/crafting-table.png");
 
         CustomMinimumSize = new Vector2(240, 145);
         ApplyPanelStyle();
@@ -427,7 +429,9 @@ public partial class TargetPanel : PanelContainer
                 "Rock" or "Quarry Boulder" => "Quarry",
                 "Quartz" or "Quartz Crystal" => "Chop",
                 "Grass" => "Chop",
-                "Treasure Chest" or "Chest" => "Open",
+                "Treasure Chest" or "Chest" or "Storage Chest" => "Open",
+                "Crafting Table" => "Craft",
+                "Blood Juicer" or "Alchemical Laboratory" or "Cavern Installation" => "Inspect",
                 _ => "Attack"
             };
 
@@ -437,7 +441,8 @@ public partial class TargetPanel : PanelContainer
                 "Rock" or "Quarry Boulder" => _quarryIcon,
                 "Quartz" or "Quartz Crystal" => _chopIcon,
                 "Grass" => _chopIcon,
-                "Treasure Chest" or "Chest" => _openIcon,
+                "Treasure Chest" or "Chest" or "Storage Chest" => _openIcon,
+                "Crafting Table" => _craftIcon,
                 _ => _attackIcon
             };
             if (_actionButton.TextureNormal != actionTex)

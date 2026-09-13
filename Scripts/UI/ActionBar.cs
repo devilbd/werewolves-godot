@@ -8,8 +8,10 @@ public partial class ActionBar : PanelContainer
 {
     private TextureButton _heroButton = null!;
     private TextureButton _pouchButton = null!;
+    private TextureButton _craftButton = null!;
     private Panel _heroSlotBg = null!;
     private Panel _pouchSlotBg = null!;
+    private Panel _craftSlotBg = null!;
 
     private StyleBoxFlat _slotNormalStyle = null!;
     private StyleBoxFlat _slotHoverStyle = null!;
@@ -24,7 +26,7 @@ public partial class ActionBar : PanelContainer
         ApplyPanelStyle();
         InitSlotStyles();
 
-        CustomMinimumSize = new Vector2(174, 120);
+        CustomMinimumSize = new Vector2(258, 120);
 
         var hbox = GetNodeOrNull<HBoxContainer>("HBoxContainer");
         if (hbox == null)
@@ -134,6 +136,55 @@ public partial class ActionBar : PanelContainer
             pouchSlot.AddChild(pouchKeyLabel);
 
             hbox.AddChild(pouchSlot);
+
+            // --- Slot 3: Crafting (B) ---
+            var craftSlot = new Control
+            {
+                Name = "CraftSlot",
+                CustomMinimumSize = new Vector2(SlotWidth, SlotHeight)
+            };
+
+            _craftSlotBg = new Panel
+            {
+                Name = "SlotBg",
+                CustomMinimumSize = new Vector2(SlotWidth, SlotHeight),
+                Size = new Vector2(SlotWidth, SlotHeight),
+                MouseFilter = MouseFilterEnum.Ignore
+            };
+            _craftSlotBg.AddThemeStyleboxOverride("panel", _slotNormalStyle);
+            craftSlot.AddChild(_craftSlotBg);
+
+            _craftButton = new TextureButton
+            {
+                Name = "CraftButton",
+                TextureNormal = GD.Load<Texture2D>("res://assets/cave-objects/crafting-table.png"),
+                IgnoreTextureSize = true,
+                StretchMode = TextureButton.StretchModeEnum.KeepAspectCentered,
+                CustomMinimumSize = new Vector2(56, 56),
+                Size = new Vector2(56, 56),
+                Position = new Vector2((SlotWidth - 56) / 2f, (SlotHeight - 56) / 2f),
+                TooltipText = "Cave Crafting (B)"
+            };
+            _craftButton.Pressed += () => GameState.Instance.ToggleCrafting();
+            _craftButton.MouseEntered += () => _craftSlotBg.AddThemeStyleboxOverride("panel", _slotHoverStyle);
+            _craftButton.MouseExited += () => _craftSlotBg.AddThemeStyleboxOverride("panel", _slotNormalStyle);
+            craftSlot.AddChild(_craftButton);
+
+            var craftKeyLabel = new Label
+            {
+                Name = "KeyLabel",
+                Text = "B",
+                Position = new Vector2(5, 3),
+                Size = new Vector2(20, 20),
+                MouseFilter = MouseFilterEnum.Ignore
+            };
+            craftKeyLabel.AddThemeFontSizeOverride("font_size", 12);
+            craftKeyLabel.AddThemeColorOverride("font_color", new Color(1f, 0.9f, 0.35f));
+            craftKeyLabel.AddThemeConstantOverride("outline_size", 3);
+            craftKeyLabel.AddThemeColorOverride("font_outline_color", new Color(0.05f, 0.05f, 0.05f, 0.95f));
+            craftSlot.AddChild(craftKeyLabel);
+
+            hbox.AddChild(craftSlot);
         }
         else
         {
@@ -170,6 +221,24 @@ public partial class ActionBar : PanelContainer
                     {
                         _pouchButton.MouseEntered += () => _pouchSlotBg.AddThemeStyleboxOverride("panel", _slotHoverStyle);
                         _pouchButton.MouseExited += () => _pouchSlotBg.AddThemeStyleboxOverride("panel", _slotNormalStyle);
+                    }
+                }
+            }
+
+            var craftSlot = hbox.GetNodeOrNull<Control>("CraftSlot");
+            if (craftSlot != null)
+            {
+                _craftSlotBg = craftSlot.GetNodeOrNull<Panel>("SlotBg")!;
+                if (_craftSlotBg != null) _craftSlotBg.AddThemeStyleboxOverride("panel", _slotNormalStyle);
+
+                _craftButton = craftSlot.GetNodeOrNull<TextureButton>("CraftButton")!;
+                if (_craftButton != null)
+                {
+                    _craftButton.Pressed += () => GameState.Instance.ToggleCrafting();
+                    if (_craftSlotBg != null)
+                    {
+                        _craftButton.MouseEntered += () => _craftSlotBg.AddThemeStyleboxOverride("panel", _slotHoverStyle);
+                        _craftButton.MouseExited += () => _craftSlotBg.AddThemeStyleboxOverride("panel", _slotNormalStyle);
                     }
                 }
             }

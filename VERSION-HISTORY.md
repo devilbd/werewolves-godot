@@ -112,3 +112,91 @@ This document tracks the evolution of game systems, balance updates, content add
   2. Right-click eating **Meat** in pouch (+20 HP, +10 Power).
   3. Right-click drinking **Blood Flasks** in pouch (up to +25 HP & +25 Power).
   4. Executing low-health targets with **Execute Bite** (+20 HP).
+
+---
+
+## 🔨 Version 2.6 — Cavern Workshop, Crafting Menu & Storage Chests
+
+### 1. Cavern Crafting System (`CraftingWindow.cs`)
+- **Interactive Crafting Modal**: Toggleable via physical hotkey <kbd>B</kbd> or the HUD Action Bar workbench slot; draggable modal displaying all craftable subterranean hideout structures.
+- **Card-Based UI**: Individual cards for Storage Chest, Crafting Table, Blood Juicer, and Alchemical Laboratory detailing lore, fixed/freeform placement rules, and material requirements.
+- **Real-Time Cost Verification**: Live material tracking (green when satisfied, red when lacking) reflecting pouch inventory and Blood Core reserves.
+- **Lair Proximity Enforcement**: Crafting and placement actions require the player to be physically inside the Werewolf's Lair.
+
+### 2. Cavern Storage Chests (`CaveChestObject.cs` & `ChestInventoryWindow.cs`)
+- **Crafting Recipe**: $10\text{ Wood Logs} + 5\text{ Stones}$ (unlimited build capacity).
+- **Placement Mode**:
+  - Semi-transparent ghost preview follows cursor in world space with real-time chamber boundary and obstacle validation.
+  - Tint feedback: green (`Color(0.4, 1.0, 0.4, 0.75)`) when valid, red (`Color(1.0, 0.3, 0.3, 0.75)`) when invalid (near Blood Core, walls, or other objects).
+  - Left-click commits placement and deducts resources; Right-click or <kbd>Esc</kbd> cancels.
+- **Dynamic Relocation**:
+  - Any placed chest can be moved at any time by clicking the **"Move Chest"** button inside the Chest Inventory modal.
+  - Temporarily removes the chest from the world into placement mode without consuming additional materials.
+- **Dual Visual States**:
+  - Renders as [`chest_closed.png`](assets/chests/chest_closed.png) in world.
+  - Dynamically transitions to [`chest_opened.png`](assets/chests/chest_opened.png) while the chest inventory modal is open.
+- **Chest Storage Interface**:
+  - Dedicated $600 \times 450\text{px}$ window utilizing [`chest_inventory.png`](assets/chests/chest_inventory.png) background.
+  - 8-column grid displaying stored items with stack counts, tooltips, and click-to-retrieve mechanics.
+  - **"Deposit All"** & **"Take All"** buttons for rapid batch transfers between pouch and chest.
+  - **Bi-Directional Shift+Click**: Shift-clicking any item in Pouch or Chest instantly transfers the entire stack.
+  - Automatic side-by-side positioning of PouchWindow and ChestInventoryWindow upon opening.
+
+### 3. Fixed Workshop Installations (`CaveStaticObject.cs`)
+- **Crafting Table** (Top Left at `X = -700, Y = -520`):
+  - Sprite: `assets/cave-objects/crafting-table.png` (scale $0.35$).
+  - Recipe: $25\text{ Wood Logs} + 15\text{ Stones}$.
+  - Interaction: Left-clicking or approaching opens the Crafting Window.
+- **Blood Juicer** (Top Center at `X = 0, Y = -520`):
+  - Sprite: `assets/cave-objects/blood-juicer.png` (scale $0.35$).
+  - Recipe: $30\text{ Stones} + 20\text{ Quartz} + 100\text{ Blood}$ (drained directly from Blood Core reserves).
+  - Purpose: Subterranean refinery for essence synthesis and life fluid distillation.
+- **Alchemical Laboratory** (Top Right at `X = 700, Y = -520`):
+  - Sprite: `assets/cave-objects/laboratory.png` (scale $0.35$).
+  - Recipe: $25\text{ Stones} + 25\text{ Quartz} + 15\text{ Grass}$.
+  - Purpose: Distillation and alembic research apparatus for potent concoctions.
+
+### 4. HUD Action Bar Expansion (`ActionBar.cs`)
+- Expanded Action Bar to 3 uniform slots ($258 \times 120\text{px}$):
+  - Slot 1: **Hero Details** (<kbd>C</kbd>) with Werewolf portrait.
+  - Slot 2: **Inventory Pouch** (<kbd>P</kbd>) with pouch bag icon.
+  - Slot 3: **Cave Crafting** (<kbd>B</kbd>) with workbench icon.
+
+### 5. State Persistence (`SaveManager.cs`)
+- Extended `user://werewolves_save.json` schema:
+  - `craftedCaveObjects`: List of crafted unique static structures (`"CraftingTable"`, `"BloodJuicer"`, `"Laboratory"`).
+  - `caveChests`: Array of placed chests containing unique IDs, world coordinates `(posX, posY)`, and stored items dictionaries.
+- Restores all crafted structures and placed chests upon loading into the cave.
+
+---
+
+## Version 2.7 — Freeform Chest Storage, Stack Splitting Modal & Quit Persistence
+
+### 1. Freeform Chest Inventory Redesign (`ChestInventoryWindow.cs`)
+- **No Slot Grids**: Removed static slot containers and empty panel borders. The chest compartment is now a clean freeform canvas ($530 \times 365\text{px}$) matching [`PouchWindow.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/PouchWindow.cs).
+- **Freeform Item Dragging**:
+  - Items can be freely dragged and positioned anywhere within the chest interior.
+  - Custom item coordinates (`PosX`, `PosY`) persist per-chest in `CaveChestData.Items` via `GameState.Instance.UpdateChestItemPosition()`.
+  - Removed obsolete "Deposit All" and "Take All" buttons in favor of precision individual and split-stack controls.
+
+### 2. Stack Split Selector Modal (`ItemSplitModal.cs`)
+- **Interactive Quantity Picker**:
+  - Holding <kbd>Shift</kbd> and clicking any stack ($N > 1$) in either the Chest or the Pouch opens a dedicated quantity modal.
+  - Interactive slider (`HSlider`) spanning $1$ to $N$.
+  - Precision stepper buttons `[-]` and `[+]` with live numeric readouts.
+  - Quick preset buttons: `[ 1 ]` (minimum), `[ Half (N/2) ]`, `[ All (N) ]`.
+  - Keyboard shortcuts: <kbd>Enter</kbd> to confirm transfer, <kbd>Escape</kbd> to cancel.
+- **Bi-Directional Transfer Flow**:
+  - **Chest $\to$ Pouch**: Click grabs $1$; <kbd>Shift</kbd> + Click opens split dialog to grab custom quantity.
+  - **Pouch $\to$ Chest**: Right-click deposits $1$; <kbd>Shift</kbd> + Click opens split dialog to deposit custom quantity.
+
+### 3. Save-on-Quit & Subterranean State Persistence
+- **Cave State Tracking (`SaveManager.cs` & `GameState.cs`)**:
+  - Added `isInLair` boolean property to `SaveData`.
+  - Intercepts Godot application termination events (`NotificationWMCloseRequest` and `NotificationPredelete`) in `GameState._Notification` to commit the exact werewolf coordinates and cave state to `user://werewolves_save.json`.
+  - Removed accidental `GameState.Instance.IsInLair = false` overwrite in `LairManager._ExitTree()`.
+- **Seamless Startup Routing (`Main.cs` & `LairManager.cs`)**:
+  - Upon game launch, `Main.cs` inspects `GameState.Instance.IsInLair`. If true, it immediately routes directly to `res://scenes/Lair.tscn`.
+  - `LairManager.cs` restores the werewolf to `SaveManager.LoadedPlayerPosition`, resuming the player exactly where they stood inside the cave hideout.
+
+

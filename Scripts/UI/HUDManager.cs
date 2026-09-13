@@ -16,6 +16,9 @@ public partial class HUDManager : CanvasLayer
     private ActionBar _actionBar = null!;
     private PouchWindow _pouchWindow = null!;
     private HeroDetailsWindow _heroDetailsWindow = null!;
+    private CraftingWindow _craftingWindow = null!;
+    private ChestInventoryWindow _chestInventoryWindow = null!;
+    private ItemSplitModal _itemSplitModal = null!;
 
     public override void _Ready()
     {
@@ -168,9 +171,70 @@ public partial class HUDManager : CanvasLayer
             AddChild(_heroDetailsWindow);
         }
 
+        // 9. Crafting Window (Modal for crafting cave installations)
+        _craftingWindow = GetNodeOrNull<CraftingWindow>("CraftingWindow");
+        if (_craftingWindow == null)
+        {
+            _craftingWindow = new CraftingWindow
+            {
+                Name = "CraftingWindow",
+                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 - 290, GetViewport().GetVisibleRect().Size.Y / 2 - 280)
+            };
+            AddChild(_craftingWindow);
+        }
+
+        // 10. Chest Inventory Window (Modal for storage chests)
+        _chestInventoryWindow = GetNodeOrNull<ChestInventoryWindow>("ChestInventoryWindow");
+        if (_chestInventoryWindow == null)
+        {
+            _chestInventoryWindow = new ChestInventoryWindow
+            {
+                Name = "ChestInventoryWindow",
+                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 - 300, GetViewport().GetVisibleRect().Size.Y / 2 - 225)
+            };
+            AddChild(_chestInventoryWindow);
+        }
+
+        // 11. Item Split Modal (Quantity picker for Shift+click)
+        _itemSplitModal = GetNodeOrNull<ItemSplitModal>("ItemSplitModal");
+        if (_itemSplitModal == null)
+        {
+            _itemSplitModal = new ItemSplitModal
+            {
+                Name = "ItemSplitModal"
+            };
+            AddChild(_itemSplitModal);
+        }
+
+        GameState.Instance.OnChestInventoryToggled += OnChestInventoryToggled;
+
         // Responsive repositioning on window resize
         GetViewport().SizeChanged += OnViewportSizeChanged;
         OnViewportSizeChanged();
+    }
+
+    private void OnChestInventoryToggled(bool isOpen, string? chestId)
+    {
+        if (!GodotObject.IsInstanceValid(this)) return;
+
+        if (isOpen)
+        {
+            var size = GetViewport().GetVisibleRect().Size;
+            if (_pouchWindow != null && GodotObject.IsInstanceValid(_pouchWindow))
+            {
+                _pouchWindow.Position = new Vector2(
+                    Mathf.Max(10f, size.X / 2 - 470),
+                    Mathf.Clamp(size.Y / 2 - 225, 10f, size.Y - _pouchWindow.Size.Y)
+                );
+            }
+            if (_chestInventoryWindow != null && GodotObject.IsInstanceValid(_chestInventoryWindow))
+            {
+                _chestInventoryWindow.Position = new Vector2(
+                    Mathf.Min(size.X - _chestInventoryWindow.Size.X - 10f, size.X / 2 + 10),
+                    Mathf.Clamp(size.Y / 2 - 225, 10f, size.Y - _chestInventoryWindow.Size.Y)
+                );
+            }
+        }
     }
 
     private void OnGameStatePositionChanged(Vector2 pos)
@@ -257,6 +321,20 @@ public partial class HUDManager : CanvasLayer
                 Mathf.Clamp(_heroDetailsWindow.Position.Y, 0, Mathf.Max(0, size.Y - _heroDetailsWindow.Size.Y))
             );
         }
+        if (_craftingWindow != null && GodotObject.IsInstanceValid(_craftingWindow))
+        {
+            _craftingWindow.Position = new Vector2(
+                Mathf.Clamp(_craftingWindow.Position.X, 0, Mathf.Max(0, size.X - _craftingWindow.Size.X)),
+                Mathf.Clamp(_craftingWindow.Position.Y, 0, Mathf.Max(0, size.Y - _craftingWindow.Size.Y))
+            );
+        }
+        if (_chestInventoryWindow != null && GodotObject.IsInstanceValid(_chestInventoryWindow))
+        {
+            _chestInventoryWindow.Position = new Vector2(
+                Mathf.Clamp(_chestInventoryWindow.Position.X, 0, Mathf.Max(0, size.X - _chestInventoryWindow.Size.X)),
+                Mathf.Clamp(_chestInventoryWindow.Position.Y, 0, Mathf.Max(0, size.Y - _chestInventoryWindow.Size.Y))
+            );
+        }
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -273,9 +351,30 @@ public partial class HUDManager : CanvasLayer
             GameState.Instance.TogglePouch();
             GetViewport().SetInputAsHandled();
         }
+        else if (@event.IsActionPressed("toggle_crafting") ||
+                 (@event is InputEventKey craftKey && craftKey.Pressed && !craftKey.Echo && craftKey.Keycode == Key.B))
+        {
+            GameState.Instance.ToggleCrafting();
+            GetViewport().SetInputAsHandled();
+        }
         else if (@event is InputEventKey escKey && escKey.Pressed && !escKey.Echo && escKey.Keycode == Key.Escape)
         {
-            if (GameState.Instance.IsHeroDetailsOpen)
+            if (GameState.Instance.IsPlacingChest)
+            {
+                GameState.Instance.CancelChestPlacement();
+                GetViewport().SetInputAsHandled();
+            }
+            else if (GameState.Instance.IsChestInventoryOpen)
+            {
+                GameState.Instance.CloseChestInventory();
+                GetViewport().SetInputAsHandled();
+            }
+            else if (GameState.Instance.IsCraftingOpen)
+            {
+                GameState.Instance.ToggleCrafting(false);
+                GetViewport().SetInputAsHandled();
+            }
+            else if (GameState.Instance.IsHeroDetailsOpen)
             {
                 GameState.Instance.ToggleHeroDetails();
                 GetViewport().SetInputAsHandled();
@@ -295,6 +394,7 @@ public partial class HUDManager : CanvasLayer
             GameState.Instance.OnPositionChanged -= OnGameStatePositionChanged;
             GameState.Instance.OnHealthChanged -= OnGameStateHealthChanged;
             GameState.Instance.OnPowerChanged -= OnGameStatePowerChanged;
+            GameState.Instance.OnChestInventoryToggled -= OnChestInventoryToggled;
         }
 
         var vp = GetViewport();

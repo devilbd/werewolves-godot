@@ -21,6 +21,12 @@ public partial class Main : Node2D
 			AddChild(gameState);
 		}
 
+		if (GameState.Instance?.IsInLair == true)
+		{
+			Callable.From(() => GetTree().ChangeSceneToFile("res://scenes/Lair.tscn")).CallDeferred();
+			return;
+		}
+
 		// 2. Set default game cursor
 		CursorManager.ResetNormal();
 

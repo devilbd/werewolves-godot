@@ -45,6 +45,11 @@ public partial class LairManager : Node2D
     private bool _isPlayerInExitArea = false;
     private float _exitBlinkTimer = 0f;
 
+    // Chest Placement Preview State
+    private Node2D? _placementGhost;
+    private Sprite2D? _ghostSprite;
+    private Label? _ghostPrompt;
+
     public override void _Ready()
     {
         GameState.Instance.IsInLair = true;
@@ -110,9 +115,15 @@ public partial class LairManager : Node2D
             _entitiesContainer.AddChild(Player);
         }
 
-        // Spawn player at the start of the cave on the left side where '1 1' is, facing into the cave (right)
-        Player.GlobalPosition = new Vector2(-1650f, 0f);
+        // Spawn player: restore saved position if valid inside cave, else spawn at entrance
+        Vector2 spawnPos = SaveManager.LoadedPlayerPosition;
+        if (spawnPos == Vector2.Zero || spawnPos.X < -1975f || spawnPos.X > 1275f || spawnPos.Y < -950f || spawnPos.Y > 950f)
+        {
+            spawnPos = new Vector2(-1650f, 0f);
+        }
+        Player.GlobalPosition = spawnPos;
         GameState.Instance.PlayerPosition = Player.GlobalPosition;
+        GameState.Instance.IsInLair = true;
 
         var playerSprite = Player.GetNodeOrNull<Sprite2D>("Sprite2D");
         if (playerSprite != null)
@@ -125,6 +136,14 @@ public partial class LairManager : Node2D
 
         // 6.1 Blood Core Altar at the center of the cave chamber
         BuildBloodCore();
+
+        // 6.2 Workshop installations (Crafting Table, Blood Juicer, Laboratory) & Storage Chests
+        BuildCraftedStaticObjects();
+        BuildPlacedChests();
+
+        GameState.Instance.OnStaticObjectCrafted += OnStaticObjectCrafted;
+        GameState.Instance.OnChestPlaced += OnChestPlaced;
+        GameState.Instance.OnChestPlacementModeChanged += OnChestPlacementModeChanged;
 
         // 7. Cave Entrance Visual Landmarks & Atmospheric Fog (no stones, woods, or materials in cave)
         BuildEntranceVisuals();
@@ -241,6 +260,173 @@ public partial class LairManager : Node2D
         }
     }
 
+    private void BuildCraftedStaticObjects()
+    {
+        foreach (var objType in GameState.Instance.CraftedStaticObjects)
+        {
+            SpawnStaticObject(objType);
+        }
+    }
+
+    private void SpawnStaticObject(string objType)
+    {
+        string nodeName = $"Static_{objType}";
+        if (_entitiesContainer.GetNodeOrNull<Node2D>(nodeName) != null) return;
+
+        if (!GameState.Recipes.TryGetValue(objType, out var recipe)) return;
+
+        var obj = CaveStaticObject.Instantiate(objType, recipe.StaticPosition);
+        obj.Name = nodeName;
+        _entitiesContainer.AddChild(obj);
+    }
+
+    private void OnStaticObjectCrafted(string objType)
+    {
+        SpawnStaticObject(objType);
+    }
+
+    private void BuildPlacedChests()
+    {
+        foreach (var kvp in GameState.Instance.CaveChests)
+        {
+            SpawnChest(kvp.Value.Id, new Vector2(kvp.Value.PosX, kvp.Value.PosY));
+        }
+    }
+
+    private void SpawnChest(string chestId, Vector2 position)
+    {
+        string nodeName = $"CaveChest_{chestId}";
+        var existing = _entitiesContainer.GetNodeOrNull<CaveChestObject>(nodeName);
+        if (existing != null)
+        {
+            existing.GlobalPosition = position;
+            existing.Visible = true;
+            return;
+        }
+
+        var scene = GD.Load<PackedScene>("res://scenes/Entities/CaveChestObject.tscn");
+        var chest = scene != null ? scene.Instantiate<CaveChestObject>() : CaveChestObject.Instantiate(chestId, position);
+        chest.ChestId = chestId;
+        chest.GlobalPosition = position;
+        chest.Name = nodeName;
+        _entitiesContainer.AddChild(chest);
+    }
+
+    private void OnChestPlaced(string chestId, Vector2 position)
+    {
+        SpawnChest(chestId, position);
+    }
+
+    private void OnChestPlacementModeChanged(bool isPlacing, string? chestId)
+    {
+        if (!GodotObject.IsInstanceValid(this)) return;
+
+        if (isPlacing)
+        {
+            // If moving existing chest, temporarily hide it from world
+            if (chestId != null)
+            {
+                var existingNode = _entitiesContainer.GetNodeOrNull<CaveChestObject>($"CaveChest_{chestId}");
+                if (existingNode != null) existingNode.Visible = false;
+            }
+
+            if (_placementGhost == null)
+            {
+                _placementGhost = new Node2D
+                {
+                    Name = "PlacementGhost",
+                    ZIndex = 50
+                };
+
+                var tex = GD.Load<Texture2D>("res://assets/chests/chest_closed.png");
+                _ghostSprite = new Sprite2D
+                {
+                    Name = "GhostSprite",
+                    Texture = tex,
+                    Scale = new Vector2(0.30f, 0.30f),
+                    Offset = new Vector2(0, -tex.GetHeight() * 0.45f),
+                    Modulate = new Color(0.4f, 1.0f, 0.4f, 0.75f)
+                };
+                _placementGhost.AddChild(_ghostSprite);
+
+                _ghostPrompt = new Label
+                {
+                    Name = "GhostPrompt",
+                    Text = "Left-Click: Confirm Placement\nRight-Click / Esc: Cancel",
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Position = new Vector2(-150, -95),
+                    Size = new Vector2(300, 36)
+                };
+                _ghostPrompt.AddThemeFontSizeOverride("font_size", 12);
+                _ghostPrompt.AddThemeConstantOverride("outline_size", 3);
+                _ghostPrompt.AddThemeColorOverride("font_outline_color", Colors.Black);
+                _placementGhost.AddChild(_ghostPrompt);
+
+                AddChild(_placementGhost);
+            }
+
+            _placementGhost.GlobalPosition = GetGlobalMousePosition();
+            _placementGhost.Visible = true;
+        }
+        else
+        {
+            // If placement was cancelled for an existing chest, restore its visibility
+            if (chestId != null)
+            {
+                var existingNode = _entitiesContainer.GetNodeOrNull<CaveChestObject>($"CaveChest_{chestId}");
+                if (existingNode != null) existingNode.Visible = true;
+            }
+
+            if (_placementGhost != null)
+            {
+                _placementGhost.QueueFree();
+                _placementGhost = null;
+                _ghostSprite = null;
+                _ghostPrompt = null;
+            }
+        }
+    }
+
+    public bool IsValidChestPlacement(Vector2 pos, string? ignoreChestId)
+    {
+        // 1. Must be inside main chamber floor
+        if (pos.X < -1000f || pos.X > 1000f || pos.Y < -620f || pos.Y > 620f)
+        {
+            return false;
+        }
+
+        // 2. Clearance from Blood Core at (0, 0)
+        if (pos.DistanceTo(Vector2.Zero) < 130f)
+        {
+            return false;
+        }
+
+        // 3. Clearance from static workshop locations
+        Vector2 craftPos = new Vector2(-700f, -520f);
+        Vector2 juicerPos = new Vector2(0f, -520f);
+        Vector2 labPos = new Vector2(700f, -520f);
+
+        if (pos.DistanceTo(craftPos) < 140f) return false;
+        if (pos.DistanceTo(juicerPos) < 140f) return false;
+        if (pos.DistanceTo(labPos) < 140f) return false;
+
+        // 4. Clearance from other chests
+        foreach (var kvp in GameState.Instance.CaveChests)
+        {
+            if (kvp.Key == ignoreChestId) continue;
+            Vector2 otherPos = new Vector2(kvp.Value.PosX, kvp.Value.PosY);
+            if (pos.DistanceTo(otherPos) < 80f) return false;
+        }
+
+        // 5. Clearance from player
+        if (Player != null && pos.DistanceTo(Player.GlobalPosition) < 45f)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     /// <summary>
     /// Arranges 350x350 tiles across the lair matching the user schema:
     /// Main chamber: columns 2..8 (centered on column 5 at X = 0)
@@ -287,6 +473,33 @@ public partial class LairManager : Node2D
     {
         float dt = (float)delta;
 
+        // Process chest placement preview
+        if (GameState.Instance.IsPlacingChest && _placementGhost != null)
+        {
+            Vector2 mousePos = GetGlobalMousePosition();
+            _placementGhost.GlobalPosition = mousePos;
+
+            bool isValid = IsValidChestPlacement(mousePos, GameState.Instance.ActivePlacementChestId);
+            if (isValid)
+            {
+                if (_ghostSprite != null) _ghostSprite.Modulate = new Color(0.4f, 1.0f, 0.4f, 0.75f);
+                if (_ghostPrompt != null)
+                {
+                    _ghostPrompt.Text = "Left-Click: Confirm Placement\nRight-Click / Esc: Cancel";
+                    _ghostPrompt.Modulate = new Color(0.9f, 1.0f, 0.9f, 0.95f);
+                }
+            }
+            else
+            {
+                if (_ghostSprite != null) _ghostSprite.Modulate = new Color(1.0f, 0.3f, 0.3f, 0.75f);
+                if (_ghostPrompt != null)
+                {
+                    _ghostPrompt.Text = "Invalid Location\nRight-Click / Esc: Cancel";
+                    _ghostPrompt.Modulate = new Color(1.0f, 0.5f, 0.5f, 0.95f);
+                }
+            }
+        }
+
         // Proximity detection for left entrance/exit at '1 1'
         float distSq = Player != null ? Player.GlobalPosition.DistanceSquaredTo(new Vector2(-1800f, 0f)) : float.MaxValue;
         bool isPlayerNearExit = _isPlayerInExitArea || (distSq <= (220f * 220f));
@@ -314,6 +527,41 @@ public partial class LairManager : Node2D
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if (GameState.Instance.IsPlacingChest)
+        {
+            if (@event is InputEventMouseButton mb && mb.Pressed)
+            {
+                if (mb.ButtonIndex == MouseButton.Left)
+                {
+                    Vector2 mousePos = GetGlobalMousePosition();
+                    if (IsValidChestPlacement(mousePos, GameState.Instance.ActivePlacementChestId))
+                    {
+                        GameState.Instance.ConfirmChestPlacement(mousePos);
+                        GetViewport().SetInputAsHandled();
+                        return;
+                    }
+                    else
+                    {
+                        GameState.Instance.TriggerDamageNumber("Cannot place chest here!", mousePos + new Vector2(0, -30), new Color(1f, 0.4f, 0.4f));
+                        GetViewport().SetInputAsHandled();
+                        return;
+                    }
+                }
+                else if (mb.ButtonIndex == MouseButton.Right)
+                {
+                    GameState.Instance.CancelChestPlacement();
+                    GetViewport().SetInputAsHandled();
+                    return;
+                }
+            }
+            else if (@event is InputEventKey key && key.Pressed && !key.Echo && key.Keycode == Key.Escape)
+            {
+                GameState.Instance.CancelChestPlacement();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+        }
+
         float distSq = Player != null ? Player.GlobalPosition.DistanceSquaredTo(new Vector2(-1800f, 0f)) : float.MaxValue;
         bool isPlayerNearExit = _isPlayerInExitArea || (distSq <= (220f * 220f));
 
@@ -573,7 +821,19 @@ public partial class LairManager : Node2D
 
     public override void _ExitTree()
     {
-        GameState.Instance.IsInLair = false;
+        if (GameState.Instance != null)
+        {
+            GameState.Instance.OnStaticObjectCrafted -= OnStaticObjectCrafted;
+            GameState.Instance.OnChestPlaced -= OnChestPlaced;
+            GameState.Instance.OnChestPlacementModeChanged -= OnChestPlacementModeChanged;
+        }
+
+        if (_placementGhost != null && GodotObject.IsInstanceValid(_placementGhost))
+        {
+            _placementGhost.QueueFree();
+            _placementGhost = null;
+        }
+
         RenderingServer.SetDefaultClearColor(new Color(0.12f, 0.12f, 0.12f, 1f));
     }
 

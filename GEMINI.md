@@ -34,21 +34,25 @@ werewolves-godot/
 │   ├── Main.tscn              # Root scene: WorldManager, Entities/Werewolf, HUD (CanvasLayer)
 │   ├── Lair.tscn              # Cave hideout scene: LairManager, BloodCore, Werewolf, HUD
 │   ├── Entities/              # Packed scenes: Werewolf, Deer, Villager, TreeObject, RockObject,
-│   │                          # HouseObject, QuartzObject, ChestObject, GrassObject, BloodCoreObject
+│   │                          # HouseObject, QuartzObject, ChestObject, GrassObject, BloodCoreObject, CaveChestObject
 │   └── UI/                    # Packed scenes: ActionBar, PouchWindow, StatsPanel, TargetPanel, HeroDetailsWindow
 ├── Scripts/
 │   ├── Main.cs                # Entry point bootstrap; dynamic node attachment fallback
 │   ├── Core/                  # Domain models, formulas, persistence, and global state
-│   │   ├── GameState.cs       # Autoload singleton: player stats, cooldowns, events, inventory, Blood Core
+│   │   ├── GameState.cs       # Autoload singleton: player stats, cooldowns, events, inventory, Blood Core, crafting
 │   │   ├── ConfigManager.cs   # JSON configuration loader & typed options models
 │   │   ├── CursorManager.cs   # Global cursor state manager (normal, interaction, grab)
 │   │   ├── Formulas.cs        # Combat formulas (damage, hit chance, loot distributions)
 │   │   ├── SaveManager.cs     # JSON persistence to user://werewolves_save.json
 │   │   ├── ICombatant.cs      # Interface for combat participants (damageable, stats)
-│   │   └── PouchItemData.cs   # Data model for inventory items, blood percent, and UI coordinates
+│   │   ├── PouchItemData.cs   # Data model for inventory items, blood percent, and UI coordinates
+│   │   ├── CaveChestData.cs   # Data model for placed storage chests and items
+│   │   └── CraftingRecipe.cs  # Domain model for cave crafting recipes and costs
 │   ├── Entities/              # Game actors and environmental interactive bodies
 │   │   ├── Werewolf.cs        # Player CharacterBody2D: movement, animation states, combat, skills
 │   │   ├── BloodCoreObject.cs # StaticBody2D: central cave altar, [E] restore, [R] flask refill
+│   │   ├── CaveChestObject.cs # StaticBody2D: craftable storage chest with closed/opened states
+│   │   ├── CaveStaticObject.cs# StaticBody2D: Crafting Table (-700,-520), Blood Juicer (0,-520), Lab (700,-520)
 │   │   ├── BloodSpot.cs       # Area2D: 40s ground pickup from killed living creatures
 │   │   ├── GrassObject.cs     # StaticBody2D: selectable/choppable wild grass, drops Grass
 │   │   ├── TerrainArtifact.cs # Node2D: decorative ground debris spaced away from obstacles
@@ -64,15 +68,17 @@ werewolves-godot/
 │   │   └── ISelectableTarget.cs # Interface for entities that can be clicked and targeted
 │   ├── World/                 # World generation and environment managers
 │   │   ├── WorldManager.cs    # Open-world generator: landmarks, vegetation, quartz, chests, grass
-│   │   └── LairManager.cs     # Cave hideout controller: multi-tile floor schema, borders, exit portal
+│   │   └── LairManager.cs     # Cave hideout controller: multi-tile floor schema, borders, chest placement
 │   ├── UI/                    # CanvasLayer and HUD components
 │   │   ├── HUDManager.cs      # Top-level UI manager: viewport resize listeners, layout anchors
 │   │   ├── OrbGauge.cs        # Diablo-style liquid orb (procedural _Draw polygon + bubbles)
 │   │   ├── StatsPanel.cs      # 4 skill hotkey slots with cooldown sweeps and timers
 │   │   ├── TargetPanel.cs     # Selected target health bar + contextual interaction button
-│   │   ├── PouchWindow.cs     # Freeform draggable inventory modal with right-click consumption
+│   │   ├── PouchWindow.cs     # Freeform draggable inventory modal with right-click consumption & chest deposit
 │   │   ├── HeroDetailsWindow.cs # Draggable character attribute sheet with solo portrait & wooden sign
-│   │   └── ActionBar.cs       # Action bar holding Pouch and Hero Details toggle buttons
+│   │   ├── CraftingWindow.cs  # Draggable cave crafting modal with recipe cards & build triggers
+│   │   ├── ChestInventoryWindow.cs # Draggable storage chest modal (chest_inventory.png, 8x4 slots)
+│   │   └── ActionBar.cs       # Action bar holding Hero Details (C), Pouch (P), and Crafting (B) buttons
 │   └── Effects/               # Transient combat feedback and visual FX
 │       ├── BuffAura.cs        # CpuParticles2D violet glowing aura for Howl buff
 │       ├── DamageNumber.cs    # Floating text drift and fade effect
@@ -171,10 +177,24 @@ All scripts are designed to work under two scenarios:
 - **`HeroDetailsWindow`**:
   - Draggable character sheet toggleable via <kbd>C</kbd> or HUD menu button.
   - Features 600×650 werewolf portrait (`solo.png`) anchored on the left, rustic wooden sign background (`wooden_sign_flat.png`), and live combat attributes (Health, Power, Damage, Defense, Speed, Accuracy, Evasion).
-- **`MenuBar`**:
-  - Clean modular action bar positioned beside the skill bar holding the Hero Details icon (`werewolf_head.png` scaled 50%) and Pouch Bag icon.
+- **`ActionBar`**:
+  - Clean modular action bar positioned beside the skill bar holding:
+    - Hero Details button (<kbd>C</kbd>, `werewolf_head.png` scaled 50%)
+    - Pouch Bag button (<kbd>P</kbd>)
+    - Cave Crafting button (<kbd>B</kbd>, `crafting-table.png`)
+- **`CraftingWindow`**:
+  - Draggable cave crafting modal toggleable via <kbd>B</kbd> or the HUD Action Bar button.
+  - Displays cards for Storage Chest, Crafting Table, Blood Juicer, and Alchemical Laboratory with live material validation and construction/placement triggers.
+- **`ChestInventoryWindow`**:
+  - Draggable storage chest modal ($600 \times 450\text{px}$) using `res://assets/chests/chest_inventory.png` as its background frame.
+  - Freeform draggable canvas ($530 \times 365\text{px}$) matching the pouch interface (no grid slots).
+  - Drag items to organize chest layout; coordinates persist per-chest in save data.
+  - Left-click or Right-click transfers 1 item to the pouch; Shift + Click opens `ItemSplitModal` to select exact quantities.
+  - Features a "Move Chest" relocation button and close button.
+- **`ItemSplitModal`**:
+  - Modal dialog with slider, stepper buttons, and quick presets (`[1]`, `[Half]`, `[All]`) for precise stack splitting when holding Shift during item transfers.
 - **`TargetPanel`**:
-  - Contextual target frame showing name, health bar, and dynamic action button (*"Chop"*, *"Quarry"*, *"Mine"*, *"Open"*, or *"Attack"*).
+  - Contextual target frame showing name, health bar, and dynamic action button (*"Chop"*, *"Quarry"*, *"Mine"*, *"Open"*, *"Craft"*, or *"Attack"*).
 
 ### 3.6 State Persistence (`SaveManager.cs`)
 - Serializes `SaveData` to `user://werewolves_save.json` using `System.Text.Json`.
@@ -183,8 +203,10 @@ All scripts are designed to work under two scenarios:
   - Item collection (`GameState.AddPouchItem`)
   - Item repositioning in pouch (`GameState.UpdatePouchItemPosition`)
   - Blood Core reserve updates (`bloodCoreReserves`, default 1000)
+  - Cave structure construction (`craftedCaveObjects`)
+  - Storage chest placement and inventory modifications (`caveChests`)
 
-### 3.7 Subterranean Hideout & Blood Core (`scenes/Lair.tscn` & `BloodCoreObject.cs`)
+### 3.7 Subterranean Hideout, Blood Core & Cavern Workshop (`scenes/Lair.tscn`)
 - **Single-Screen Cavern**: A compact subterranean sanctuary surrounded by pitch-black space (`#030305`), a procedurally twinkling 240-star field, and drifting cavern fog zones.
 - **Procedural Floor Schema**: $5 \times 9$ stone tile matrix (`lair_1..5.jpeg`, scale 0.1709) with perimeter edge borders (`lair_border_o.png`) and solid collision barriers.
 - **Blood Core Altar (`BloodCoreObject`)**:
@@ -193,6 +215,15 @@ All scripts are designed to work under two scenarios:
   - Dual prompts:
     - `[E] Restore Health & Power (-250 Blood)` $\implies$ consumes 250 blood, restores +12 HP & +13 Power.
     - `[R] Fill Core with Blood Flask` $\implies$ pours blood from held flasks (+250 blood for 100% flask) and returns an `"EmptyFlask"`.
+- **Fixed Cavern Workshop Installations (`CaveStaticObject`)**:
+  - **Crafting Table**: Top Left at `(-700, -520)`, sprite `crafting-table.png`. Left-clicking opens the Crafting Window.
+  - **Blood Juicer**: Top Center at `(0, -520)`, sprite `blood-juicer.png`. Refines raw vitae and organic essence.
+  - **Alchemical Laboratory**: Top Right at `(700, -520)`, sprite `laboratory.png`. Alembic research and potion synthesis.
+- **Cavern Storage Chests (`CaveChestObject` & `ChestInventoryWindow`)**:
+  - Interactive ghost placement mode with real-time clearance and collision verification.
+  - Relocatable at any time via the "Move Chest" button.
+  - Dynamic world sprites: `chest_closed.png` while closed, `chest_opened.png` while opened.
+  - Bi-directional transfers between pouch and chest, supporting <kbd>Shift</kbd> + Left Click for instant full-stack transfers.
 
 ---
 
@@ -237,10 +268,14 @@ All input actions are configured in `project.godot`:
 | `skill_4` | <kbd>4</kbd> | Blood Howling (Buff Damage, Def, Speed, Acc, Eva) |
 | `toggle_pouch` | <kbd>P</kbd> | Toggle Inventory Pouch Window |
 | `toggle_hero_details` | <kbd>C</kbd> | Toggle Hero Details Character Sheet |
+| `toggle_crafting` | <kbd>B</kbd> | Toggle Cave Crafting Menu Window |
 | `interact_core` | <kbd>E</kbd> | Restore Health & Power at Blood Core Altar |
 | `fill_core` | <kbd>R</kbd> | Pour Blood Flask into Blood Core Altar |
 | `enter_lair` / `ui_accept` | <kbd>Enter</kbd> | Enter / Exit Werewolf's Lair Portal |
-| *(Pouch GUI)* | <kbd>Right Click</kbd> | Consume Meat (+20 HP, +10 Pwr) or Drink Blood Flask |
+| *(Pouch GUI)* | <kbd>Right Click</kbd> | Consume Meat (+20 HP, +10 Pwr), Drink Blood Flask, or deposit 1 into open chest |
+| *(Pouch GUI)* | <kbd>Shift + Click</kbd> | Open Split Modal to deposit custom quantity into open chest |
+| *(Chest GUI)* | <kbd>Click / Right-Click</kbd> | Grab 1 item into Pouch (or drag to organize inside chest) |
+| *(Chest GUI)* | <kbd>Shift + Click</kbd> | Open Split Modal to grab custom quantity into Pouch |
 
 When querying inputs in code:
 ```csharp
