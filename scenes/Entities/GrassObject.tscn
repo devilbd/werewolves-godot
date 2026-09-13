@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://c7grass0scene"]
+
+[ext_resource type="Script" path="res://Scripts/Entities/GrassObject.cs" id="1_grass"]
+[ext_resource type="Texture2D" path="res://assets/grass/1.png" id="2_grass_tex"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 16.0
+
+[node name="GrassObject" type="StaticBody2D"]
+input_pickable = true
+script = ExtResource("1_grass")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.42, 0.42)
+offset = Vector2(0, -60)
+texture = ExtResource("2_grass_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -8)
+shape = SubResource("CircleShape2D_1")

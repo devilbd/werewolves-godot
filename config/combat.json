@@ -70,6 +70,10 @@
     "quartz": {
       "maxHealth": 100.0,
       "damagePerHit": 25.0
+    },
+    "grass": {
+      "maxHealth": 50.0,
+      "damagePerHit": 25.0
     }
   }
 }

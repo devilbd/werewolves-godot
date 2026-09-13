@@ -223,10 +223,16 @@ public partial class WorldManager : Node2D
 		// 8. Build Rare Treasure Chests
 		BuildTreasureChests();
 
-		// 9. Build World Boundary Barriers
+		// 9. Build Terrain Artifacts (Ground Details)
+		BuildTerrainArtifacts();
+
+		// 10. Build Grass Patches (Choppable)
+		BuildGrassPatches();
+
+		// 11. Build World Boundary Barriers
 		BuildWorldBoundaries();
 
-		// 10. Build Atmospheric Fog Zones
+		// 12. Build Atmospheric Fog Zones
 		BuildFogZones();
 	}
 
@@ -573,6 +579,130 @@ public partial class WorldManager : Node2D
 			var chest = new ChestObject { GlobalPosition = pos };
 			_entitiesContainer.AddChild(chest);
 		}
+	}
+
+	private void BuildTerrainArtifacts()
+	{
+		var cfg = ConfigManager.Resources.TerrainArtifacts;
+		int targetCount = cfg.Count;
+		float minDistance = cfg.MinDistance;
+
+		List<Vector2> obstacles = GetStationaryObstaclePositions();
+		List<Vector2> placedArtifacts = new();
+
+		int maxAttempts = targetCount * 30;
+		int attempts = 0;
+
+		while (placedArtifacts.Count < targetCount && attempts < maxAttempts)
+		{
+			attempts++;
+			Vector2 pos = new Vector2(
+				(float)GD.RandRange(-WorldRadius + 300f, WorldRadius - 300f),
+				(float)GD.RandRange(-WorldRadius + 300f, WorldRadius - 300f)
+			);
+
+			if (IsInsideLake(pos, 80f)) continue;
+			if (pos.DistanceTo(VillagePosition) < 1350f) continue;
+			if (pos.DistanceTo(LairEntrancePosition) < 250f) continue;
+			if (pos.DistanceTo(AwakeningGrovePosition) < 180f) continue;
+			if (pos.DistanceTo(QuarryPosition) < 320f) continue;
+
+			bool tooClose = false;
+			foreach (var obs in obstacles)
+			{
+				if (pos.DistanceTo(obs) < minDistance)
+				{
+					tooClose = true;
+					break;
+				}
+			}
+			if (tooClose) continue;
+
+			foreach (var existing in placedArtifacts)
+			{
+				if (pos.DistanceTo(existing) < 80f)
+				{
+					tooClose = true;
+					break;
+				}
+			}
+			if (tooClose) continue;
+
+			placedArtifacts.Add(pos);
+			var artifact = TerrainArtifact.Instantiate(0, pos);
+			_entitiesContainer.AddChild(artifact);
+		}
+	}
+
+	private void BuildGrassPatches()
+	{
+		var cfg = ConfigManager.Resources.Grass;
+		int targetCount = cfg.Count;
+		float minDistance = cfg.MinDistance;
+
+		List<Vector2> obstacles = GetStationaryObstaclePositions();
+		List<Vector2> placedGrass = new();
+
+		int maxAttempts = targetCount * 30;
+		int attempts = 0;
+
+		while (placedGrass.Count < targetCount && attempts < maxAttempts)
+		{
+			attempts++;
+			Vector2 pos = new Vector2(
+				(float)GD.RandRange(-WorldRadius + 300f, WorldRadius - 300f),
+				(float)GD.RandRange(-WorldRadius + 300f, WorldRadius - 300f)
+			);
+
+			if (IsInsideLake(pos, 70f)) continue;
+			if (pos.DistanceTo(VillagePosition) < 1350f) continue;
+			if (pos.DistanceTo(LairEntrancePosition) < 250f) continue;
+			if (pos.DistanceTo(AwakeningGrovePosition) < 160f) continue;
+			if (pos.DistanceTo(QuarryPosition) < 320f) continue;
+
+			bool tooClose = false;
+			foreach (var obs in obstacles)
+			{
+				if (pos.DistanceTo(obs) < minDistance)
+				{
+					tooClose = true;
+					break;
+				}
+			}
+			if (tooClose) continue;
+
+			foreach (var existing in placedGrass)
+			{
+				if (pos.DistanceTo(existing) < 70f)
+				{
+					tooClose = true;
+					break;
+				}
+			}
+			if (tooClose) continue;
+
+			placedGrass.Add(pos);
+			var grass = GrassObject.Instantiate(0, pos);
+			_entitiesContainer.AddChild(grass);
+		}
+	}
+
+	private List<Vector2> GetStationaryObstaclePositions()
+	{
+		List<Vector2> obstacles = new();
+		if (_entitiesContainer == null) return obstacles;
+
+		foreach (Node child in _entitiesContainer.GetChildren())
+		{
+			if (child is TreeObject or RockObject or QuartzObject or ChestObject or HouseObject or LairEntranceObject)
+			{
+				if (child is Node2D n2d)
+				{
+					obstacles.Add(n2d.GlobalPosition);
+				}
+			}
+		}
+		return obstacles;
 	}
 
 	private void BuildWorldBoundaries()

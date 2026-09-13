@@ -301,6 +301,23 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
                 }
             }
         }
+        else if (target is GrassObject grass)
+        {
+            if (dist <= MeleeRange * 1.5f && !_isAttacking)
+            {
+                _autoAttackTimer += dt;
+                if (_autoAttackTimer >= AutoAttackInterval)
+                {
+                    _autoAttackTimer = 0f;
+                    TriggerAttackAnimation(0);
+                    grass.Interact();
+                    if (grass.Health <= 0f || grass.IsDead)
+                    {
+                        SetAutoInteract(false);
+                    }
+                }
+            }
+        }
         else if (target is ChestObject chest)
         {
             if (dist <= MeleeRange * 1.5f && !_isAttacking)
@@ -525,6 +542,22 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
                 }
             }
             else if (GlobalPosition.DistanceTo(quartz.GlobalPosition) > MeleeRange * 1.5f)
+            {
+                GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
+            }
+        }
+        else if (GameState.Instance.SelectedTarget is GrassObject grass)
+        {
+            if (GlobalPosition.DistanceTo(grass.GlobalPosition) <= MeleeRange * 1.5f && !_isAttacking)
+            {
+                TriggerAttackAnimation(0);
+                grass.Interact();
+                if (grass.Health <= 0f || grass.IsDead)
+                {
+                    SetAutoInteract(false);
+                }
+            }
+            else if (GlobalPosition.DistanceTo(grass.GlobalPosition) > MeleeRange * 1.5f)
             {
                 GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
             }

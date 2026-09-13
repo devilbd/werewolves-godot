@@ -114,6 +114,22 @@ public class ChestResourceDrop
 public class ResourcesConfig
 {
     [JsonPropertyName("quartz")] public QuartzConfig Quartz { get; set; } = new();
+    [JsonPropertyName("grass")] public GrassConfig Grass { get; set; } = new();
+    [JsonPropertyName("terrainArtifacts")] public TerrainArtifactsConfig TerrainArtifacts { get; set; } = new();
+}
+
+public class GrassConfig
+{
+    [JsonPropertyName("count")] public int Count { get; set; } = 75;
+    [JsonPropertyName("minDistance")] public float MinDistance { get; set; } = 120f;
+    [JsonPropertyName("dropMin")] public int DropMin { get; set; } = 1;
+    [JsonPropertyName("dropMax")] public int DropMax { get; set; } = 2;
+}
+
+public class TerrainArtifactsConfig
+{
+    [JsonPropertyName("count")] public int Count { get; set; } = 130;
+    [JsonPropertyName("minDistance")] public float MinDistance { get; set; } = 130f;
 }
 
 public class QuartzConfig
@@ -236,6 +252,7 @@ public class HarvestablesConfig
     [JsonPropertyName("tree")] public HarvestableStatsConfig Tree { get; set; } = new() { MaxHealth = 100f, DamagePerHit = 25f };
     [JsonPropertyName("rock")] public HarvestableStatsConfig Rock { get; set; } = new() { MaxHealth = 100f, DamagePerHit = 25f };
     [JsonPropertyName("quartz")] public HarvestableStatsConfig Quartz { get; set; } = new() { MaxHealth = 100f, DamagePerHit = 25f };
+    [JsonPropertyName("grass")] public HarvestableStatsConfig Grass { get; set; } = new() { MaxHealth = 50f, DamagePerHit = 25f };
 }
 
 public class HarvestableStatsConfig

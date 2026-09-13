@@ -47,6 +47,7 @@ public partial class DroppedLoot : Area2D, IFogBorderable
             "GoldCoins" or "Gold Coins" or "Gold" => GD.Load<Texture2D>("res://assets/gold_coins.png"),
             "Quartz" => GD.Load<Texture2D>("res://assets/resources/quartz/quartz_2.png"),
             "EmptyFlask" or "Empty Flask" or "Flask" => GD.Load<Texture2D>("res://assets/flasks/blood_flask_0.png"),
+            "Grass" => GD.Load<Texture2D>("res://assets/grass/grass_drop.png"),
             _ => GD.Load<Texture2D>("res://assets/logs_o.png")
         };
         _sprite.Texture = tex;
@@ -64,6 +65,10 @@ public partial class DroppedLoot : Area2D, IFogBorderable
         {
             _sprite.Scale = new Vector2(0.12f, 0.12f);
         }
+        else if (ItemType is "Grass")
+        {
+            _sprite.Scale = new Vector2(0.26f, 0.26f);
+        }
         else
         {
             _sprite.Scale = new Vector2(0.6f, 0.6f);
@@ -71,7 +76,7 @@ public partial class DroppedLoot : Area2D, IFogBorderable
         AddChild(_sprite);
 
         _collision = new CollisionShape2D();
-        float radius = (ItemType is "GoldCoins" or "Gold Coins" or "Gold") ? 28f : ((ItemType is "Quartz" or "EmptyFlask" or "Empty Flask" or "Flask") ? 22f : 30f);
+        float radius = (ItemType is "GoldCoins" or "Gold Coins" or "Gold") ? 28f : ((ItemType is "Quartz" or "EmptyFlask" or "Empty Flask" or "Flask" or "Grass") ? 22f : 30f);
         var circle = new CircleShape2D { Radius = radius };
         _collision.Shape = circle;
         AddChild(_collision);

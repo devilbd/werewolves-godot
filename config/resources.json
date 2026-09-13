@@ -11,5 +11,15 @@
     "dropVariant2MediumMax": 2,
     "dropVariant3LargeMin": 2,
     "dropVariant3LargeMax": 3
+  },
+  "grass": {
+    "count": 75,
+    "minDistance": 120.0,
+    "dropMin": 1,
+    "dropMax": 2
+  },
+  "terrainArtifacts": {
+    "count": 130,
+    "minDistance": 130.0
   }
 }

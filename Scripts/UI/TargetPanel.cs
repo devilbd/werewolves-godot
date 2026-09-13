@@ -426,6 +426,7 @@ public partial class TargetPanel : PanelContainer
                 "Tree" or "Pine Tree" => "Chop",
                 "Rock" or "Quarry Boulder" => "Quarry",
                 "Quartz" or "Quartz Crystal" => "Chop",
+                "Grass" => "Chop",
                 "Treasure Chest" or "Chest" => "Open",
                 _ => "Attack"
             };
@@ -435,6 +436,7 @@ public partial class TargetPanel : PanelContainer
                 "Tree" or "Pine Tree" => _chopIcon,
                 "Rock" or "Quarry Boulder" => _quarryIcon,
                 "Quartz" or "Quartz Crystal" => _chopIcon,
+                "Grass" => _chopIcon,
                 "Treasure Chest" or "Chest" => _openIcon,
                 _ => _attackIcon
             };

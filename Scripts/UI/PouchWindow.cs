@@ -211,6 +211,7 @@ public partial class PouchWindow : Control
                     "GoldCoins" or "Gold Coins" or "Gold" => "res://assets/gold_coins.png",
                     "Quartz" => "res://assets/resources/quartz/quartz_2.png",
                     "EmptyFlask" or "Empty Flask" or "Flask" => "res://assets/flasks/blood_flask_0.png",
+                    "Grass" => "res://assets/grass/grass_drop.png",
                     _ => "res://assets/logs_collected_o.png"
                 };
 
