@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://rkotoybg2da1"]
 
 [ext_resource type="Script" path="res://Scripts/Entities/LairEntranceObject.cs" id="1_entrance"]
-[ext_resource type="Texture2D" path="res://assets/liar/liar_entrance.png" id="2_entrance_tex"]
+[ext_resource type="Texture2D" path="res://assets/lair/lair_entrance.png" id="2_entrance_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(380, 90)

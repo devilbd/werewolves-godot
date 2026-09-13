@@ -63,11 +63,11 @@ public partial class LairManager : Node2D
             Input.SetCustomMouseCursor(normalCursor, Input.CursorShape.Arrow, Vector2.Zero);
         }
 
-        // 2. Preload the 5 textures from liar-floor (liar_1 through liar_5)
+        // 2. Preload the 5 textures from lair-floor (lair_1 through lair_5)
         _floorTextures.Clear();
         for (int i = 1; i <= 5; i++)
         {
-            var tex = GD.Load<Texture2D>($"res://assets/liar/liar-floor/liar_{i}.jpeg");
+            var tex = GD.Load<Texture2D>($"res://assets/lair/lair-floor/lair_{i}.jpeg");
             if (tex != null)
             {
                 _floorTextures[i] = tex;
@@ -82,6 +82,9 @@ public partial class LairManager : Node2D
             AddChild(_floorContainer);
         }
         BuildFloorGrid();
+
+        // 3.1 Build rocky terrain borders using lair_border_o.png
+        BuildTerrainBorders();
 
         // 4. Physical Wall Boundaries matching the schema with single solid right wall
         BuildBoundaries();
@@ -128,9 +131,8 @@ public partial class LairManager : Node2D
         // Set camera limits to encompass the lair chamber and side corridor
         Player.SetCameraLimits(-1975, -950, 1275, 950);
 
-        // 7. Cave Entrance Visual Landmarks, Ambiance & Atmospheric Fog
+        // 7. Cave Entrance Visual Landmarks & Atmospheric Fog (no stones, woods, or materials in cave)
         BuildEntranceVisuals();
-        BuildAmbiance();
         BuildFog();
 
         // 7.1 Fog dashed border overlay
@@ -379,7 +381,7 @@ public partial class LairManager : Node2D
     private void BuildEntranceVisuals()
     {
         var entranceNode = new Node2D { Name = "EntranceVisuals", ZIndex = -2 };
-        var archTex = GD.Load<Texture2D>("res://assets/liar/liar_entrance.png");
+        var archTex = GD.Load<Texture2D>("res://assets/lair/lair_entrance.png");
 
         // Cave entrance arch on the left side at '1 1', horizontally oriented
         if (archTex != null)
@@ -397,38 +399,94 @@ public partial class LairManager : Node2D
         AddChild(entranceNode);
     }
 
-    private void BuildAmbiance()
+    /// <summary>
+    /// Places the custom rocky border sprite (lair_border_o.png) along the outer perimeter
+    /// of the cave floor terrain grid.
+    /// </summary>
+    private void BuildTerrainBorders()
     {
-        var decorContainer = new Node2D { Name = "Ambiance", ZIndex = -1 };
+        var borderTex = GD.Load<Texture2D>("res://assets/lair/lair_border_o.png");
+        if (borderTex == null) return;
 
-        // Decorative cave boulders framing the room
-        Vector2[] rockPositions =
+        var borderContainer = GetNodeOrNull<Node2D>("BorderContainer");
+        if (borderContainer == null)
         {
-            new Vector2(-1100f, -780f),
-            new Vector2(1100f, -780f),
-            new Vector2(-1100f, 780f),
-            new Vector2(1100f, 780f),
-            new Vector2(-350f, -780f),
-            new Vector2(350f, -780f)
-        };
-
-        var rockTex = GD.Load<Texture2D>("res://assets/rocks/optimized/rock_stone_o.png");
-        foreach (var pos in rockPositions)
-        {
-            if (rockTex != null)
+            borderContainer = new Node2D
             {
-                var rockSprite = new Sprite2D
-                {
-                    Texture = rockTex,
-                    Position = pos,
-                    Scale = new Vector2(0.45f, 0.45f)
-                };
-                _entitiesContainer.AddChild(rockSprite);
+                Name = "BorderContainer",
+                ZIndex = -5 // Sits between floor tiles (-10) and entities/actors (0)
+            };
+            AddChild(borderContainer);
+        }
+        else
+        {
+            foreach (Node child in borderContainer.GetChildren())
+            {
+                child.QueueFree();
             }
         }
 
-        AddChild(decorContainer);
+        float[] cols = { -1750f, -1400f, -1050f, -700f, -350f, 0f, 350f, 700f, 1050f };
+        float[] rows = { -700f, -350f, 0f, 350f, 700f };
+        const float halfTile = TileSize / 2f; // 175f
+
+        for (int r = 0; r < FloorSchema.Length; r++)
+        {
+            for (int c = 0; c < FloorSchema[r].Length; c++)
+            {
+                if (FloorSchema[r][c] <= 0) continue;
+
+                // 1. Top border: if neighbor cell above is empty or out of bounds
+                if (r == 0 || FloorSchema[r - 1][c] <= 0)
+                {
+                    var sprite = new Sprite2D
+                    {
+                        Texture = borderTex,
+                        Position = new Vector2(cols[c], rows[r] - halfTile),
+                        RotationDegrees = 0f
+                    };
+                    borderContainer.AddChild(sprite);
+                }
+
+                // 2. Bottom border: if neighbor cell below is empty or out of bounds
+                if (r == FloorSchema.Length - 1 || FloorSchema[r + 1][c] <= 0)
+                {
+                    var sprite = new Sprite2D
+                    {
+                        Texture = borderTex,
+                        Position = new Vector2(cols[c], rows[r] + halfTile),
+                        RotationDegrees = 180f
+                    };
+                    borderContainer.AddChild(sprite);
+                }
+
+                // 3. Left border: if neighbor cell to the left is empty or out of bounds
+                if (c == 0 || FloorSchema[r][c - 1] <= 0)
+                {
+                    var sprite = new Sprite2D
+                    {
+                        Texture = borderTex,
+                        Position = new Vector2(cols[c] - halfTile, rows[r]),
+                        RotationDegrees = -90f
+                    };
+                    borderContainer.AddChild(sprite);
+                }
+
+                // 4. Right border: if neighbor cell to the right is empty or out of bounds
+                if (c == FloorSchema[r].Length - 1 || FloorSchema[r][c + 1] <= 0)
+                {
+                    var sprite = new Sprite2D
+                    {
+                        Texture = borderTex,
+                        Position = new Vector2(cols[c] + halfTile, rows[r]),
+                        RotationDegrees = 90f
+                    };
+                    borderContainer.AddChild(sprite);
+                }
+            }
+        }
     }
+
 
     private void BuildExitArea()
     {

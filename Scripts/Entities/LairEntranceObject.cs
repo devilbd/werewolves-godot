@@ -49,7 +49,7 @@ public partial class LairEntranceObject : StaticBody2D, IFogBorderable
 
         if (_sprite.Texture == null)
         {
-            _sprite.Texture = GD.Load<Texture2D>("res://assets/liar/liar_entrance.png");
+            _sprite.Texture = GD.Load<Texture2D>("res://assets/lair/lair_entrance.png");
         }
         _sprite.Scale = new Vector2(0.75f, 0.75f);
         _sprite.Offset = new Vector2(0, -120);

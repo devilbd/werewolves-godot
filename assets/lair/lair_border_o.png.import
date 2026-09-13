@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ba1ejjew43bvv"
-path="res://.godot/imported/liar_4.jpeg-23fb988857e8e54b293f7ee6cfa100b1.ctex"
+uid="uid://bppfc72eqq0m7"
+path="res://.godot/imported/lair_border_o.png-140fd2336e235ab143a5769765130d5a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/liar/liar-floor/liar_4.jpeg"
-dest_files=["res://.godot/imported/liar_4.jpeg-23fb988857e8e54b293f7ee6cfa100b1.ctex"]
+source_file="res://assets/lair/lair_border_o.png"
+dest_files=["res://.godot/imported/lair_border_o.png-140fd2336e235ab143a5769765130d5a.ctex"]
 
 [params]
 
