@@ -8,7 +8,7 @@ public partial class QuartzObject : StaticBody2D, ISelectableTarget, IFogBordera
     [Export] public int Variant { get; set; } = 0; // 1: small, 2: medium, 3: large (0 = random)
     public string TargetName => "Quartz";
     public float Health { get; set; } = 100f;
-    public float MaxHealth => 100f;
+    public float MaxHealth { get; set; } = 100f;
     public bool IsDead => Health <= 0;
 
     public Vector2 FloatingTextPosition => Variant switch
@@ -45,10 +45,16 @@ public partial class QuartzObject : StaticBody2D, ISelectableTarget, IFogBordera
 
     public override void _Ready()
     {
+        MaxHealth = ConfigManager.Combat.Harvestables.Quartz.MaxHealth;
+        Health = MaxHealth;
+
         if (Variant < 1 || Variant > 3)
         {
+            var qCfg = ConfigManager.Resources.Quartz;
             float roll = GD.Randf();
-            Variant = roll < 0.40f ? 1 : (roll < 0.75f ? 2 : 3);
+            float wSmall = qCfg.VariantWeightSmall;
+            float wMed = wSmall + qCfg.VariantWeightMedium;
+            Variant = roll < wSmall ? 1 : (roll < wMed ? 2 : 3);
         }
 
         _sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
@@ -189,7 +195,7 @@ public partial class QuartzObject : StaticBody2D, ISelectableTarget, IFogBordera
         Vibrate(5f, 0.18f);
         _isBlinking = true;
         _blinkTimer = _blinkDuration;
-        Health -= 25f;
+        Health -= ConfigManager.Combat.Harvestables.Quartz.DamagePerHit;
 
         GameState.Instance.TriggerDamageNumber("Chop!", FloatingTextPosition, new Color(0.85f, 0.70f, 1.0f));
 
@@ -197,11 +203,12 @@ public partial class QuartzObject : StaticBody2D, ISelectableTarget, IFogBordera
         {
             Health = 0f;
 
+            var qCfg = ConfigManager.Resources.Quartz;
             int dropCount = Variant switch
             {
-                1 => 1,
-                2 => GD.RandRange(1, 2),
-                _ => GD.RandRange(2, 3)
+                1 => GD.RandRange(qCfg.DropVariant1SmallMin, qCfg.DropVariant1SmallMax),
+                2 => GD.RandRange(qCfg.DropVariant2MediumMin, qCfg.DropVariant2MediumMax),
+                _ => GD.RandRange(qCfg.DropVariant3LargeMin, qCfg.DropVariant3LargeMax)
             };
 
             var loot = DroppedLoot.Instantiate("Quartz", GlobalPosition, dropCount);

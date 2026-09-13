@@ -1,0 +1,15 @@
+{
+  "quartz": {
+    "wildernessCount": 35,
+    "quarryClusterCount": 6,
+    "variantWeightSmall": 0.40,
+    "variantWeightMedium": 0.35,
+    "variantWeightLarge": 0.25,
+    "dropVariant1SmallMin": 1,
+    "dropVariant1SmallMax": 1,
+    "dropVariant2MediumMin": 1,
+    "dropVariant2MediumMax": 2,
+    "dropVariant3LargeMin": 2,
+    "dropVariant3LargeMax": 3
+  }
+}

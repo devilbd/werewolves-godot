@@ -220,10 +220,13 @@ public partial class WorldManager : Node2D
 		// 7. Build Quartz Mineral Deposits
 		BuildQuartzDeposits();
 
-		// 8. Build World Boundary Barriers
+		// 8. Build Rare Treasure Chests
+		BuildTreasureChests();
+
+		// 9. Build World Boundary Barriers
 		BuildWorldBoundaries();
 
-		// 9. Build Atmospheric Fog Zones
+		// 10. Build Atmospheric Fog Zones
 		BuildFogZones();
 	}
 
@@ -495,8 +498,10 @@ public partial class WorldManager : Node2D
 
 	private void BuildQuartzDeposits()
 	{
+		var cfg = ConfigManager.Resources.Quartz;
+
 		// 1. Scattered quartz formations across the open world
-		int scatteredQuartzCount = 35;
+		int scatteredQuartzCount = cfg.WildernessCount;
 		for (int i = 0; i < scatteredQuartzCount; i++)
 		{
 			Vector2 pos = new Vector2(
@@ -515,7 +520,7 @@ public partial class WorldManager : Node2D
 		}
 
 		// 2. Cluster of mineral quartz in Quarry Hills
-		int quarryQuartzCount = 6;
+		int quarryQuartzCount = cfg.QuarryClusterCount;
 		for (int i = 0; i < quarryQuartzCount; i++)
 		{
 			float angle = (float)GD.RandRange(0, Mathf.Pi * 2f);
@@ -523,6 +528,50 @@ public partial class WorldManager : Node2D
 			Vector2 pos = QuarryPosition + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * dist;
 			var quartz = new QuartzObject { GlobalPosition = pos };
 			_entitiesContainer.AddChild(quartz);
+		}
+	}
+
+	private void BuildTreasureChests()
+	{
+		var cfg = ConfigManager.Chests.Spawning;
+		int targetChestCount = cfg.TargetCount;
+		float minChestDistance = cfg.MinSeparationDistance;
+		List<Vector2> placedChests = new();
+
+		int maxAttempts = cfg.MaxAttempts;
+		int attempts = 0;
+		float margin = cfg.WorldMargin;
+
+		while (placedChests.Count < targetChestCount && attempts < maxAttempts)
+		{
+			attempts++;
+			Vector2 pos = new Vector2(
+				(float)GD.RandRange(-WorldRadius + margin, WorldRadius - margin),
+				(float)GD.RandRange(-WorldRadius + margin, WorldRadius - margin)
+			);
+
+			// Exclusion checks
+			if (IsInsideLake(pos, 90f)) continue;
+			if (pos.DistanceTo(AwakeningGrovePosition) < cfg.AwakeningGroveBuffer) continue;
+			if (pos.DistanceTo(LairEntrancePosition) < cfg.LairBuffer) continue;
+			if (pos.DistanceTo(VillagePosition) < cfg.VillageBuffer) continue;
+
+			// Distance constraint: must not be within minChestDistance of another chest
+			bool tooClose = false;
+			foreach (var existing in placedChests)
+			{
+				if (pos.DistanceTo(existing) < minChestDistance)
+				{
+					tooClose = true;
+					break;
+				}
+			}
+
+			if (tooClose) continue;
+
+			placedChests.Add(pos);
+			var chest = new ChestObject { GlobalPosition = pos };
+			_entitiesContainer.AddChild(chest);
 		}
 	}
 

@@ -13,7 +13,7 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget, 
     public float BaseDefense { get; set; } = 5f;
     public float Evasion { get; set; } = 0.15f;
     public float Health { get; set; } = 80f;
-    public float MaxHealth => 80f;
+    public float MaxHealth { get; set; } = 80f;
     public bool IsDead => Health <= 0f;
     public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -100);
     public Rect2 TargetBounds => new Rect2(-42f, -102f, 84f, 102f);
@@ -25,8 +25,8 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget, 
     private float _speed = 65f;
     private bool _isAggro = false;
     private float _attackCooldown = 0f;
-    private const float AttackCooldownTotal = 2.5f;
-    private const float AttackRange = 95f;
+    private float _attackCooldownTotal = 2.5f;
+    private float _attackRange = 95f;
     private const float AttackDuration = 0.45f;
     private float _attackAnimTimer = 0f;
     private bool _isAttacking = false;
@@ -53,6 +53,17 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget, 
 
     public override void _Ready()
     {
+        var vCfg = ConfigManager.Combat.Enemies.Villager;
+        BaseDamage = vCfg.BaseDamage;
+        Accuracy = vCfg.Accuracy;
+        BaseDefense = vCfg.BaseDefense;
+        Evasion = vCfg.Evasion;
+        MaxHealth = vCfg.MaxHealth;
+        Health = vCfg.MaxHealth;
+        _speed = vCfg.Speed;
+        _attackCooldownTotal = vCfg.AttackCooldown;
+        _attackRange = vCfg.AttackRange;
+
         if (HomePosition == Vector2.Zero)
         {
             HomePosition = GlobalPosition;
@@ -211,7 +222,7 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget, 
             Vector2 diff = TargetWerewolf.GlobalPosition - GlobalPosition;
             float dist = diff.Length();
 
-            if (dist > AttackRange)
+            if (dist > _attackRange)
             {
                 Velocity = diff.Normalized() * _speed * 1.35f;
                 _sprite.FlipH = Velocity.X < 0;
@@ -223,7 +234,7 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget, 
 
                 if (_attackCooldown <= 0f && !_isAttacking)
                 {
-                    _attackCooldown = AttackCooldownTotal;
+                    _attackCooldown = _attackCooldownTotal;
                     _isAttacking = true;
                     _attackAnimTimer = AttackDuration;
 

@@ -13,19 +13,22 @@ public static class Formulas
 
     public static float CalculateScratchHitDamage(ICombatant dealer, ICombatant target)
     {
-        float damageDealt = dealer.BaseDamage - target.BaseDefense / 2.0f + 12.0f;
+        float bonus = ConfigManager.Combat.Skills.Scratch.BonusDamage;
+        float damageDealt = dealer.BaseDamage - target.BaseDefense / 2.0f + bonus;
         return Math.Max(0f, damageDealt);
     }
 
     public static float CalculateChargeAttackDamage(ICombatant dealer, ICombatant target)
     {
-        float damageDealt = dealer.BaseDamage - target.BaseDefense / 2.0f + 20.0f;
+        float bonus = ConfigManager.Combat.Skills.Charge.BonusDamage;
+        float damageDealt = dealer.BaseDamage - target.BaseDefense / 2.0f + bonus;
         return Math.Max(0f, damageDealt);
     }
 
     public static float CalculateBiteDamage(ICombatant dealer, ICombatant target)
     {
-        float damageDealt = dealer.BaseDamage - target.BaseDefense / 2.0f + 15.0f;
+        float bonus = ConfigManager.Combat.Skills.Bite.BonusDamage;
+        float damageDealt = dealer.BaseDamage - target.BaseDefense / 2.0f + bonus;
         return Math.Max(0f, damageDealt);
     }
 

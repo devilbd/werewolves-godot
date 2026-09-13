@@ -13,15 +13,15 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget, IFog
     public float BaseDefense { get; set; } = 5f;
     public float Evasion { get; set; } = 0.15f;
     public float Health { get; set; } = 80f;
-    public float MaxHealth => 80f;
+    public float MaxHealth { get; set; } = 80f;
     public bool IsDead => Health <= 0f;
     public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -75);
 
     private float _speed = 70f;
     private bool _isAggro = false;
     private float _attackCooldown = 0f;
-    private const float AttackCooldownTotal = 3.0f;
-    private const float AttackRange = 90f;
+    private float _attackCooldownTotal = 3.0f;
+    private float _attackRange = 90f;
 
     private Vector2 _wanderVelocity = Vector2.Zero;
     private float _wanderTimer = 0f;
@@ -47,6 +47,17 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget, IFog
 
     public override void _Ready()
     {
+        var dCfg = ConfigManager.Combat.Enemies.Deer;
+        BaseDamage = dCfg.BaseDamage;
+        Accuracy = dCfg.Accuracy;
+        BaseDefense = dCfg.BaseDefense;
+        Evasion = dCfg.Evasion;
+        MaxHealth = dCfg.MaxHealth;
+        Health = dCfg.MaxHealth;
+        _speed = dCfg.Speed;
+        _attackCooldownTotal = dCfg.AttackCooldown;
+        _attackRange = dCfg.AttackRange;
+
         if (HomePosition == Vector2.Zero)
         {
             HomePosition = GlobalPosition;
@@ -147,7 +158,7 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget, IFog
             Vector2 diff = TargetWerewolf.GlobalPosition - GlobalPosition;
             float dist = diff.Length();
 
-            if (dist > AttackRange)
+            if (dist > _attackRange)
             {
                 Velocity = diff.Normalized() * _speed * 1.4f;
                 _sprite.FlipH = Velocity.X < 0;
@@ -158,7 +169,7 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget, IFog
                 if (_attackCooldown <= 0f)
                 {
                     // Attack Werewolf
-                    _attackCooldown = AttackCooldownTotal;
+                    _attackCooldown = _attackCooldownTotal;
                     if (Formulas.IsHitSuccessful(this, TargetWerewolf))
                     {
                         float dmg = Formulas.CalculateDamage(this, TargetWerewolf);
@@ -211,7 +222,7 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget, IFog
         {
             _sprite.Frame = 11; // Dead frame (row 2, col 3)
         }
-        else if (_attackCooldown > AttackCooldownTotal - 0.4f)
+        else if (_attackCooldown > _attackCooldownTotal - 0.4f)
         {
             _sprite.Frame = 10; // Attack frame (row 2, col 2)
         }

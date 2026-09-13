@@ -9,7 +9,7 @@ public partial class TreeObject : StaticBody2D, ISelectableTarget, IFogBorderabl
     [Export] public float TreeScale { get; set; } = 0f;
     public string TargetName => "Tree";
     public float Health { get; set; } = 100f;
-    public float MaxHealth => 100f;
+    public float MaxHealth { get; set; } = 100f;
     public bool IsDead => Health <= 0;
     public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -440f * _currentScale);
     public Rect2 TargetBounds => new Rect2(-64f * _currentScale, -100f * _currentScale, 128f * _currentScale, 108f * _currentScale);
@@ -29,6 +29,9 @@ public partial class TreeObject : StaticBody2D, ISelectableTarget, IFogBorderabl
 
     public override void _Ready()
     {
+        MaxHealth = ConfigManager.Combat.Harvestables.Tree.MaxHealth;
+        Health = MaxHealth;
+
         _sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
         if (_sprite == null)
         {
@@ -191,7 +194,7 @@ public partial class TreeObject : StaticBody2D, ISelectableTarget, IFogBorderabl
         Vibrate(6f, 0.2f);
         _isBlinking = true;
         _blinkTimer = _blinkDuration;
-        Health -= 25f; // Each chop deals 25 damage
+        Health -= ConfigManager.Combat.Harvestables.Tree.DamagePerHit;
 
         GameState.Instance.TriggerDamageNumber("Chop!", FloatingTextPosition, new Color(1f, 0.85f, 0.25f));
 

@@ -7,7 +7,7 @@ public partial class RockObject : StaticBody2D, ISelectableTarget, IFogBorderabl
 {
     public string TargetName => "Rock";
     public float Health { get; set; } = 100f;
-    public float MaxHealth => 100f;
+    public float MaxHealth { get; set; } = 100f;
     public bool IsDead => Health <= 0;
     public Vector2 FloatingTextPosition => GlobalPosition + new Vector2(0, -70);
     public Rect2 TargetBounds => new Rect2(-36f, -38f, 72f, 40f);
@@ -26,6 +26,9 @@ public partial class RockObject : StaticBody2D, ISelectableTarget, IFogBorderabl
 
     public override void _Ready()
     {
+        MaxHealth = ConfigManager.Combat.Harvestables.Rock.MaxHealth;
+        Health = MaxHealth;
+
         _sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
         if (_sprite == null)
         {
@@ -148,7 +151,7 @@ public partial class RockObject : StaticBody2D, ISelectableTarget, IFogBorderabl
         Vibrate(5f, 0.18f);
         _isBlinking = true;
         _blinkTimer = _blinkDuration;
-        Health -= 25f;
+        Health -= ConfigManager.Combat.Harvestables.Rock.DamagePerHit;
 
         GameState.Instance.TriggerDamageNumber("Quarry!", FloatingTextPosition, new Color(0.9f, 0.9f, 0.9f));
 

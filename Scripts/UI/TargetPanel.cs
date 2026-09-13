@@ -22,12 +22,14 @@ public partial class TargetPanel : PanelContainer
     private Texture2D _attackIcon = null!;
     private Texture2D _chopIcon = null!;
     private Texture2D _quarryIcon = null!;
+    private Texture2D _openIcon = null!;
 
     public override void _Ready()
     {
         _attackIcon = GD.Load<Texture2D>("res://assets/icons/simple_attack_menu.png");
         _chopIcon = GD.Load<Texture2D>("res://assets/icons/log_chopping.png");
         _quarryIcon = GD.Load<Texture2D>("res://assets/icons/rock_stone_digging.png");
+        _openIcon = GD.Load<Texture2D>("res://assets/chests/chest_closed.png");
 
         CustomMinimumSize = new Vector2(240, 145);
         ApplyPanelStyle();
@@ -424,6 +426,7 @@ public partial class TargetPanel : PanelContainer
                 "Tree" or "Pine Tree" => "Chop",
                 "Rock" or "Quarry Boulder" => "Quarry",
                 "Quartz" or "Quartz Crystal" => "Chop",
+                "Treasure Chest" or "Chest" => "Open",
                 _ => "Attack"
             };
 
@@ -432,6 +435,7 @@ public partial class TargetPanel : PanelContainer
                 "Tree" or "Pine Tree" => _chopIcon,
                 "Rock" or "Quarry Boulder" => _quarryIcon,
                 "Quartz" or "Quartz Crystal" => _chopIcon,
+                "Treasure Chest" or "Chest" => _openIcon,
                 _ => _attackIcon
             };
             if (_actionButton.TextureNormal != actionTex)

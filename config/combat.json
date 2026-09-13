@@ -1,0 +1,74 @@
+{
+  "player": {
+    "maxHealth": 100.0,
+    "maxPower": 100.0,
+    "healthRegenRate": 0.10,
+    "powerRegenRate": 0.20,
+    "baseDamage": 25.0,
+    "baseDefense": 10.0,
+    "speed": 260.0,
+    "accuracy": 0.80,
+    "evasion": 0.10
+  },
+  "skills": {
+    "scratch": {
+      "powerCost": 15.0,
+      "cooldown": 5.0,
+      "bonusDamage": 12.0
+    },
+    "charge": {
+      "powerCost": 25.0,
+      "cooldown": 8.0,
+      "bonusDamage": 20.0
+    },
+    "bite": {
+      "powerCost": 20.0,
+      "cooldown": 10.0,
+      "bonusDamage": 15.0,
+      "executeHpThreshold": 0.25,
+      "healAmount": 20.0
+    },
+    "howl": {
+      "powerCost": 40.0,
+      "cooldown": 30.0,
+      "duration": 10.0,
+      "statMultiplier": 1.30
+    }
+  },
+  "enemies": {
+    "deer": {
+      "maxHealth": 80.0,
+      "baseDamage": 15.0,
+      "baseDefense": 5.0,
+      "speed": 70.0,
+      "accuracy": 0.75,
+      "evasion": 0.15,
+      "attackCooldown": 3.0,
+      "attackRange": 90.0
+    },
+    "villager": {
+      "maxHealth": 80.0,
+      "baseDamage": 15.0,
+      "baseDefense": 5.0,
+      "speed": 65.0,
+      "accuracy": 0.75,
+      "evasion": 0.15,
+      "attackCooldown": 2.5,
+      "attackRange": 95.0
+    }
+  },
+  "harvestables": {
+    "tree": {
+      "maxHealth": 100.0,
+      "damagePerHit": 25.0
+    },
+    "rock": {
+      "maxHealth": 100.0,
+      "damagePerHit": 25.0
+    },
+    "quartz": {
+      "maxHealth": 100.0,
+      "damagePerHit": 25.0
+    }
+  }
+}

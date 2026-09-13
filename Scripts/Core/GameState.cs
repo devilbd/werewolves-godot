@@ -135,7 +135,31 @@ public partial class GameState : Node
 
     public override void _Ready()
     {
+        ConfigManager.LoadAll();
+        InitStatsFromConfig();
         SaveManager.LoadGame();
+    }
+
+    public void InitStatsFromConfig()
+    {
+        var p = ConfigManager.Combat.Player;
+        PlayerMaxHealth = p.MaxHealth;
+        PlayerHealth = p.MaxHealth;
+        PlayerMaxPower = p.MaxPower;
+        PlayerPower = p.MaxPower;
+        HealthRegenRate = p.HealthRegenRate;
+        PowerRegenRate = p.PowerRegenRate;
+        BaseDamage = p.BaseDamage;
+        BaseDefense = p.BaseDefense;
+        Speed = p.Speed;
+        Accuracy = p.Accuracy;
+        Evasion = p.Evasion;
+
+        var s = ConfigManager.Combat.Skills;
+        SkillCooldownTotal[0] = s.Scratch.Cooldown;
+        SkillCooldownTotal[1] = s.Charge.Cooldown;
+        SkillCooldownTotal[2] = s.Bite.Cooldown;
+        SkillCooldownTotal[3] = s.Howl.Cooldown;
     }
 
     public override void _Process(double delta)
@@ -234,26 +258,30 @@ public partial class GameState : Node
     {
         if (IsBuffed) return;
 
+        var howl = ConfigManager.Combat.Skills.Howl;
         IsBuffed = true;
-        BuffTimeRemaining = BuffDuration;
-        BaseDamage *= 1.3f;
-        BaseDefense *= 1.3f;
-        Speed *= 1.3f;
-        Accuracy *= 1.3f;
-        Evasion *= 1.3f;
+        BuffTimeRemaining = howl.Duration;
+        float mult = howl.StatMultiplier;
+        BaseDamage *= mult;
+        BaseDefense *= mult;
+        Speed *= mult;
+        Accuracy *= mult;
+        Evasion *= mult;
     }
 
     private void RemoveBuff()
     {
         if (!IsBuffed) return;
 
+        var howl = ConfigManager.Combat.Skills.Howl;
         IsBuffed = false;
         BuffTimeRemaining = 0f;
-        BaseDamage /= 1.3f;
-        BaseDefense /= 1.3f;
-        Speed /= 1.3f;
-        Accuracy /= 1.3f;
-        Evasion /= 1.3f;
+        float mult = howl.StatMultiplier;
+        BaseDamage /= mult;
+        BaseDefense /= mult;
+        Speed /= mult;
+        Accuracy /= mult;
+        Evasion /= mult;
     }
 
     public void SetPlayerPosition(Vector2 pos)

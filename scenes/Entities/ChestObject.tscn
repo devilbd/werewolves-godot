@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://c6chestscene"]
+
+[ext_resource type="Script" path="res://Scripts/Entities/ChestObject.cs" id="1_chest"]
+[ext_resource type="Texture2D" path="res://assets/chests/chest_closed.png" id="2_chest_tex"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 20.0
+
+[node name="ChestObject" type="StaticBody2D"]
+input_pickable = true
+script = ExtResource("1_chest")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.22, 0.22)
+offset = Vector2(0, -157)
+texture = ExtResource("2_chest_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -10)
+shape = SubResource("CircleShape2D_1")

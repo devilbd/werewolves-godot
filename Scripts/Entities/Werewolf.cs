@@ -301,6 +301,15 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
                 }
             }
         }
+        else if (target is ChestObject chest)
+        {
+            if (dist <= MeleeRange * 1.5f && !_isAttacking)
+            {
+                TriggerAttackAnimation(0);
+                chest.Interact();
+                SetAutoInteract(false);
+            }
+        }
     }
 
     private void ExecuteMeleeHit(ICombatant combatant, ISelectableTarget selectableTarget)
@@ -333,13 +342,14 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
 
         switch (skillIndex)
         {
-            case 0: // Scratch Hit (5s cooldown)
-                if (GameState.Instance.PlayerPower < 15f)
+            case 0: // Scratch Hit
+                var skScratch = ConfigManager.Combat.Skills.Scratch;
+                if (GameState.Instance.PlayerPower < skScratch.PowerCost)
                 {
-                    GameState.Instance.TriggerDamageNumber("Need 15 Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
+                    GameState.Instance.TriggerDamageNumber($"Need {(int)skScratch.PowerCost} Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
                     return;
                 }
-                GameState.Instance.ModifyPower(-15f);
+                GameState.Instance.ModifyPower(-skScratch.PowerCost);
                 GameState.Instance.StartSkillCooldown(0);
                 TriggerAttackAnimation(0);
 
@@ -354,10 +364,11 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
                 }
                 break;
 
-            case 1: // Charge Attack (8s cooldown)
-                if (GameState.Instance.PlayerPower < 25f)
+            case 1: // Charge Attack
+                var skCharge = ConfigManager.Combat.Skills.Charge;
+                if (GameState.Instance.PlayerPower < skCharge.PowerCost)
                 {
-                    GameState.Instance.TriggerDamageNumber("Need 25 Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
+                    GameState.Instance.TriggerDamageNumber($"Need {(int)skCharge.PowerCost} Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
                     return;
                 }
                 if (GameState.Instance.SelectedTarget is not ICombatant chargeTarget || GameState.Instance.SelectedTarget is not ISelectableTarget selCharge || chargeTarget.IsDead)
@@ -365,7 +376,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
                     GameState.Instance.TriggerDamageNumber("Need Target!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.7f, 0.3f));
                     return;
                 }
-                GameState.Instance.ModifyPower(-25f);
+                GameState.Instance.ModifyPower(-skCharge.PowerCost);
                 GameState.Instance.StartSkillCooldown(1);
                 _isCharging = true;
                 _chargeTargetPos = chargeTarget.GlobalPosition;
@@ -386,10 +397,11 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
                 };
                 break;
 
-            case 2: // Bite (Execute below 25% HP, 10s cooldown)
-                if (GameState.Instance.PlayerPower < 20f)
+            case 2: // Bite
+                var skBite = ConfigManager.Combat.Skills.Bite;
+                if (GameState.Instance.PlayerPower < skBite.PowerCost)
                 {
-                    GameState.Instance.TriggerDamageNumber("Need 20 Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
+                    GameState.Instance.TriggerDamageNumber($"Need {(int)skBite.PowerCost} Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
                     return;
                 }
                 if (GameState.Instance.SelectedTarget is not ICombatant biteTarget || GameState.Instance.SelectedTarget is not ISelectableTarget selBite || biteTarget.IsDead)
@@ -397,9 +409,9 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
                     GameState.Instance.TriggerDamageNumber("Need Target!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.7f, 0.3f));
                     return;
                 }
-                if (biteTarget.Health / biteTarget.MaxHealth > 0.25f)
+                if (biteTarget.Health / biteTarget.MaxHealth > skBite.ExecuteHpThreshold)
                 {
-                    GameState.Instance.TriggerDamageNumber("Target HP > 25%!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.7f, 0.3f));
+                    GameState.Instance.TriggerDamageNumber($"Target HP > {(int)(skBite.ExecuteHpThreshold * 100)}%!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.7f, 0.3f));
                     return;
                 }
                 if (GlobalPosition.DistanceTo(biteTarget.GlobalPosition) > MeleeRange * 1.4f)
@@ -408,7 +420,7 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
                     return;
                 }
 
-                GameState.Instance.ModifyPower(-20f);
+                GameState.Instance.ModifyPower(-skBite.PowerCost);
                 GameState.Instance.StartSkillCooldown(2);
                 TriggerAttackAnimation(2);
 
@@ -416,19 +428,20 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
                 {
                     float dmg = Formulas.CalculateBiteDamage(this, biteTarget);
                     biteTarget.TakeDamage(dmg, isSkill: true);
-                    GameState.Instance.ModifyHealth(20f); // Heal werewolf 20 HP
-                    GameState.Instance.TriggerDamageNumber("+20 HP", GlobalPosition + new Vector2(0, -85), new Color(0.2f, 1f, 0.4f));
+                    GameState.Instance.ModifyHealth(skBite.HealAmount);
+                    GameState.Instance.TriggerDamageNumber($"+{(int)skBite.HealAmount} HP", GlobalPosition + new Vector2(0, -85), new Color(0.2f, 1f, 0.4f));
                     GameState.Instance.TriggerDamageNumber(Mathf.FloorToInt(dmg).ToString(), selBite.FloatingTextPosition, new Color(1f, 0.2f, 0.2f));
                 }
                 break;
 
-            case 3: // Blood Howling (Ultimate buff, 30s cooldown)
-                if (GameState.Instance.PlayerPower < 40f)
+            case 3: // Blood Howling
+                var skHowl = ConfigManager.Combat.Skills.Howl;
+                if (GameState.Instance.PlayerPower < skHowl.PowerCost)
                 {
-                    GameState.Instance.TriggerDamageNumber("Need 40 Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
+                    GameState.Instance.TriggerDamageNumber($"Need {(int)skHowl.PowerCost} Power!", GlobalPosition + new Vector2(0, -85), new Color(0.95f, 0.4f, 0.4f));
                     return;
                 }
-                GameState.Instance.ModifyPower(-40f);
+                GameState.Instance.ModifyPower(-skHowl.PowerCost);
                 GameState.Instance.StartSkillCooldown(3);
                 TriggerAttackAnimation(3);
                 GameState.Instance.ApplyHowlBuff();
@@ -512,6 +525,19 @@ public partial class Werewolf : CharacterBody2D, ICombatant, IFogBorderable
                 }
             }
             else if (GlobalPosition.DistanceTo(quartz.GlobalPosition) > MeleeRange * 1.5f)
+            {
+                GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
+            }
+        }
+        else if (GameState.Instance.SelectedTarget is ChestObject chest)
+        {
+            if (GlobalPosition.DistanceTo(chest.GlobalPosition) <= MeleeRange * 1.5f && !_isAttacking)
+            {
+                TriggerAttackAnimation(0);
+                chest.Interact();
+                SetAutoInteract(false);
+            }
+            else if (GlobalPosition.DistanceTo(chest.GlobalPosition) > MeleeRange * 1.5f)
             {
                 GameState.Instance.TriggerDamageNumber("Auto: approaching...", GlobalPosition + new Vector2(0, -85), new Color(0.9f, 0.85f, 0.5f));
             }

@@ -1,0 +1,44 @@
+{
+  "spawning": {
+    "targetCount": 5,
+    "minSeparationDistance": 2500.0,
+    "awakeningGroveBuffer": 900.0,
+    "lairBuffer": 700.0,
+    "villageBuffer": 1400.0,
+    "worldMargin": 500.0,
+    "maxAttempts": 1000
+  },
+  "loot": {
+    "flaskDropChance": 0.20,
+    "flaskAmount": 1,
+    "singleResourceTypeChance": 0.65,
+    "maxResourceTypes": 2,
+    "resources": [
+      {
+        "itemType": "GoldCoins",
+        "minAmount": 2,
+        "maxAmount": 5
+      },
+      {
+        "itemType": "Quartz",
+        "minAmount": 1,
+        "maxAmount": 1
+      },
+      {
+        "itemType": "Logs",
+        "minAmount": 1,
+        "maxAmount": 2
+      },
+      {
+        "itemType": "Stones",
+        "minAmount": 1,
+        "maxAmount": 2
+      },
+      {
+        "itemType": "Meat",
+        "minAmount": 1,
+        "maxAmount": 2
+      }
+    ]
+  }
+}

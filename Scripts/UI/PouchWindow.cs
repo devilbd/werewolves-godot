@@ -206,6 +206,7 @@ public partial class PouchWindow : Control
                 "Meat" => "res://assets/meat_collected_o.png",
                 "GoldCoins" or "Gold Coins" or "Gold" => "res://assets/gold_coins.png",
                 "Quartz" => "res://assets/resources/quartz/quartz_2.png",
+                "EmptyFlask" or "Empty Flask" or "Flask" => "res://assets/flasks/blood_flask_0.png",
                 _ => "res://assets/logs_collected_o.png"
             };
 
