@@ -51,12 +51,94 @@ public partial class BloodSpot : Area2D, IFogBorderable
         InputPickable = true;
         MouseEntered += OnMouseEntered;
         MouseExited += OnMouseExited;
+
+        BuildBloodLabel();
+    }
+
+    private Button _bloodLabel = null!;
+
+    private void BuildBloodLabel()
+    {
+        _bloodLabel = new Button
+        {
+            Name = "BloodLabel",
+            Text = $"[ Blood Spot ({MaxLifetime:F0}s) ]",
+            Position = new Vector2(-55f, -62f),
+            CustomMinimumSize = new Vector2(110f, 22f),
+            Size = new Vector2(110f, 22f),
+            ZIndex = 50,
+            MouseFilter = Control.MouseFilterEnum.Stop,
+            TooltipText = "Click to collect blood with flask"
+        };
+
+        var styleNormal = new StyleBoxFlat
+        {
+            BgColor = new Color(0.12f, 0.05f, 0.05f, 0.92f),
+            BorderColor = new Color(0.95f, 0.25f, 0.25f),
+            BorderWidthLeft = 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 3,
+            CornerRadiusTopRight = 3,
+            CornerRadiusBottomLeft = 3,
+            CornerRadiusBottomRight = 3
+        };
+        var styleHover = new StyleBoxFlat
+        {
+            BgColor = new Color(0.25f, 0.10f, 0.10f, 1.0f),
+            BorderColor = Colors.White,
+            BorderWidthLeft = 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 3,
+            CornerRadiusTopRight = 3,
+            CornerRadiusBottomLeft = 3,
+            CornerRadiusBottomRight = 3
+        };
+
+        _bloodLabel.AddThemeStyleboxOverride("normal", styleNormal);
+        _bloodLabel.AddThemeStyleboxOverride("hover", styleHover);
+        _bloodLabel.AddThemeColorOverride("font_color", new Color(1.0f, 0.45f, 0.45f));
+        _bloodLabel.AddThemeColorOverride("font_hover_color", Colors.White);
+        _bloodLabel.AddThemeFontSizeOverride("font_size", 11);
+
+        _bloodLabel.Pressed += () =>
+        {
+            TryCollect();
+            GetViewport().SetInputAsHandled();
+        };
+        _bloodLabel.MouseEntered += () => CursorManager.SetGrab();
+        _bloodLabel.MouseExited += () => CursorManager.ResetNormal();
+
+        _bloodLabel.Visible = GameState.Instance != null && GameState.Instance.IsLootLabelsVisible;
+        if (GameState.Instance != null)
+        {
+            GameState.Instance.OnLootLabelsToggled += OnLootLabelsToggled;
+        }
+
+        AddChild(_bloodLabel);
+    }
+
+    private void OnLootLabelsToggled(bool visible)
+    {
+        if (GodotObject.IsInstanceValid(this) && _bloodLabel != null && GodotObject.IsInstanceValid(_bloodLabel))
+        {
+            _bloodLabel.Visible = visible;
+        }
     }
 
     public override void _Process(double delta)
     {
         float dt = (float)delta;
         _lifetime += dt;
+
+        if (_bloodLabel != null && GodotObject.IsInstanceValid(_bloodLabel) && _bloodLabel.Visible)
+        {
+            float rem = Mathf.Max(0f, MaxLifetime - _lifetime);
+            _bloodLabel.Text = $"[ Blood Spot ({rem:F0}s) ]";
+        }
 
         // Smooth fade out during the final 5 seconds of the 40s lifetime
         if (_lifetime >= MaxLifetime - FadeOutDuration)
@@ -134,6 +216,11 @@ public partial class BloodSpot : Area2D, IFogBorderable
 
     public override void _ExitTree()
     {
+        if (GameState.Instance != null)
+        {
+            GameState.Instance.OnLootLabelsToggled -= OnLootLabelsToggled;
+        }
+
         if (_isHovered || _isCollected)
         {
             CursorManager.ForceResetNormal();

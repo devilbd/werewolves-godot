@@ -199,4 +199,39 @@ This document tracks the evolution of game systems, balance updates, content add
   - Upon game launch, `Main.cs` inspects `GameState.Instance.IsInLair`. If true, it immediately routes directly to `res://scenes/Lair.tscn`.
   - `LairManager.cs` restores the werewolf to `SaveManager.LoadedPlayerPosition`, resuming the player exactly where they stood inside the cave hideout.
 
+---
+
+## 🗺️ Version 2.8 — Alt-Key Ground Loot Names, Death Scatter Fix & World/Cavern Map System
+
+### 1. Living Entity Drop Scatter & Overlap Bug Fix
+- **Scatter Offset**: Resolved bug where blood spot pools would spawn at the exact same location as dropped Meat/Gold and intercept user mouse clicks.
+  - Added a randomized offset ($\pm 24\text{px}$ X, $\pm 16\text{px}$ Y) to drops in `Deer.cs` and `Villager.cs`.
+  - Meat and currency pickups now land separated from the central blood pool, allowing easy targeting.
+
+### 2. ARPG-Style Alt-Key Loot Highlight System
+- **Key Binding**: Holding <kbd>Alt</kbd> (Left or Right) dynamically reveals floating, clickable nameplates above all ground items and blood pools in the world.
+- **Visual Nameplates**:
+  - `[ ItemName (Count) ]` buttons color-coded by rarity (Gold = Yellow, Meat = Crimson, Quartz = Lavender, Flasks = Cyan, Resources = Green) positioned at $Y = -38\text{px}$.
+  - `[ Blood Spot ({seconds}s) ]` crimson badge with live lifetime countdown positioned at $Y = -62\text{px}$ to prevent label collisions.
+- **Direct Collection**: Clicking either label directly collects the corresponding item or fills an empty flask, completely bypassing 2D collision occlusion.
+- **Event-Driven Architecture**: `GameState.Instance.OnLootLabelsToggled` with continuous key state polling in `HUDManager._Process`.
+
+### 3. World & Cavern Map System (`MapWindow.cs`)
+- **Hotkey & Action Bar Integration**: Toggleable via keypress <kbd>M</kbd> (`toggle_map`), Escape key dismissal, or the new 4th slot on the HUD Action Bar featuring an antique compass rose icon.
+- **Wilderness Map View**:
+  - Full $10,000 \times 10,000$ open-world Cartesian coordinate space with major grid markers every 1000m.
+  - Permanent landmark pins: Awakening Grove `(0, 0)`, Werewolf's Lair Entrance `(-650, 450)`, The Village `(2500, 1800)`, Quarry Hills `(2200, -2200)`, Silent Lake, and Misty Lake.
+  - **Visible Perception Radar Range ($R = 1800\text{m}$)**: A glowing radial perception aura centered on the player that scans and renders real-time entity blips within sensory range:
+    - Humans / Villagers (Gold)
+    - Wildlife / Deer (Emerald)
+    - Treasure Chests (Golden Amber)
+    - Minable Quartz Clusters (Purple)
+    - Ground Loot & Collectibles (Cyan)
+    - Harvestable Blood Spots (Crimson)
+  - Interactive tooltips showing entity name, distance, and relative bearing.
+  - Pan & Zoom controls (0.035x to 0.35x), "Center Player" button, and layer filter toggles (Landmarks, Creatures, Resources, Loot).
+- **Cavern Map View**:
+  - Automatically switches when inside the hideout (`GameState.Instance.IsInLair == true`).
+  - Displays cavern borders, Central Blood Core altar (with live blood reserves %), fixed workshop installations (Crafting Table, Blood Juicer, Laboratory), placed storage chests, and exit portal.
+
 

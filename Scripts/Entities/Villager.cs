@@ -178,20 +178,22 @@ public partial class Villager : CharacterBody2D, ICombatant, ISelectableTarget, 
                 var lootResult = Formulas.RollVillagerLoot();
                 if (lootResult.GoldCoins > 0 && lootResult.Meat > 0)
                 {
-                    var goldLoot = DroppedLoot.Instantiate("GoldCoins", GlobalPosition + new Vector2(-18f, 0f), lootResult.GoldCoins);
+                    var goldLoot = DroppedLoot.Instantiate("GoldCoins", GlobalPosition + new Vector2(-24f, -12f), lootResult.GoldCoins);
                     GetParent()?.AddChild(goldLoot);
 
-                    var meatLoot = DroppedLoot.Instantiate("Meat", GlobalPosition + new Vector2(18f, 0f), lootResult.Meat);
+                    var meatLoot = DroppedLoot.Instantiate("Meat", GlobalPosition + new Vector2(24f, -12f), lootResult.Meat);
                     GetParent()?.AddChild(meatLoot);
                 }
                 else if (lootResult.GoldCoins > 0)
                 {
-                    var goldLoot = DroppedLoot.Instantiate("GoldCoins", GlobalPosition, lootResult.GoldCoins);
+                    Vector2 offset = new Vector2((float)GD.RandRange(-24.0, 24.0), (float)GD.RandRange(-16.0, 16.0));
+                    var goldLoot = DroppedLoot.Instantiate("GoldCoins", GlobalPosition + offset, lootResult.GoldCoins);
                     GetParent()?.AddChild(goldLoot);
                 }
                 else if (lootResult.Meat > 0)
                 {
-                    var meatLoot = DroppedLoot.Instantiate("Meat", GlobalPosition, lootResult.Meat);
+                    Vector2 offset = new Vector2((float)GD.RandRange(-24.0, 24.0), (float)GD.RandRange(-16.0, 16.0));
+                    var meatLoot = DroppedLoot.Instantiate("Meat", GlobalPosition + offset, lootResult.Meat);
                     GetParent()?.AddChild(meatLoot);
                 }
 

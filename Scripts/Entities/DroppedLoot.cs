@@ -84,6 +84,96 @@ public partial class DroppedLoot : Area2D, IFogBorderable
         InputPickable = true;
         MouseEntered += OnMouseEntered;
         MouseExited += OnMouseExited;
+
+        BuildLootLabel();
+    }
+
+    private Button _lootLabel = null!;
+
+    private void BuildLootLabel()
+    {
+        string displayName = (ItemType is "GoldCoins" or "Gold Coins" or "Gold")
+            ? (Amount > 1 ? $"Gold ({Amount})" : "Gold")
+            : (Amount > 1 ? $"{ItemType} ({Amount})" : ItemType);
+
+        Color textColor = (ItemType is "GoldCoins" or "Gold Coins" or "Gold")
+            ? new Color(1.0f, 0.88f, 0.25f)
+            : (ItemType is "Meat"
+                ? new Color(1.0f, 0.55f, 0.55f)
+                : (ItemType is "Quartz"
+                    ? new Color(0.85f, 0.70f, 1.0f)
+                    : ((ItemType is "EmptyFlask" or "Empty Flask" or "Flask")
+                        ? new Color(0.55f, 0.85f, 1.0f)
+                        : new Color(0.65f, 0.95f, 0.65f))));
+
+        _lootLabel = new Button
+        {
+            Name = "LootLabel",
+            Text = $"[ {displayName} ]",
+            Position = new Vector2(-45f, -38f),
+            CustomMinimumSize = new Vector2(90f, 22f),
+            Size = new Vector2(90f, 22f),
+            ZIndex = 50,
+            MouseFilter = Control.MouseFilterEnum.Stop,
+            TooltipText = $"Click to pick up {displayName}"
+        };
+
+        var styleNormal = new StyleBoxFlat
+        {
+            BgColor = new Color(0.08f, 0.09f, 0.12f, 0.92f),
+            BorderColor = textColor,
+            BorderWidthLeft = 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 3,
+            CornerRadiusTopRight = 3,
+            CornerRadiusBottomLeft = 3,
+            CornerRadiusBottomRight = 3
+        };
+        var styleHover = new StyleBoxFlat
+        {
+            BgColor = new Color(0.18f, 0.20f, 0.26f, 1.0f),
+            BorderColor = Colors.White,
+            BorderWidthLeft = 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 3,
+            CornerRadiusTopRight = 3,
+            CornerRadiusBottomLeft = 3,
+            CornerRadiusBottomRight = 3
+        };
+
+        _lootLabel.AddThemeStyleboxOverride("normal", styleNormal);
+        _lootLabel.AddThemeStyleboxOverride("hover", styleHover);
+        _lootLabel.AddThemeColorOverride("font_color", textColor);
+        _lootLabel.AddThemeColorOverride("font_hover_color", Colors.White);
+        _lootLabel.AddThemeFontSizeOverride("font_size", 11);
+
+        _lootLabel.Pressed += () =>
+        {
+            Collect();
+            GetViewport().SetInputAsHandled();
+        };
+        _lootLabel.MouseEntered += () => CursorManager.SetGrab();
+        _lootLabel.MouseExited += () => CursorManager.ResetNormal();
+
+        _lootLabel.Visible = GameState.Instance != null && GameState.Instance.IsLootLabelsVisible;
+        if (GameState.Instance != null)
+        {
+            GameState.Instance.OnLootLabelsToggled += OnLootLabelsToggled;
+        }
+
+        AddChild(_lootLabel);
+    }
+
+    private void OnLootLabelsToggled(bool visible)
+    {
+        if (GodotObject.IsInstanceValid(this) && _lootLabel != null && GodotObject.IsInstanceValid(_lootLabel))
+        {
+            _lootLabel.Visible = visible;
+        }
     }
 
     private void OnMouseEntered()
@@ -150,6 +240,11 @@ public partial class DroppedLoot : Area2D, IFogBorderable
 
     public override void _ExitTree()
     {
+        if (GameState.Instance != null)
+        {
+            GameState.Instance.OnLootLabelsToggled -= OnLootLabelsToggled;
+        }
+
         if (_isHovered || _isCollected)
         {
             CursorManager.ForceResetNormal();

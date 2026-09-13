@@ -9,9 +9,11 @@ public partial class ActionBar : PanelContainer
     private TextureButton _heroButton = null!;
     private TextureButton _pouchButton = null!;
     private TextureButton _craftButton = null!;
+    private TextureButton _mapButton = null!;
     private Panel _heroSlotBg = null!;
     private Panel _pouchSlotBg = null!;
     private Panel _craftSlotBg = null!;
+    private Panel _mapSlotBg = null!;
 
     private StyleBoxFlat _slotNormalStyle = null!;
     private StyleBoxFlat _slotHoverStyle = null!;
@@ -26,7 +28,7 @@ public partial class ActionBar : PanelContainer
         ApplyPanelStyle();
         InitSlotStyles();
 
-        CustomMinimumSize = new Vector2(258, 120);
+        CustomMinimumSize = new Vector2(344, 120);
 
         var hbox = GetNodeOrNull<HBoxContainer>("HBoxContainer");
         if (hbox == null)
@@ -185,6 +187,55 @@ public partial class ActionBar : PanelContainer
             craftSlot.AddChild(craftKeyLabel);
 
             hbox.AddChild(craftSlot);
+
+            // --- Slot 4: Map (M) ---
+            var mapSlot = new Control
+            {
+                Name = "MapSlot",
+                CustomMinimumSize = new Vector2(SlotWidth, SlotHeight)
+            };
+
+            _mapSlotBg = new Panel
+            {
+                Name = "SlotBg",
+                CustomMinimumSize = new Vector2(SlotWidth, SlotHeight),
+                Size = new Vector2(SlotWidth, SlotHeight),
+                MouseFilter = MouseFilterEnum.Ignore
+            };
+            _mapSlotBg.AddThemeStyleboxOverride("panel", _slotNormalStyle);
+            mapSlot.AddChild(_mapSlotBg);
+
+            _mapButton = new TextureButton
+            {
+                Name = "MapButton",
+                TextureNormal = GD.Load<Texture2D>("res://assets/icons/map_icon.png"),
+                IgnoreTextureSize = true,
+                StretchMode = TextureButton.StretchModeEnum.KeepAspectCentered,
+                CustomMinimumSize = new Vector2(56, 56),
+                Size = new Vector2(56, 56),
+                Position = new Vector2((SlotWidth - 56) / 2f, (SlotHeight - 56) / 2f),
+                TooltipText = "World & Cavern Map (M)"
+            };
+            _mapButton.Pressed += () => GameState.Instance.ToggleMap();
+            _mapButton.MouseEntered += () => _mapSlotBg.AddThemeStyleboxOverride("panel", _slotHoverStyle);
+            _mapButton.MouseExited += () => _mapSlotBg.AddThemeStyleboxOverride("panel", _slotNormalStyle);
+            mapSlot.AddChild(_mapButton);
+
+            var mapKeyLabel = new Label
+            {
+                Name = "KeyLabel",
+                Text = "M",
+                Position = new Vector2(5, 3),
+                Size = new Vector2(20, 20),
+                MouseFilter = MouseFilterEnum.Ignore
+            };
+            mapKeyLabel.AddThemeFontSizeOverride("font_size", 12);
+            mapKeyLabel.AddThemeColorOverride("font_color", new Color(1f, 0.9f, 0.35f));
+            mapKeyLabel.AddThemeConstantOverride("outline_size", 3);
+            mapKeyLabel.AddThemeColorOverride("font_outline_color", new Color(0.05f, 0.05f, 0.05f, 0.95f));
+            mapSlot.AddChild(mapKeyLabel);
+
+            hbox.AddChild(mapSlot);
         }
         else
         {
@@ -239,6 +290,24 @@ public partial class ActionBar : PanelContainer
                     {
                         _craftButton.MouseEntered += () => _craftSlotBg.AddThemeStyleboxOverride("panel", _slotHoverStyle);
                         _craftButton.MouseExited += () => _craftSlotBg.AddThemeStyleboxOverride("panel", _slotNormalStyle);
+                    }
+                }
+            }
+
+            var mapSlot = hbox.GetNodeOrNull<Control>("MapSlot");
+            if (mapSlot != null)
+            {
+                _mapSlotBg = mapSlot.GetNodeOrNull<Panel>("SlotBg")!;
+                if (_mapSlotBg != null) _mapSlotBg.AddThemeStyleboxOverride("panel", _slotNormalStyle);
+
+                _mapButton = mapSlot.GetNodeOrNull<TextureButton>("MapButton")!;
+                if (_mapButton != null)
+                {
+                    _mapButton.Pressed += () => GameState.Instance.ToggleMap();
+                    if (_mapSlotBg != null)
+                    {
+                        _mapButton.MouseEntered += () => _mapSlotBg.AddThemeStyleboxOverride("panel", _slotHoverStyle);
+                        _mapButton.MouseExited += () => _mapSlotBg.AddThemeStyleboxOverride("panel", _slotNormalStyle);
                     }
                 }
             }

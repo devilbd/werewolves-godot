@@ -78,7 +78,8 @@ werewolves-godot/
 │   │   ├── HeroDetailsWindow.cs # Draggable character attribute sheet with solo portrait & wooden sign
 │   │   ├── CraftingWindow.cs  # Draggable cave crafting modal with recipe cards & build triggers
 │   │   ├── ChestInventoryWindow.cs # Draggable storage chest modal (chest_inventory.png, 8x4 slots)
-│   │   └── ActionBar.cs       # Action bar holding Hero Details (C), Pouch (P), and Crafting (B) buttons
+│   │   ├── MapWindow.cs       # Draggable world & cavern map modal with 1800m radar perception
+│   │   └── ActionBar.cs       # Action bar holding Hero Details (C), Pouch (P), Crafting (B), and Map (M) buttons
 │   └── Effects/               # Transient combat feedback and visual FX
 │       ├── BuffAura.cs        # CpuParticles2D violet glowing aura for Howl buff
 │       ├── DamageNumber.cs    # Floating text drift and fade effect
@@ -97,7 +98,7 @@ werewolves-godot/
     ├── cursors/               # normal_o.png, interaction_o.png, grab_o.png
     ├── werewolf/              # werewolf_head.png, solo.png, optimized/ animation spritesheets
     ├── houses/                # house_1..4.png, simple_path_cross_prim.png, lantern_light.png
-    ├── icons/                 # scratch_hit_icon.png, charge_attack.png, bite.png, blood_howling.png
+    ├── icons/                 # map_icon.png, scratch_hit_icon.png, charge_attack.png, bite.png, blood_howling.png
     ├── villager/              # villager.png (3x3 spritesheet)
     └── gold_coins.png         # Collectible currency sprite
 ```
@@ -178,10 +179,16 @@ All scripts are designed to work under two scenarios:
   - Draggable character sheet toggleable via <kbd>C</kbd> or HUD menu button.
   - Features 600×650 werewolf portrait (`solo.png`) anchored on the left, rustic wooden sign background (`wooden_sign_flat.png`), and live combat attributes (Health, Power, Damage, Defense, Speed, Accuracy, Evasion).
 - **`ActionBar`**:
-  - Clean modular action bar positioned beside the skill bar holding:
+  - Clean modular action bar positioned beside the skill bar ($344 \times 120\text{px}$) holding:
     - Hero Details button (<kbd>C</kbd>, `werewolf_head.png` scaled 50%)
     - Pouch Bag button (<kbd>P</kbd>)
     - Cave Crafting button (<kbd>B</kbd>, `crafting-table.png`)
+    - World & Cavern Map button (<kbd>M</kbd>, `map_icon.png` antique compass rose)
+- **`MapWindow`**:
+  - Draggable modal ($900 \times 720\text{px}$) toggleable via <kbd>M</kbd>, Action Bar button, or Escape key.
+  - **Wilderness Mode**: 10,000 × 10,000 Cartesian coordinate grid, permanent landmark beacons (Awakening Grove, Lair Entrance, The Village, Quarry Hills, Lakes), smooth pan/zoom (0.035x–0.35x), "Center Player" tracker, and layer filter toggles.
+  - **Visible Perception Radar Range ($R = 1800\text{m}$)**: Radial perception aura that dynamically detects and highlights nearby humans/villagers, deer, chests, quartz deposits, dropped loot, and blood pools in real-time with hover distance info cards.
+  - **Cavern Mode**: Displays hideout boundary walls, central Blood Core altar (with blood reserve %), workshop craft tables, storage chests, and portal archway.
 - **`CraftingWindow`**:
   - Draggable cave crafting modal toggleable via <kbd>B</kbd> or the HUD Action Bar button.
   - Displays cards for Storage Chest, Crafting Table, Blood Juicer, and Alchemical Laboratory with live material validation and construction/placement triggers.
@@ -195,6 +202,13 @@ All scripts are designed to work under two scenarios:
   - Modal dialog with slider, stepper buttons, and quick presets (`[1]`, `[Half]`, `[All]`) for precise stack splitting when holding Shift during item transfers.
 - **`TargetPanel`**:
   - Contextual target frame showing name, health bar, and dynamic action button (*"Chop"*, *"Quarry"*, *"Mine"*, *"Open"*, *"Craft"*, or *"Attack"*).
+
+### 3.6 ARPG-Style Alt-Key Loot Highlighting & Drop Scatter
+- **Ground Loot Nameplates**: Holding <kbd>Alt</kbd> (Left/Right) reveals floating clickable buttons for all dropped items and blood spots.
+  - `[ ItemName (Count) ]` buttons at $Y = -38\text{px}$ color-coded by rarity.
+  - `[ Blood Spot ({seconds}s) ]` crimson badge at $Y = -62\text{px}$ with live 40s lifetime countdown.
+  - Direct click on any nameplate triggers pickup or flask collection immediately, bypassing 2D collision occlusions.
+- **Drop Scatter Offset**: Defeated living prey (Deer, Villagers) scatter meat and gold drops by $\pm 24\text{px}$ away from the death blood pool, ensuring physical collision shapes do not overlap.
 
 ### 3.6 State Persistence (`SaveManager.cs`)
 - Serializes `SaveData` to `user://werewolves_save.json` using `System.Text.Json`.
@@ -269,9 +283,11 @@ All input actions are configured in `project.godot`:
 | `toggle_pouch` | <kbd>P</kbd> | Toggle Inventory Pouch Window |
 | `toggle_hero_details` | <kbd>C</kbd> | Toggle Hero Details Character Sheet |
 | `toggle_crafting` | <kbd>B</kbd> | Toggle Cave Crafting Menu Window |
+| `toggle_map` | <kbd>M</kbd> | Toggle World & Cavern Map Window |
 | `interact_core` | <kbd>E</kbd> | Restore Health & Power at Blood Core Altar |
 | `fill_core` | <kbd>R</kbd> | Pour Blood Flask into Blood Core Altar |
 | `enter_lair` / `ui_accept` | <kbd>Enter</kbd> | Enter / Exit Werewolf's Lair Portal |
+| *(World Ground)* | <kbd>Hold Alt</kbd> | Display floating clickable nameplates on all dropped loot & blood spots |
 | *(Pouch GUI)* | <kbd>Right Click</kbd> | Consume Meat (+20 HP, +10 Pwr), Drink Blood Flask, or deposit 1 into open chest |
 | *(Pouch GUI)* | <kbd>Shift + Click</kbd> | Open Split Modal to deposit custom quantity into open chest |
 | *(Chest GUI)* | <kbd>Click / Right-Click</kbd> | Grab 1 item into Pouch (or drag to organize inside chest) |

@@ -314,13 +314,14 @@ The lair scene includes a dedicated [`HUDManager`](file:///run/media/devilbd/d/D
 2. **Health & Power Orbs**: Real-time liquid simulation reflecting manual restoration and skill usage.
 3. **Skills & Action Menus**:
    - [`StatsPanel`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/StatsPanel.tscn) (Skill hotkeys 1–4).
-   - [`ActionBar`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/ActionBar.tscn) (Hero Details <kbd>C</kbd>, Inventory Pouch <kbd>P</kbd>, and Cave Crafting <kbd>B</kbd>).
+   - [`ActionBar`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/ActionBar.tscn) (Hero Details <kbd>C</kbd>, Inventory Pouch <kbd>P</kbd>, Cave Crafting <kbd>B</kbd>, and Cavern Map <kbd>M</kbd>).
 4. **Draggable Modals**:
    - [`PouchWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/PouchWindow.tscn) for inventory inspection, dragging, right-click consumption, and chest depositing.
    - [`HeroDetailsWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/scenes/UI/HeroDetailsWindow.tscn) for viewing live combat attributes.
    - [`CraftingWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/CraftingWindow.cs) for viewing recipes and constructing cave installations (<kbd>B</kbd>).
    - [`ChestInventoryWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/ChestInventoryWindow.cs) for chest storage and item retrieval.
    - [`ItemSplitModal`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/ItemSplitModal.cs) for Shift-click stack quantity selection.
+   - [`MapWindow`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/MapWindow.cs) for viewing the subterranean layout, Blood Core reserve %, workshop stations, and placed storage chests (<kbd>M</kbd>).
 
 ---
 
@@ -338,6 +339,8 @@ The lair scene includes a dedicated [`HUDManager`](file:///run/media/devilbd/d/D
 | [`Scripts/UI/CraftingWindow.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/CraftingWindow.cs) | Draggable crafting menu modal showing recipes, material checks, and placement triggers (<kbd>B</kbd>). |
 | [`Scripts/UI/ChestInventoryWindow.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/ChestInventoryWindow.cs) | Draggable freeform storage chest modal using `chest_inventory.png` background. |
 | [`Scripts/UI/ItemSplitModal.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/ItemSplitModal.cs) | Modal dialog for choosing stack split quantities with slider, steppers, and presets on Shift+click. |
+| [`Scripts/UI/MapWindow.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/UI/MapWindow.cs) | Draggable world and cavern map modal supporting 1800m radar perception, pan/zoom, and hideout layout inspection (<kbd>M</kbd>). |
+| [`assets/icons/map_icon.png`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/assets/icons/map_icon.png) | Antique brass compass rose icon texture for ActionBar Slot 4. |
 | [`Scripts/Core/CaveChestData.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Core/CaveChestData.cs) | Serialized data model for placed chest positions and stored items. |
 | [`Scripts/Core/CraftingRecipe.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Core/CraftingRecipe.cs) | Domain model defining ingredients, blood costs, and placement metadata for craftable objects. |
 | [`Scripts/Entities/LairEntranceObject.cs`](file:///run/media/devilbd/d/Development/godot-dev/werewolves-godot/Scripts/Entities/LairEntranceObject.cs) | Outside world landmark: proximity detection, prompt animation, and scene transition. |

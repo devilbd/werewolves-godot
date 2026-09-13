@@ -32,6 +32,8 @@ public partial class GameState : Node
         private set => _instance = value;
     }
 
+    public static GameState GetInstance() => Instance;
+
     public const float WorldBoundRadius = 5000f;
 
     // Player stats
@@ -87,6 +89,11 @@ public partial class GameState : Node
     // Inventory
     public Dictionary<string, PouchItemData> PouchItems { get; } = new();
 
+    public int GetPouchItemCount(string itemName)
+    {
+        return PouchItems.TryGetValue(itemName, out var item) ? item.Count : 0;
+    }
+
     // Selected Target
     private Node2D? _selectedTarget;
     public Node2D? SelectedTarget
@@ -119,6 +126,8 @@ public partial class GameState : Node
     public bool IsCraftingOpen { get; private set; } = false;
     public bool IsChestInventoryOpen { get; private set; } = false;
     public string? ActiveChestId { get; private set; } = null;
+    public bool IsMapOpen { get; private set; } = false;
+    public bool IsLootLabelsVisible { get; private set; } = false;
 
     // Chest Placement State
     public bool IsPlacingChest { get; private set; } = false;
@@ -143,6 +152,8 @@ public partial class GameState : Node
     public event Action<string, Vector2>? OnChestPlaced;
     public event Action<string>? OnStaticObjectCrafted;
     public event Action<bool, string?>? OnChestPlacementModeChanged;
+    public event Action<bool>? OnMapToggled;
+    public event Action<bool>? OnLootLabelsToggled;
     public event Action<string, Vector2, Color>? OnSpawnDamageNumber;
     public event Action<bool>? OnPlayerInFogChanged;
 
@@ -439,12 +450,14 @@ public partial class GameState : Node
         return false;
     }
 
+    public void TogglePouch() => TogglePouch(null);
     public void TogglePouch(bool? force = null)
     {
         IsPouchOpen = force ?? !IsPouchOpen;
         SafeInvoke(OnPouchToggled, IsPouchOpen);
     }
 
+    public void ToggleHeroDetails() => ToggleHeroDetails(null);
     public void ToggleHeroDetails(bool? force = null)
     {
         IsHeroDetailsOpen = force ?? !IsHeroDetailsOpen;
@@ -460,6 +473,7 @@ public partial class GameState : Node
         }
     }
 
+    public void ToggleCrafting() => ToggleCrafting(null);
     public void ToggleCrafting(bool? force = null)
     {
         IsCraftingOpen = force ?? !IsCraftingOpen;
@@ -485,6 +499,31 @@ public partial class GameState : Node
             string? id = ActiveChestId;
             ActiveChestId = null;
             SafeInvoke(OnChestInventoryToggled, false, id);
+        }
+    }
+
+    public void ToggleMap() => ToggleMap(null);
+    public void ToggleMap(bool? force = null)
+    {
+        IsMapOpen = force ?? !IsMapOpen;
+        SafeInvoke(OnMapToggled, IsMapOpen);
+    }
+
+    public void CloseMap()
+    {
+        if (IsMapOpen)
+        {
+            IsMapOpen = false;
+            SafeInvoke(OnMapToggled, false);
+        }
+    }
+
+    public void SetLootLabelsVisible(bool visible)
+    {
+        if (IsLootLabelsVisible != visible)
+        {
+            IsLootLabelsVisible = visible;
+            SafeInvoke(OnLootLabelsToggled, visible);
         }
     }
 

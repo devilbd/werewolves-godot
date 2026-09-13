@@ -126,8 +126,9 @@ public partial class Deer : CharacterBody2D, ICombatant, ISelectableTarget, IFog
             _sprite.Modulate = new Color(1, 1, 1, Mathf.MoveToward(_sprite.Modulate.A, 0.0f, dt * 1.5f));
             if (_sprite.Modulate.A <= 0.01f)
             {
-                // Spawn meat loot and blood spot
-                var loot = DroppedLoot.Instantiate("Meat", GlobalPosition);
+                // Spawn meat loot with slight scatter offset and blood spot at center
+                Vector2 lootOffset = new Vector2((float)GD.RandRange(-24.0, 24.0), (float)GD.RandRange(-16.0, 16.0));
+                var loot = DroppedLoot.Instantiate("Meat", GlobalPosition + lootOffset);
                 GetParent()?.AddChild(loot);
 
                 var bloodSpot = BloodSpot.Instantiate(GlobalPosition);

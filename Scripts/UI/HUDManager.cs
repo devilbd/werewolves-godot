@@ -19,6 +19,9 @@ public partial class HUDManager : CanvasLayer
     private CraftingWindow _craftingWindow = null!;
     private ChestInventoryWindow _chestInventoryWindow = null!;
     private ItemSplitModal _itemSplitModal = null!;
+    private MapWindow _mapWindow = null!;
+
+    private Vector2 ViewportSize => GetViewport()?.GetVisibleRect().Size ?? new Vector2(1920, 1080);
 
     public override void _Ready()
     {
@@ -32,7 +35,7 @@ public partial class HUDManager : CanvasLayer
                 Text = "Wilderness | Pos: (0, 0)",
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Size = new Vector2(360, 30),
-                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 - 180, 15)
+                Position = new Vector2(ViewportSize.X / 2 - 180, 15)
             };
             _positionLabel.AddThemeFontSizeOverride("font_size", 16);
             _positionLabel.AddThemeColorOverride("font_color", new Color(0.9f, 0.9f, 0.9f));
@@ -77,7 +80,7 @@ public partial class HUDManager : CanvasLayer
                 RingTexture = GD.Load<Texture2D>("res://assets/health_ring.png"),
                 CurrentValue = GameState.Instance.PlayerHealth,
                 MaxValue = GameState.Instance.PlayerMaxHealth,
-                Position = new Vector2(24, GetViewport().GetVisibleRect().Size.Y - 234)
+                Position = new Vector2(24, ViewportSize.Y - 234)
             };
             AddChild(_healthOrb);
         }
@@ -104,7 +107,7 @@ public partial class HUDManager : CanvasLayer
                 RingTexture = GD.Load<Texture2D>("res://assets/power_ring.png"),
                 CurrentValue = GameState.Instance.PlayerPower,
                 MaxValue = GameState.Instance.PlayerMaxPower,
-                Position = new Vector2(GetViewport().GetVisibleRect().Size.X - 234, GetViewport().GetVisibleRect().Size.Y - 234)
+                Position = new Vector2(ViewportSize.X - 234, ViewportSize.Y - 234)
             };
             AddChild(_powerOrb);
         }
@@ -126,7 +129,7 @@ public partial class HUDManager : CanvasLayer
             {
                 Name = "StatsPanel",
                 Player = Player,
-                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 - 140, GetViewport().GetVisibleRect().Size.Y - 80)
+                Position = new Vector2(ViewportSize.X / 2 - 140, ViewportSize.Y - 80)
             };
             AddChild(_statsPanel);
         }
@@ -142,7 +145,7 @@ public partial class HUDManager : CanvasLayer
             _actionBar = new ActionBar
             {
                 Name = "ActionBar",
-                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 + 150, GetViewport().GetVisibleRect().Size.Y - 132)
+                Position = new Vector2(ViewportSize.X / 2 + 150, ViewportSize.Y - 132)
             };
             AddChild(_actionBar);
         }
@@ -154,7 +157,7 @@ public partial class HUDManager : CanvasLayer
             _pouchWindow = new PouchWindow
             {
                 Name = "PouchWindow",
-                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 - 170, GetViewport().GetVisibleRect().Size.Y / 2 - 180)
+                Position = new Vector2(ViewportSize.X / 2 - 170, ViewportSize.Y / 2 - 180)
             };
             AddChild(_pouchWindow);
         }
@@ -166,7 +169,7 @@ public partial class HUDManager : CanvasLayer
             _heroDetailsWindow = new HeroDetailsWindow
             {
                 Name = "HeroDetailsWindow",
-                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 - 520, GetViewport().GetVisibleRect().Size.Y / 2 - 325)
+                Position = new Vector2(ViewportSize.X / 2 - 520, ViewportSize.Y / 2 - 325)
             };
             AddChild(_heroDetailsWindow);
         }
@@ -178,7 +181,7 @@ public partial class HUDManager : CanvasLayer
             _craftingWindow = new CraftingWindow
             {
                 Name = "CraftingWindow",
-                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 - 290, GetViewport().GetVisibleRect().Size.Y / 2 - 280)
+                Position = new Vector2(ViewportSize.X / 2 - 290, ViewportSize.Y / 2 - 280)
             };
             AddChild(_craftingWindow);
         }
@@ -190,7 +193,7 @@ public partial class HUDManager : CanvasLayer
             _chestInventoryWindow = new ChestInventoryWindow
             {
                 Name = "ChestInventoryWindow",
-                Position = new Vector2(GetViewport().GetVisibleRect().Size.X / 2 - 300, GetViewport().GetVisibleRect().Size.Y / 2 - 225)
+                Position = new Vector2(ViewportSize.X / 2 - 300, ViewportSize.Y / 2 - 225)
             };
             AddChild(_chestInventoryWindow);
         }
@@ -206,11 +209,27 @@ public partial class HUDManager : CanvasLayer
             AddChild(_itemSplitModal);
         }
 
+        // 12. Map Window (Toggleable world & cavern map)
+        _mapWindow = GetNodeOrNull<MapWindow>("MapWindow");
+        if (_mapWindow == null)
+        {
+            _mapWindow = new MapWindow
+            {
+                Name = "MapWindow",
+                Position = new Vector2(ViewportSize.X / 2 - 450, ViewportSize.Y / 2 - 360)
+            };
+            AddChild(_mapWindow);
+        }
+
         GameState.Instance.OnChestInventoryToggled += OnChestInventoryToggled;
 
         // Responsive repositioning on window resize
-        GetViewport().SizeChanged += OnViewportSizeChanged;
-        OnViewportSizeChanged();
+        var vp = GetViewport();
+        if (vp != null)
+        {
+            vp.SizeChanged += OnViewportSizeChanged;
+            OnViewportSizeChanged();
+        }
     }
 
     private void OnChestInventoryToggled(bool isOpen, string? chestId)
@@ -219,7 +238,7 @@ public partial class HUDManager : CanvasLayer
 
         if (isOpen)
         {
-            var size = GetViewport().GetVisibleRect().Size;
+            var size = ViewportSize;
             if (_pouchWindow != null && GodotObject.IsInstanceValid(_pouchWindow))
             {
                 _pouchWindow.Position = new Vector2(
@@ -284,6 +303,13 @@ public partial class HUDManager : CanvasLayer
             Vector2 pos = Player != null ? Player.GlobalPosition : GameState.Instance.PlayerPosition;
             UpdatePositionText(pos);
         }
+
+        // Alt key polling for ground loot nameplates
+        bool isAltPressed = Input.IsKeyPressed(Key.Alt);
+        if (GameState.Instance.IsLootLabelsVisible != isAltPressed)
+        {
+            GameState.Instance.SetLootLabelsVisible(isAltPressed);
+        }
     }
 
     private void OnViewportSizeChanged()
@@ -335,6 +361,13 @@ public partial class HUDManager : CanvasLayer
                 Mathf.Clamp(_chestInventoryWindow.Position.Y, 0, Mathf.Max(0, size.Y - _chestInventoryWindow.Size.Y))
             );
         }
+        if (_mapWindow != null && GodotObject.IsInstanceValid(_mapWindow))
+        {
+            _mapWindow.Position = new Vector2(
+                Mathf.Clamp(_mapWindow.Position.X, 0, Mathf.Max(0, size.X - _mapWindow.Size.X)),
+                Mathf.Clamp(_mapWindow.Position.Y, 0, Mathf.Max(0, size.Y - _mapWindow.Size.Y))
+            );
+        }
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -357,9 +390,20 @@ public partial class HUDManager : CanvasLayer
             GameState.Instance.ToggleCrafting();
             GetViewport().SetInputAsHandled();
         }
+        else if (@event.IsActionPressed("toggle_map") ||
+                 (@event is InputEventKey mapKey && mapKey.Pressed && !mapKey.Echo && mapKey.Keycode == Key.M))
+        {
+            GameState.Instance.ToggleMap();
+            GetViewport().SetInputAsHandled();
+        }
         else if (@event is InputEventKey escKey && escKey.Pressed && !escKey.Echo && escKey.Keycode == Key.Escape)
         {
-            if (GameState.Instance.IsPlacingChest)
+            if (GameState.Instance.IsMapOpen)
+            {
+                GameState.Instance.CloseMap();
+                GetViewport().SetInputAsHandled();
+            }
+            else if (GameState.Instance.IsPlacingChest)
             {
                 GameState.Instance.CancelChestPlacement();
                 GetViewport().SetInputAsHandled();
